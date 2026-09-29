@@ -7,13 +7,14 @@
 
 clear; clc; close all;
 
-%% Parameters (ICM-42688-P datasheet, provenance: datasheet)
+%% Parameters (provenance: datasheet - ICM-42688-P DS-000347 rev 1.5,
+% Tables 1-2, @10 Hz)
 Fs = 100;                        % sample rate [Hz]
 T  = 2 * 3600;                   % duration [s] - 2 h stationary
 n  = T * Fs;
 
-gyroN  = 2.8e-3 * pi/180;        % 2.8 mdps/sqrt(Hz) -> rad/s/sqrt(Hz)
-accelN = 70e-6 * 9.80665;        % 70 ug/sqrt(Hz)    -> m/s^2/sqrt(Hz)
+gyroN  = 2.8e-3 * pi/180;            % 0.0028 dps/sqrt(Hz) -> rad/s/sqrt(Hz)
+accelN = [65 65 70] * 1e-6 * 9.80665; % X,Y 65 / Z 70 ug/sqrt(Hz) -> m/s^2/sqrt(Hz)
 
 %% Sensor model
 % NoiseType must be "single-sided": datasheets and the Allan N use the

@@ -4,7 +4,8 @@ Bu dosyada her test/kontrol scripti için şunlar kayıtlıdır: **nerede olduğ
 
 **Ortam:** MATLAB R2026a (Windows 11) · Sensor Fusion and Tracking Toolbox + Navigation Toolbox (`imuSensor` ve `allanvar` ortak `shared/positioning` altında).
 **Kabul toleransı:** ±%10 (M1 faz çıkış kriteri, [`mihenk.md` §10.4](mihenk.md)).
-**Parametre kaynakları:** Her değerin kaynağı script içinde belirtilir: `datasheet` veya `assumed`. İlke için bkz. [`mihenk.md` §S2.5](mihenk.md).
+**Parametre kaynakları:** Her değerin kaynağı script içinde belirtilir: `datasheet` veya `assumed`.
+**Figürler:** [`figures/`](figures/) klasöründe. İlke için bkz. [`mihenk.md` §S2.5](mihenk.md).
 
 ---
 
@@ -15,6 +16,7 @@ Bu dosyada her test/kontrol scripti için şunlar kayıtlıdır: **nerede olduğ
 | 1 | [`first_allan_check.m`](matlab/reference-model/first_allan_check.m) | Beyaz gürültü yoğunluğu (N) | ✅ −%0,04 (düzeltme sonrası) |
 | 2 | [`allan_noise_terms_check.m`](matlab/reference-model/allan_noise_terms_check.m) | Rate random walk (K), bias instability (B) | ✅ K, ✅ B (1/f filtresiyle) · ❌ B (varsayılan filtre) |
 | 3 | [`thermal_model_check.m`](matlab/reference-model/thermal_model_check.m) | Sıcaklık bias'ı ve ölçek faktörü, sıcaklık değişimi altında gürültü sürekliliği | ✅ Formül tam (hata 0) · ✅ N, K |
+| 4 | — (veri sayfası teyidi) | ICM-42688-P parametreleri, DS-000347 Rev 1.5 | Termal katsayılar ve gyro N teyit edildi · B ve K veri sayfasında yok |
 
 **Kritik kurallar** (MATLAB referans modelinde her zaman uygulanacak):
 
@@ -34,7 +36,7 @@ Bu dosyada her test/kontrol scripti için şunlar kayıtlıdır: **nerede olduğ
 **Ne test ediyor:** `imuSensor`'a verilen gyro gürültü yoğunluğunun (N), üretilen sinyalin Allan sapmasından geri okunabilmesi.
 
 **Nasıl:**
-- ICM-42688-P veri sayfası değerleri kullanılıyor (`datasheet`): gyro 2,8 mdps/√Hz, ivmeölçer 70 µg/√Hz.
+- ICM-42688-P veri sayfası değerleri kullanılıyor (`datasheet`): gyro 2,8 mdps/√Hz. İvmeölçer ilk koşuda üç eksende 70 µg/√Hz idi; veri sayfası teyidinden sonra X/Y 65, Z 70 µg/√Hz olarak düzeltildi (Bulgu 4). Test yalnızca gyroyu ölçtüğü için sonuç etkilenmiyor.
 - Sensör 100 Hz'de 2 saat boyunca sanal olarak durağan tutuluyor.
 - Gyro X'in Allan sapması hesaplanıyor. Saf beyaz gürültüde `σ(τ) = N/√τ` olduğundan, `σ(τ)·√τ` değerinin τ ≤ T/10 aralığındaki medyanı N'nin kestirimi olarak alınıyor.
 
@@ -127,7 +129,7 @@ Bu dosyada her test/kontrol scripti için şunlar kayıtlıdır: **nerede olduğ
 **Nasıl:**
 - Sıcaklık profili 4 saat sürüyor: 25 → 45 °C rampa (1 saat), 45 °C'de bekleme (1 saat), 45 → 25 °C rampa (1 saat), 25 °C'de bekleme (1 saat).
 - `Temperature` her saniye güncelleniyor; `imuSensor` 1 saniyelik parçalar hâlinde adımlanıyor.
-- Termal katsayılar `assumed`: 0,005 dps/°C ve 0,005 %/°C. Bunlar ICM-42688-P veri sayfasının mertebesinde; veri sayfasından teyit edilecek.
+- Termal katsayılar 0,005 dps/°C ve 0,005 %/°C. İlk koşuda `assumed` olarak girildiler; veri sayfasından aynı değerler teyit edildi ve kaynak `datasheet` oldu (Bulgu 4). Veri sayfası bunları ± sınır olarak veriyor; script üst sınırı kullanıyor.
 - T1: sensör 100 dps'lik bir döner tablada, gürültü yok. Çıktı formülle karşılaştırılıyor; ölçüt maksimum göreli hata < 1e-9.
 - T2: gyroya N (veri sayfası) + K (1e-5, `assumed`) + termal bias veriliyor. Bilinen termal terim çıkarılıyor. Artığın Allan varyansına `σ² = N²/τ + K²τ/3` modeli göreli-hata ağırlıklı en küçük karelerle fit ediliyor.
 
@@ -143,7 +145,12 @@ Bu dosyada her test/kontrol scripti için şunlar kayıtlıdır: **nerede olduğ
 
 **Bulgu 3B:** `Temperature` çalışma sırasında değiştirildiğinde gürültü durumları sıfırlanmıyor. Parça parça adımlama güvenli.
 
-**Bulgu 3C: Ham Allan eğrisi termal kaymayla bozuluyor** *(teorik beklenti; 2. figürde gözle teyit edilecek)*. Rampa sırasındaki kayma hızı R = 0,005 dps/°C × 20 °C/h ≈ 4,8e-7 rad/s². Bu kayma Allan eğrisine `R·τ/√2` terimini ekliyor. τ ≈ 1000 s civarında bu terim (~3,4e-4) K teriminden (~1,8e-4) büyük. Dolayısıyla termal terim çıkarılmadan hesaplanan eğri uzun τ'larda yükselir ve gerçek K'yı maskeler. Bu, gerçek logların Allan analizinde sıcaklığın da kaydedilmesi ve etkisinin ayrıştırılması gerektiğini gösteriyor ([`mihenk.md` §14.2/2](mihenk.md)).
+**Bulgu 3C: Ham Allan eğrisi termal kaymayla bozuluyor** *(önce hesapla öngörüldü, sonra figürle teyit edildi)*.
+- Öngörü: Rampa sırasındaki kayma hızı R = 0,005 dps/°C × 20 °C/h ≈ 4,8e-7 rad/s². Bu kayma Allan eğrisine `R·τ/√2` terimini ekliyor. τ ≈ 1000 s civarında bu terim (~3,4e-4), K teriminden (~1,8e-4) büyük.
+- Figür ([`figures/thermal_figure_2.png`](figures/thermal_figure_2.png)): τ ≈ 40 s'ye kadar iki eğri üst üste. Sonra ham eğri yukarı ayrılıyor; τ ≈ 1000 s'de aradaki fark yaklaşık 2 kat. Öngörüyle uyumlu.
+- Ek gözlem: Termal terimi çıkarılmış eğri de τ ≳ 1300 s'de beklenen çizginin biraz üstüne çıkıyor. Bu aralık, fit aralığının (τ ≤ T/10 = 1440 s) dışında. 4 saatlik veride o τ değerlerinde yalnızca birkaç bağımsız küme kaldığı için bu istatistiksel belirsizlik.
+
+Sonuç olarak, termal terim çıkarılmadan hesaplanan eğri uzun τ'larda yükselir ve gerçek K'yı maskeler. Bu, gerçek logların Allan analizinde sıcaklığın da kaydedilmesi ve etkisinin ayrıştırılması gerektiğini gösteriyor ([`mihenk.md` §14.2/2](mihenk.md)).
 
 **Bulgu 3D: `imuSensor`'ın termal modeli G1 için yapısal olarak yetersiz.** Bu bir test sonucu değil, kaynak kod okumasından çıkan bir tespit:
 
@@ -159,10 +166,55 @@ Bu dosyada her test/kontrol scripti için şunlar kayıtlıdır: **nerede olduğ
 
 ---
 
+## 4. ICM-42688-P veri sayfası teyidi
+
+**Script:** yok. Bu girdi, veri sayfasından yapılan parametre teyidinin kaydıdır.
+**Kaynak:** TDK InvenSense, *ICM-42688-P Datasheet*, DS-000347, **Rev 1.5 (05/05/2021)**. Değerler Tablo 1 (gyro, s. 11), Tablo 2 (ivmeölçer, s. 12) ve §4.13'ten (sıcaklık sensörü) alındı.
+Raporda Rev 1.6 anılıyor. TDK sitesi dosyanın otomatik indirilmesine izin vermediği için ([Rev 1.6 bağlantısı](https://product.tdk.com/system/files/dam/doc/product/sensor/mortion-inertial/imu/data_sheet/ds-000347-icm-42688-p-v1.6.pdf)) Rev 1.5'in [açık bir kopyası](https://github.com/finani/ICM42688/blob/master/extras/InvenSense-ICM-42688-P-datasheet.pdf) kullanıldı. Değerlerin Rev 1.6 ile karşılaştırılması açık konu olarak duruyor.
+
+**Amaç:** Scriptlerdeki `assumed` değerleri `datasheet` kaynağına taşımak ([`mihenk.md` §S2.5](mihenk.md), [ADR-015](mihenk.md)). Ayrıca veri sayfasının **neyi vermediğini** belgelemek.
+
+**Teyit edilen değerler** (tablolarda "TA = 25 °C, VDD = 1,8 V" koşulunda):
+
+| Parametre | Gyro | İvmeölçer | Koşul | Veri sayfası notu |
+|---|---|---|---|---|
+| Gürültü yoğunluğu | 0,0028 °/s/√Hz | X/Y 65, **Z 70** µg/√Hz | @ 10 Hz | — |
+| Toplam RMS gürültü | 0,028 °/s-rms | X/Y 0,65, Z 0,70 mg-rms | BW = 100 Hz | Gürültü yoğunluğundan hesaplanmış |
+| Hassasiyet başlangıç toleransı | ±%0,5 | ±%0,5 | 25 °C, bileşen ve kart seviyesi | — |
+| **Hassasiyetin sıcaklıkla değişimi** | **±0,005 %/°C** | **±0,005 %/°C** | gyro 0…70 °C; ivme −40…+85 °C | Karakterizasyondan türetilmiş, üretimde test edilmiyor |
+| Doğrusalsızlık | ±%0,1 | ±%0,1 | En iyi doğru uydurma | — |
+| Eksenler arası duyarlılık | ±%1,25 | ±%1 | Kart seviyesi | — |
+| Başlangıç ofseti (ZRO / zero-g) | ±0,5 °/s | ±20 mg | Kart seviyesi | — |
+| **Ofsetin sıcaklıkla değişimi** | **±0,005 °/s/°C** | **±0,15 mg/°C** | gyro 0…70 °C; ivme −40…+85 °C | Karakterizasyondan türetilmiş, üretimde test edilmiyor |
+| Sıcaklık sensörü dönüşümü | `TEMP_DATA/132,48 + 25` °C (16 bit, ≈ 0,0075 °C/LSB) · FIFO'da `FIFO_TEMP_DATA/2,07 + 25` °C (8 bit, ≈ 0,48 °C/LSB) | | §4.13 | — |
+
+`pdftotext` tablo sütunlarını karıştırdığı için değer–satır eşleştirmesi okuma sırasından yapıldı. Gyro ofset katsayısı (±0,005 °/s/°C) ayrıca bağımsız bir kaynakla doğrulandı. Rev 1.6 incelendiğinde tablo bir kez daha gözle kontrol edilmeli.
+
+**Bulgu 4A: Termal katsayılar tek bir değer değil, parçalar arası ± sınır.**
+- Veri sayfası belirli bir sensörün katsayısını vermiyor. Verdiği şey, "üretilen parçaların katsayısı bu aralıkta" bilgisi. İşareti de belli değil.
+- Değerler karakterizasyondan türetilmiş, üretimde test edilmiyor.
+- **G1'e etkisi:** Her fiziksel sensörün kendi katsayısı var ve bunu önceden bilmiyoruz. Simülasyonda katsayıyı sabit vermek yerine her sanal birim için ±sınır içinden örneklemek daha gerçekçi. Bu, kanalların sıcaklığa **farklı** tepki vermesini doğal olarak sağlar; G1'in ayrıştırması tam da bu farka dayanıyor ([`mihenk.md` §S1-B](mihenk.md)).
+- Gerçek katsayılar ancak termal salınım logundan ölçülebilir ([§14.2/2](mihenk.md), Ek C.3).
+
+**Bulgu 4B: Veri sayfası bias instability ve rate random walk vermiyor.** Allan terimlerinden yalnızca beyaz gürültü (N) veri sayfasında. B ve K hiçbir zaman `datasheet` kaynaklı olamaz. Tek kaynak kendi statik logumuz (`allan_fit`) veya literatür. Bu, gece boyu statik kaydın önceliğini artırıyor.
+
+**Bulgu 4C: Veri sayfası termal modelin yalnızca doğrusal kısmını veriyor.** Histerezis, termal gecikme ve öz-ısınma için bir değer yok; katsayılar doğrusal °C başına değişim olarak verilmiş. Bulgu 3D'de sayılan eksikler, veri sayfasından da doldurulamıyor; ölçüm gerekiyor.
+
+**Bulgu 4D: İvmeölçer gürültüsü eksene bağlı.** Z ekseni X/Y'den gürültülü (70'e karşı 65 µg/√Hz). Raporda (Ek C.1) tek değer olarak 70 µg/√Hz geçiyor. `first_allan_check.m` eksen bazlı değerlerle güncellendi.
+
+**Bulgu 4E: Sıcaklık sensörünün çözünürlüğü okuma yoluna bağlı; mutlak doğruluğu belirtilmemiş.**
+- Register'dan 16 bit okunduğunda ~0,0075 °C/LSB, FIFO'daki 8 bit alanda ~0,48 °C/LSB. G1 için termal imzanın 0,5 °C'lik adımlarla okunması çok kaba. Firmware sıcaklığı register'dan (`TEMP_DATA`) okumalı. FIFO'nun yüksek çözünürlüklü (20 bit) paket biçiminin sıcaklık alanı henüz incelenmedi.
+- Veri sayfasında sıcaklık sensörü için doğruluk veya ofset spesifikasyonu yok; ölçülen şey kalıp (die) sıcaklığı. Bu, ikinci ve bağımsız bir sıcaklık kaynağının (BME688, Ek C.1) ve müfredat sınıf 7'nin ("konfounder sensörünün kendisi arızalı") gerekçesini güçlendiriyor.
+
+---
+
 ## Açık konular
 
-- [ ] Termal katsayıları ICM-42688-P veri sayfasından teyit etmek (`assumed` → `datasheet`)
-- [ ] Bias instability değerini gerçek statik logdan çıkarmak (`assumed` → `allan_fit`, [§14.2/2](mihenk.md))
+- [x] ~~Termal katsayıları ICM-42688-P veri sayfasından teyit etmek~~ → Bulgu 4 (Rev 1.5)
+- [ ] Değerleri veri sayfası Rev 1.6 ile karşılaştırmak
+- [ ] Bias instability ve rate random walk değerlerini gerçek statik logdan çıkarmak (`assumed` → `allan_fit`, [§14.2/2](mihenk.md)); veri sayfası bunları vermiyor (Bulgu 4B)
+- [ ] Termal katsayıların birim bazında ±sınır içinden örneklenmesi (Bulgu 4A)
+- [ ] Manyetometre (MMC5983MA / LIS2MDL) ve BME688 veri sayfalarını da aynı şekilde teyit etmek
 - [ ] `first_allan_check.m`'e sabit tohum eklemek
 - [ ] Sensör başına ayrı sıcaklık ve dış termal model (gradyan, histerezis, öz-ısınma, gecikme) — Bulgu 3D
 - [ ] Çapraz doğrulama toleransını, karşılaştırmaya başlamadan **önce** yazılı olarak ilan etmek ([§14.2/7](mihenk.md))

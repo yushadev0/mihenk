@@ -20,8 +20,10 @@ clear; clc; close all;
 BI_FLOOR = sqrt(2*log(2)/pi);    % 0.664 - IEEE flicker floor factor
 TOL      = 10;                   % [%] M1 exit criterion
 
-% Magnitudes are placeholders (provenance: assumed) - each term is
-% simulated alone, so only the ratio measured/expected matters.
+% Magnitudes are placeholders (provenance: assumed - the ICM-42688-P
+% datasheet gives neither bias instability nor random walk; they must come
+% from a static log, allan_fit). Each term is simulated alone, so only the
+% ratio measured/expected matters.
 K = 20 * (pi/180) / 3600 / 60;   % 20 deg/h/sqrt(h) -> rad/s/sqrt(s)
 B = 5  * (pi/180) / 3600;        % 5 deg/h          -> rad/s
 
