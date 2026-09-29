@@ -7,7 +7,7 @@
 
 clear; clc; close all;
 
-%% Parameters (provenance: datasheet - ICM-42688-P DS-000347 rev 1.5,
+%% Parameters (provenance: datasheet - ICM-42688-P DS-000347 rev 1.6,
 % Tables 1-2, @10 Hz)
 Fs = 100;                        % sample rate [Hz]
 T  = 2 * 3600;                   % duration [s] - 2 h stationary

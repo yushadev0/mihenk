@@ -16,7 +16,7 @@ Bu dosyada her test/kontrol scripti için şunlar kayıtlıdır: **nerede olduğ
 | 1 | [`first_allan_check.m`](matlab/reference-model/first_allan_check.m) | Beyaz gürültü yoğunluğu (N) | ✅ −%0,04 (düzeltme sonrası) |
 | 2 | [`allan_noise_terms_check.m`](matlab/reference-model/allan_noise_terms_check.m) | Rate random walk (K), bias instability (B) | ✅ K, ✅ B (1/f filtresiyle) · ❌ B (varsayılan filtre) |
 | 3 | [`thermal_model_check.m`](matlab/reference-model/thermal_model_check.m) | Sıcaklık bias'ı ve ölçek faktörü, sıcaklık değişimi altında gürültü sürekliliği | ✅ Formül tam (hata 0) · ✅ N, K |
-| 4 | — (veri sayfası teyidi) | ICM-42688-P parametreleri, DS-000347 Rev 1.5 | Termal katsayılar ve gyro N teyit edildi · B ve K veri sayfasında yok |
+| 4 | — (veri sayfası teyidi) | ICM-42688-P parametreleri, DS-000347 Rev 1.6 | Termal katsayılar ve gyro N teyit edildi · B ve K veri sayfasında yok · sıcaklık sensörü ofseti ±5 °C |
 
 **Kritik kurallar** (MATLAB referans modelinde her zaman uygulanacak):
 
@@ -169,8 +169,12 @@ Sonuç olarak, termal terim çıkarılmadan hesaplanan eğri uzun τ'larda yüks
 ## 4. ICM-42688-P veri sayfası teyidi
 
 **Script:** yok. Bu girdi, veri sayfasından yapılan parametre teyidinin kaydıdır.
-**Kaynak:** TDK InvenSense, *ICM-42688-P Datasheet*, DS-000347, **Rev 1.5 (05/05/2021)**. Değerler Tablo 1 (gyro, s. 11), Tablo 2 (ivmeölçer, s. 12) ve §4.13'ten (sıcaklık sensörü) alındı.
-Raporda Rev 1.6 anılıyor. TDK sitesi dosyanın otomatik indirilmesine izin vermediği için ([Rev 1.6 bağlantısı](https://product.tdk.com/system/files/dam/doc/product/sensor/mortion-inertial/imu/data_sheet/ds-000347-icm-42688-p-v1.6.pdf)) Rev 1.5'in [açık bir kopyası](https://github.com/finani/ICM42688/blob/master/extras/InvenSense-ICM-42688-P-datasheet.pdf) kullanıldı. Değerlerin Rev 1.6 ile karşılaştırılması açık konu olarak duruyor.
+**Kaynak:** TDK InvenSense, *ICM-42688-P Datasheet*, DS-000347, **Rev 1.6 (06/20/2021)**. Dosya repoda: [`docs/ds-000347-icm-42688-p-v1.6.pdf`](docs/ds-000347-icm-42688-p-v1.6.pdf). Değerler Tablo 1 (gyro, s. 11), Tablo 2 (ivmeölçer, s. 12), Tablo 4 (sıcaklık sensörü, s. 14) ve §4.13'ten alındı.
+
+**Sürüm karşılaştırması:**
+- Teyit önce Rev 1.5 (05/05/2021) üzerinde yapıldı, sonra Rev 1.6 ile karşılaştırıldı.
+- İki sürümün metinleri çıkarılıp boşluklar yok sayılarak karşılaştırıldı. **Tablo 1, 2 ve 4 birebir aynı.**
+- Rev 1.6'daki değişiklikler SPI zamanlaması, saat kaynağı ve APEX gibi, modelimizi etkilemeyen konularda.
 
 **Amaç:** Scriptlerdeki `assumed` değerleri `datasheet` kaynağına taşımak ([`mihenk.md` §S2.5](mihenk.md), [ADR-015](mihenk.md)). Ayrıca veri sayfasının **neyi vermediğini** belgelemek.
 
@@ -186,9 +190,18 @@ Raporda Rev 1.6 anılıyor. TDK sitesi dosyanın otomatik indirilmesine izin ver
 | Eksenler arası duyarlılık | ±%1,25 | ±%1 | Kart seviyesi | — |
 | Başlangıç ofseti (ZRO / zero-g) | ±0,5 °/s | ±20 mg | Kart seviyesi | — |
 | **Ofsetin sıcaklıkla değişimi** | **±0,005 °/s/°C** | **±0,15 mg/°C** | gyro 0…70 °C; ivme −40…+85 °C | Karakterizasyondan türetilmiş, üretimde test edilmiyor |
-| Sıcaklık sensörü dönüşümü | `TEMP_DATA/132,48 + 25` °C (16 bit, ≈ 0,0075 °C/LSB) · FIFO'da `FIFO_TEMP_DATA/2,07 + 25` °C (8 bit, ≈ 0,48 °C/LSB) | | §4.13 | — |
+**Sıcaklık sensörü** (Tablo 4 ve §4.13):
 
-`pdftotext` tablo sütunlarını karıştırdığı için değer–satır eşleştirmesi okuma sırasından yapıldı. Gyro ofset katsayısı (±0,005 °/s/°C) ayrıca bağımsız bir kaynakla doğrulandı. Rev 1.6 incelendiğinde tablo bir kez daha gözle kontrol edilmeli.
+| Parametre | Değer | Koşul |
+|---|---|---|
+| Çalışma aralığı | −40 … +85 °C | Ortam |
+| ADC çözünürlüğü | 16 bit | — |
+| Hassasiyet | 132,48 LSB/°C (≈ 0,0075 °C/LSB) | **Trimlenmemiş (untrimmed)** |
+| FIFO verisi hassasiyeti | 2,07 LSB/°C (≈ 0,48 °C/LSB) | 8 bit FIFO alanı |
+| **Oda sıcaklığı ofseti** | **−5 … +5 °C** | 25 °C |
+| Dönüşüm | `TEMP_DATA/132,48 + 25` °C · `FIFO_TEMP_DATA/2,07 + 25` °C | §4.13 |
+
+`pdftotext` tablo sütunlarını karıştırdığı için değer–satır eşleştirmesi okuma sırasından yapıldı. Gyro ofset katsayısı (±0,005 °/s/°C) ayrıca bağımsız bir kaynakla doğrulandı. PDF açılıp tablolar bir kez gözle kontrol edilirse bu çekince kalkar.
 
 **Bulgu 4A: Termal katsayılar tek bir değer değil, parçalar arası ± sınır.**
 - Veri sayfası belirli bir sensörün katsayısını vermiyor. Verdiği şey, "üretilen parçaların katsayısı bu aralıkta" bilgisi. İşareti de belli değil.
@@ -202,16 +215,24 @@ Raporda Rev 1.6 anılıyor. TDK sitesi dosyanın otomatik indirilmesine izin ver
 
 **Bulgu 4D: İvmeölçer gürültüsü eksene bağlı.** Z ekseni X/Y'den gürültülü (70'e karşı 65 µg/√Hz). Raporda (Ek C.1) tek değer olarak 70 µg/√Hz geçiyor. `first_allan_check.m` eksen bazlı değerlerle güncellendi.
 
-**Bulgu 4E: Sıcaklık sensörünün çözünürlüğü okuma yoluna bağlı; mutlak doğruluğu belirtilmemiş.**
-- Register'dan 16 bit okunduğunda ~0,0075 °C/LSB, FIFO'daki 8 bit alanda ~0,48 °C/LSB. G1 için termal imzanın 0,5 °C'lik adımlarla okunması çok kaba. Firmware sıcaklığı register'dan (`TEMP_DATA`) okumalı. FIFO'nun yüksek çözünürlüklü (20 bit) paket biçiminin sıcaklık alanı henüz incelenmedi.
-- Veri sayfasında sıcaklık sensörü için doğruluk veya ofset spesifikasyonu yok; ölçülen şey kalıp (die) sıcaklığı. Bu, ikinci ve bağımsız bir sıcaklık kaynağının (BME688, Ek C.1) ve müfredat sınıf 7'nin ("konfounder sensörünün kendisi arızalı") gerekçesini güçlendiriyor.
+**Bulgu 4E: Çip üstü sıcaklık sensörü ince çözünürlüklü ama mutlak değeri güvenilmez.**
+- **Çözünürlük okuma yoluna bağlı.** Register'dan 16 bit okunduğunda ~0,0075 °C/LSB, FIFO'daki 8 bit alanda ~0,48 °C/LSB. G1 için termal imzanın 0,5 °C'lik adımlarla okunması çok kaba; firmware sıcaklığı register'dan (`TEMP_DATA`) okumalı. FIFO'nun yüksek çözünürlüklü (20 bit) paket biçiminin sıcaklık alanı henüz incelenmedi.
+- **Mutlak doğruluk zayıf.** 25 °C'de ofset ±5 °C'ye kadar çıkabiliyor ve hassasiyet trimlenmemiş, yani kazanç hatası da belirsiz. Ölçülen şey ortam değil, kalıp (die) sıcaklığı; öz-ısınmayı da içeriyor.
+- *Düzeltme:* Bu maddenin ilk hâlinde "doğruluk spesifikasyonu yok" yazıyordu. Bu yanlıştı. Arama aracı metin dosyasını ikili sandığı için Tablo 4'ü kaçırmıştı; Rev 1.6 karşılaştırması sırasında bulundu. Tablo Rev 1.5'te de aynı.
+
+**Sonuçları:**
+- G1 **mutlak** sıcaklığa değil, sıcaklık **değişimine** dayanmalı. Değişim ince çözünürlükle ölçülebiliyor; mutlak değer ±5 °C belirsiz.
+- ICM çip üstü sensörü ile BME688 karşılaştırılırken aralarında 5 °C'ye varan sabit bir ofset ve bir kazanç farkı olacağı baştan varsayılmalı. Aksi hâlde bu fark "arıza" gibi görünür. Müfredat sınıf 7 ("konfounder sensörünün kendisi arızalı") ancak bu ofset modellenince anlamlı olur.
+- Simülasyondaki sıcaklık sensörü modeline her sanal birim için ±5 °C içinden örneklenmiş bir ofset ve belirsiz bir kazanç eklenmeli.
 
 ---
 
 ## Açık konular
 
-- [x] ~~Termal katsayıları ICM-42688-P veri sayfasından teyit etmek~~ → Bulgu 4 (Rev 1.5)
-- [ ] Değerleri veri sayfası Rev 1.6 ile karşılaştırmak
+- [x] ~~Termal katsayıları ICM-42688-P veri sayfasından teyit etmek~~ → Bulgu 4
+- [x] ~~Değerleri veri sayfası Rev 1.6 ile karşılaştırmak~~ → Tablo 1, 2, 4 aynı
+- [ ] Veri sayfası tablolarını PDF üzerinden bir kez gözle kontrol etmek
+- [ ] Sıcaklık sensörü modeline birim bazında ofset (±5 °C) ve kazanç hatası eklemek (Bulgu 4E)
 - [ ] Bias instability ve rate random walk değerlerini gerçek statik logdan çıkarmak (`assumed` → `allan_fit`, [§14.2/2](mihenk.md)); veri sayfası bunları vermiyor (Bulgu 4B)
 - [ ] Termal katsayıların birim bazında ±sınır içinden örneklenmesi (Bulgu 4A)
 - [ ] Manyetometre (MMC5983MA / LIS2MDL) ve BME688 veri sayfalarını da aynı şekilde teyit etmek
