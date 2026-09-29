@@ -55,8 +55,9 @@ Rapor bu tuzakları "müfredat sınıf 8" olarak topluyor. G1'in değeri kolay s
 | 3 | [`thermal_model_check.m`](matlab/checks/thermal_model_check.m) | Sıcaklık bias'ı ve ölçek faktörü, sıcaklık değişimi altında gürültü sürekliliği | ✅ Formül tam (hata 0) · ✅ N, K |
 | 4 | — (veri sayfası teyidi) | ICM-42688-P parametreleri, DS-000347 Rev 1.6 | Termal katsayılar ve gyro N teyit edildi · B ve K veri sayfasında yok · sıcaklık sensörü ofseti ±5 °C |
 | 5 | [`thermal_node_check.m`](matlab/checks/thermal_node_check.m) | Sensör başına sıcaklık: gecikme, gradyan, öz-ısınma, histerezis | ✅ C1–C4 makine hassasiyetinde · ortak mod artık kusurlu |
-| 6 | [`g1_prototype_v0.m`](matlab/g1/g1_prototype_v0.m) | G1 ilk prototip: ortak mod / kanala özgü ayrıştırma | ✅ ısıtıcı tuzağı çözüldü · ⚠️ histerezis, gecikme ve pencere uyumu zayıflıkları |
-| 7 | [`g1_prototype_v1.m`](matlab/g1/g1_prototype_v1.m) | G1 v1: hafızalı model, CUSUM, histerezis ve gecikme seçimi | ✅ kapsama %98, yanlış alarm 0 · ⚠️ tek senaryoya ayarlı, histerezis modeli simülatörle aynı |
+| 6 | [`g1_prototype_v0.m`](matlab/g1/v0/g1_prototype_v0.m) | G1 ilk prototip: ortak mod / kanala özgü ayrıştırma | ✅ ısıtıcı tuzağı çözüldü · ⚠️ histerezis, gecikme ve pencere uyumu zayıflıkları |
+| 7 | [`g1_prototype_v1.m`](matlab/g1/v1/g1_prototype_v1.m) | G1 v1: hafızalı model, CUSUM, histerezis ve gecikme seçimi | ✅ kapsama %98, yanlış alarm 0 · ⚠️ tek senaryoya ayarlı, histerezis modeli simülatörle aynı |
+| 8 | [`g1_prototype_v2.m`](matlab/g1/v2/g1_prototype_v2.m) | v0 ve v1'in 9 senaryo × 5 tohumla sınavı | ✅ v1 beyaz gürültüde tohumdan bağımsız · ❌ v1 renkli gürültüde çöküyor (saatte 115–195 yanlış alarm) · ❌ EMI çözülemiyor |
 
 **Kritik kurallar** (MATLAB referans modelinde her zaman uygulanacak):
 
@@ -340,7 +341,7 @@ ICM sıcaklık okuması ile BME688 kalıp sıcaklığı arasındaki fark: ortala
 
 ## 6. G1 prototipi v0
 
-**Script:** [`matlab/g1/g1_prototype_v0.m`](matlab/g1/g1_prototype_v0.m)
+**Script:** [`matlab/g1/v0/g1_prototype_v0.m`](matlab/g1/v0/g1_prototype_v0.m)
 **Figürler:** [`matlab/figures/g1_v0_1.png`](matlab/figures/g1_v0_1.png), [`matlab/figures/g1_v0_2.png`](matlab/figures/g1_v0_2.png)
 
 **Amaç:** G1'in (bkz. "G1 nedir?") ilk çalışan prototipi. İki soruya yanıt arıyor: en basit ortak mod ayrıştırması bir sensör arızasını ortam değişiminden ve kanala özgü bir termal tuzaktan ayırabiliyor mu? Ve G1'i zorlayan şeyler ilk nerede ortaya çıkıyor? Bu, raporun M1-M izindeki "Katman 1 prototipi" adımı.
@@ -416,8 +417,8 @@ Karar verilen blok sayısı: 380. İlk 1,68 saat pencerenin dolması için bekle
 
 ## 7. G1 prototipi v1
 
-**Script:** [`matlab/g1/g1_prototype_v1.m`](matlab/g1/g1_prototype_v1.m). v1, v0 ve temel çizgiyi aynı veri üzerinde karşılaştırıyor.
-**Dedektör:** [`matlab/g1/g1_detect_v1.m`](matlab/g1/g1_detect_v1.m) · **Senaryo:** [`matlab/models/simulate_node.m`](matlab/models/simulate_node.m) · **Değerlendirme:** [`matlab/g1/g1_evaluate.m`](matlab/g1/g1_evaluate.m)
+**Script:** [`matlab/g1/v1/g1_prototype_v1.m`](matlab/g1/v1/g1_prototype_v1.m). v1, v0 ve temel çizgiyi aynı veri üzerinde karşılaştırıyor.
+**Dedektör:** [`matlab/g1/v1/g1_detect_v1.m`](matlab/g1/v1/g1_detect_v1.m) · **Senaryo:** [`matlab/models/simulate_node.m`](matlab/models/simulate_node.m) · **Değerlendirme:** [`matlab/g1/g1_evaluate.m`](matlab/g1/g1_evaluate.m)
 **Figürler:** [`matlab/figures/g1_v1_1.png`](matlab/figures/g1_v1_1.png), [`matlab/figures/g1_v1_2.png`](matlab/figures/g1_v1_2.png)
 
 **Amaç:** Bulgu 6C–6F'deki zayıflıkları gidermek. Bunu v0 ile **aynı senaryo, aynı veri ve aynı ölçütler** üzerinde göstermek.
@@ -488,6 +489,100 @@ Tam karar aralığında (0,51 saatten itibaren, 450 blok): yanlış sensör alar
 
 ---
 
+## 8. G1 v2: çok senaryolu, çok tohumlu değerlendirme
+
+**Script:** [`matlab/g1/v2/g1_prototype_v2.m`](matlab/g1/v2/g1_prototype_v2.m) · **Senaryolar:** [`matlab/g1/v2/g1_scenarios_v2.m`](matlab/g1/v2/g1_scenarios_v2.m)
+**Ham sonuçlar:** [`matlab/g1/v2/g1_v2_results.csv`](matlab/g1/v2/g1_v2_results.csv) (90 satır: 9 senaryo × 5 tohum × 2 dedektör)
+**Figürler:** [`matlab/figures/g1_v2_1.png`](matlab/figures/g1_v2_1.png) (özet), [`matlab/figures/g1_v2_2.png`](matlab/figures/g1_v2_2.png) (her senaryoda v1'in suçlama grafiği, tohum 0)
+
+**Amaç:** Bulgu 7D'nin çağrısını yerine getirmek. v0 ve v1, **hiç ayar yapılmamış** senaryolarda ve tohumlarla sınandı. Yeni bir dedektör yok; bu bir sınav.
+
+**Model genişletmeleri** (varsayılan yol bit düzeyinde değişmedi):
+- `simulate_node.m`'e şunlar eklendi:
+  - Renkli gürültü: 1 Hz'de üretilen bias instability (`fractalcoef(2000)`) ve rate random walk. Değerler `assumed`: gyro B = 5 °/h, K = 5 °/h/√h; ivmeölçer B = 0,04 mg, K = 0,02 mg/√h; manyetometre B = 0,01 µT.
+  - Herhangi bir kanalda kayma veya basamak arızası; birden çok arıza.
+  - Manyetometre EMI'si.
+  - BME688 sıcaklık sensörü arızası.
+- `thermal_node.m`'e ikinci bir histerezis biçimi eklendi: gevşeme (relaxation). Bu biçim dedektörün varsaydığı play operatöründen farklı; model-uyuşmazlığı testi bunu kullanıyor.
+
+**Senaryolar:** Tohum değişince gürültü ve birimin sıcaklık katsayıları değişiyor. BME688 ısıtıcı patlaması tüm senaryolarda var.
+
+| Senaryo | Neyi sınıyor | Doğru davranış |
+|---|---|---|
+| white | v1 koşulları, yalnızca tohum değişiyor | gz suçlanmalı |
+| colored | Renkli gürültü | gz suçlanmalı |
+| hold-fault | Sabit sıcaklıkta yavaş kayma (0,01 dps/saat) | gz suçlanmalı |
+| accel-step | Rampa sırasında ay'de 0,3 mg basamak | ay suçlanmalı |
+| two-faults | gz ve ax'te aynı anda bağımsız kayma (sınıf 8) | İkisi de suçlanmalı |
+| emi | 20 dakikalık manyetik girişim (sınıf 8) | Sensör suçlanmamalı |
+| bme-fault | BME688 sıcaklığı 0,5 °C/saat kayıyor (sınıf 7) | BME688 suçlanmalı, hareket kanalı suçlanmamalı |
+| hyst-relax | Model uyuşmazlığı: gevşeme histerezisi | gz suçlanmalı |
+| day-cycle | 25 ± 8 °C sinüs, 4 saat periyot | gz suçlanmalı |
+
+`white` dışındaki tüm senaryolarda renkli gürültü var.
+
+**Sonuç — arızalar** (5 tohum; tespit oranı ve kapsama tohum ortalaması, gecikme tohum medyanı):
+
+| Senaryo | Tespit v0 / v1 | Gecikme [dk] v0 / v1 | Kapsama v0 / v1 | Yanlış alarm/saat v0 / v1 |
+|---|---|---|---|---|
+| white | %100 / %100 | 2,5 / 5,5 | %28 / %98 | 4,0 / **0,0** |
+| colored | %100 / %100 | 17,5 / 0,5 | %7 / %92 | 0,7 / **138,8** |
+| hold-fault | %40 / %100 | 38,5 / 0,5 | %0 / %88 | 0,7 / **155,9** |
+| accel-step | %40 / %100 | 2,0 / 2,5 | %2 / %96 | 0,7 / **151,7** |
+| two-faults | %60 / %100 | 51,5 / 25,5 | %4 / %81 | 0,6 / **115,6** |
+| emi | — | — | — | 6,9 / 193,8 |
+| bme-fault | — | — | — | 0,8 / 179,5 |
+| hyst-relax | %100 / %100 | 17,5 / 0,5 | %6 / %89 | 0,7 / **138,2** |
+| day-cycle | %100 / %100 | 22,5 / 0,5 | %15 / %96 | 0,8 / **128,6** |
+
+**Sonuç — tuzaklar:**
+
+| Ölçüt | v0 | v1 |
+|---|---|---|
+| Isıtıcı sırasında sensör suçlama (koşu başına blok) | 0,1 | 22,2 |
+| Olaylar dışında "T src" alarmı (koşu başına blok) | 37,8 | **0,7** |
+| EMI bloklarında manyetometrenin suçlanma oranı | %53 | %57 |
+| BME arızası sırasında BME688'in suçlanma oranı | %0 | %31 |
+| BME arızası sırasında bir hareket kanalının suçlanma oranı | %0 | %100 |
+
+**Bulgu 8A: Genişletme doğru; v1 beyaz gürültüde tohuma aşırı uyum yapmamış.**
+- CSV'deki "white / tohum 0" satırı v1 koşusuyla birebir aynı: gecikme 4,5 dk, kapsama 0,981, yanlış alarm 0; v0 için 2,5 dk, 0,281, "T src" 47.
+- Beş tohumun hepsinde v1: yanlış alarm 0, kapsama %97,6–98,1. Birim katsayıları ve gürültü değişse de beyaz gürültüde sonuç korunuyor.
+- Bulgu 6D'nin düzeltmesi (gecikme hizalama) tüm senaryolara genelleniyor: olaylar dışındaki "T src" alarmı v0'da 37,8, v1'de 0,7.
+
+**Bulgu 8B: v1 renkli gürültü altında çöküyor.** Günün en önemli bulgusu bu.
+- Renkli gürültünün olduğu her senaryoda v1 saatte 115–195 yanlış alarm veriyor. Figür 2'de ax, mz, my gibi sağlam kanallar 2–4. saatte suçlanıyor ve gün sonuna kadar suçlu kalıyor.
+- Bu yüzden v1'in "%100 tespit, 0,5 dk gecikme" değerleri **anlamsız**. Temel çizgide olduğu gibi (Bulgu 6B), hemen her şeyi suçlayan bir yöntem arızayı da "yakalıyor".
+- **Neden?** v1 iki varsayıma dayanıyor:
+  - (1) Gürültü düzeyi ısınma dönemindeki blok farklarından ölçülüyor. Bu yalnızca beyaz kısmı görüyor; bias instability ve random walk'un yavaş gezinmesini görmüyor. z skorları şişiyor.
+  - (2) "Sıcaklıkla açıklanamayan yavaş kayma = arıza." Oysa random walk, **sağlam** bir sensörün de yavaşça kaymasıdır. v1'in arıza tanımına göre sağlam bir gyro, 1–2 saat içinde "arızalı" sayılıyor.
+- Model de dondurulduğu için (Bulgu 7C) bu yanlış karar bir daha düzelmiyor.
+- **Kavramsal sonuç:** "Arıza" ancak sensörün **kendi stokastik bütçesinin dışına çıkan** sapmadır. Bu bütçe, Allan parametreleriyle (N, B, K) belirlenir. G1, gürültü modelinden ayrı tasarlanamaz: Allan (Katman 1'deki ④) G1'in "sıfır hipotezini" tanımlıyor. Bu, B ve K'nın gerçek statik kayıttan ölçülmesini (Bulgu 4B) zorunlu hâle getiriyor.
+
+**Bulgu 8C: v0 yanlış alarmda sağlam ama arızayı unutuyor. İki tasarımın zayıflıkları birbirinin tersi.**
+- v0, renkli gürültüde saatte yalnızca 0,5–0,8 yanlış alarm veriyor, çünkü kayan penceresinin standart sapması gezinmeye uyum sağlıyor.
+- Aynı uyum yüzünden arızayı da kaçırıyor: kapsama %0–15; hold-fault ve accel-step'te tespit oranı %40.
+- Uyum sağlayan pencere sağlam ama unutkan; hafızalı model ısrarcı ama kırılgan. İkisi de kabul edilemez. v3, hafızayı dürüst bir gürültü modeliyle birleştirmeli.
+
+**Bulgu 8D: EMI tuzağı beklendiği gibi G1'in sınırında.**
+- İki dedektör de EMI bloklarının yarısından fazlasında manyetometreyi suçluyor: v0 %53, v1 %57. Yalnızca termal ayrıştırmaya bakan bir yöntem için "ortak mod olmayan çevresel etki" ile "sensör arızası" aynı görünüyor.
+- v1'de ek bir sorun var: EMI 5,33 saatte bittiği hâlde manyetometre kanalları gün sonuna kadar suçlu kalıyor. Bu, 7C'deki kilitlenme.
+- **İddia kapsamı için sonucu:** G1 bu durumu tek başına çözemez. Manyetik alanın büyüklüğünün sabitliği (`‖m‖ ≈ sabit`) ve üç yönlü yönelim oylaması (Katman 1 ②) gibi başka kaldıraçlar gerekiyor. Rapordaki "EMI, G1'in en zorlu karşı-örneği" öngörüsü doğrulandı.
+
+**Bulgu 8E: Konfounder sensörünün arızasını yalnızca hafızalı tasarım görüyor.**
+- BME688 sıcaklığı kaydığında v0 onu hiç suçlamıyor (%0); penceresi kaymaya uyum sağlıyor.
+- v1 BME688 sıcaklığını suçluyor: tohum ortalaması %31, tohum 0'da ~5,2 saatten itibaren kesintisiz (Figür 2).
+- Ama v1 aynı anda renkli gürültü yüzünden hareket kanallarını da suçladığı için (%100) sonuç temiz değil. Doğru mekanizma var, gürültü modeli onu gölgeliyor.
+
+**Bulgu 8F: Deney tasarımında bir hata yaptım.** Renkli gürültüyü `white` dışındaki **tüm** senaryolara koydum. Bu yüzden histerezis uyuşmazlığının, iki arızanın ve günlük döngünün etkisi gürültünün etkisinden ayrılamıyor: v1'in yanlış alarm oranı her yerde 115–195 arasında. Doğrusu, her tuzağı hem beyaz hem renkli gürültüyle koşmak (faktöriyel tasarım); v3 değerlendirmesi bu şekilde kurulmalı.
+
+**v3 için yön:**
+- **Gürültüyü bilen bir sıfır modeli.** RLS yerine bir Kalman filtresi kullanmak. Bias'ı random walk'a uyan bir durum olarak modellemek. Süreç gürültüsü, Allan parametrelerinden (K, B) gelmeli. Böylece sağlam bir sensörün beklenen gezinmesi tahmin belirsizliğine girer, arıza da ancak bu belirsizliği aşan sapma olur.
+- **Kilitlenmeye karşı bir çıkış yolu:** Suçlanan bir kanalın modeli dondurulur, ama kanalın durumu açıkça "arızalı" ve "yeni rejim" arasında sınanır. Örneğin bir olay bittikten sonra artıklar gürültü bütçesine geri dönerse kanal serbest bırakılır.
+- **Faktöriyel değerlendirme:** Her tuzak için beyaz ve renkli gürültü (8F).
+
+---
+
 ## Açık konular
 
 - [x] ~~Termal katsayıları ICM-42688-P veri sayfasından teyit etmek~~ → Bulgu 4
@@ -502,7 +597,10 @@ Tam karar aralığında (0,51 saatten itibaren, 450 blok): yanlış sensör alar
 - [ ] Termal model parametrelerini (τ, gradyan, R_th, histerezis) termal salınım kaydından ölçmek (`assumed` → ölçüm)
 - [ ] Sıcaklık sensörü kazanç hatasını modele eklemek (şu an yalnız ofset ve kuantizasyon var)
 - [x] ~~Termal modeli ivmeölçer ve manyetometre bias'larına da bağlamak~~ → `simulate_node.m` (§6)
-- [ ] G1 v1'i birden çok tohum ve senaryoyla değerlendirmek; müfredat sınıf 5–8 tuzakları (Bulgu 7D)
+- [x] ~~G1 v1'i birden çok tohum ve senaryoyla değerlendirmek~~ → Bulgu 8
+- [ ] **G1 v3:** Allan parametrelerine dayanan, gürültüyü bilen bir sıfır modeli (random walk bias durumu olan Kalman filtresi) ve kilitlenmeye karşı serbest bırakma kuralı (Bulgu 8B, 7C)
+- [ ] Faktöriyel değerlendirme: her tuzak için beyaz ve renkli gürültü (Bulgu 8F)
+- [ ] EMI için G1 dışı kaldıraçlar: `‖m‖` sabitliği ve üç yönlü oylama (Bulgu 8D)
 - [ ] Model-uyuşmazlığı testi: simülatörde play operatöründen farklı bir histerezis biçimi (Bulgu 7D, ADR-012)
 - [ ] G1 skorunu kalibre edilmiş bir güven skoruna çevirmek (ECE, reliability diagram; ADR-010)
 - [ ] "Model yapısı uyumsuzluğu" (Bulgu 7C) ve "termal uyarım yetersizliği" (Bulgu 6F) koşullarını teşhis kestiricisinin formel tanımına yazmak ([§14.2/4](mihenk.md))
