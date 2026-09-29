@@ -15,7 +15,9 @@
 
 clear; clc; close all;
 
-figDir = fullfile(fileparts(mfilename('fullpath')), '..', '..', 'figures');
+here = fileparts(mfilename('fullpath'));
+addpath(fullfile(here, '..', 'models'));
+figDir = fullfile(here, '..', 'figures');
 if ~isfolder(figDir), mkdir(figDir); end
 
 %% Node definition

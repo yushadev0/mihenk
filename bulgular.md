@@ -4,8 +4,8 @@ Bu dosyada her test/kontrol scripti için şunlar kayıtlıdır: **nerede olduğ
 
 **Ortam:** MATLAB R2026a (Windows 11) · Sensor Fusion and Tracking Toolbox + Navigation Toolbox (`imuSensor` ve `allanvar` ortak `shared/positioning` altında).
 **Kabul toleransı:** ±%10 (M1 faz çıkış kriteri, [`mihenk.md` §10.4](mihenk.md)).
-**Parametre kaynakları:** Her değerin kaynağı script içinde belirtilir: `datasheet` veya `assumed`.
-**Figürler:** [`figures/`](figures/) klasöründe. İlke için bkz. [`mihenk.md` §S2.5](mihenk.md).
+**Parametre kaynakları:** Her değerin kaynağı script içinde belirtilir: `datasheet` veya `assumed`. İlke için bkz. [`mihenk.md` §S2.5](mihenk.md).
+**Klasör düzeni:** [`matlab/README.md`](matlab/README.md). Modeller `matlab/models/`, kontrol scriptleri `matlab/checks/`, G1 prototipleri `matlab/g1/`, figürler [`matlab/figures/`](matlab/figures/) altında. Klasör düzeni §6'dan sonra kuruldu; önceki girdilerdeki commit'ler dosyaları eski yerleriyle (`matlab/reference-model/`, `figures/`) gösterir.
 
 ---
 
@@ -50,12 +50,12 @@ Rapor bu tuzakları "müfredat sınıf 8" olarak topluyor. G1'in değeri kolay s
 
 | # | Script | Test edilen | Sonuç |
 |---|---|---|---|
-| 1 | [`first_allan_check.m`](matlab/reference-model/first_allan_check.m) | Beyaz gürültü yoğunluğu (N) | ✅ −%0,04 (düzeltme sonrası) |
-| 2 | [`allan_noise_terms_check.m`](matlab/reference-model/allan_noise_terms_check.m) | Rate random walk (K), bias instability (B) | ✅ K, ✅ B (1/f filtresiyle) · ❌ B (varsayılan filtre) |
-| 3 | [`thermal_model_check.m`](matlab/reference-model/thermal_model_check.m) | Sıcaklık bias'ı ve ölçek faktörü, sıcaklık değişimi altında gürültü sürekliliği | ✅ Formül tam (hata 0) · ✅ N, K |
+| 1 | [`first_allan_check.m`](matlab/checks/first_allan_check.m) | Beyaz gürültü yoğunluğu (N) | ✅ −%0,04 (düzeltme sonrası) |
+| 2 | [`allan_noise_terms_check.m`](matlab/checks/allan_noise_terms_check.m) | Rate random walk (K), bias instability (B) | ✅ K, ✅ B (1/f filtresiyle) · ❌ B (varsayılan filtre) |
+| 3 | [`thermal_model_check.m`](matlab/checks/thermal_model_check.m) | Sıcaklık bias'ı ve ölçek faktörü, sıcaklık değişimi altında gürültü sürekliliği | ✅ Formül tam (hata 0) · ✅ N, K |
 | 4 | — (veri sayfası teyidi) | ICM-42688-P parametreleri, DS-000347 Rev 1.6 | Termal katsayılar ve gyro N teyit edildi · B ve K veri sayfasında yok · sıcaklık sensörü ofseti ±5 °C |
-| 5 | [`thermal_node_check.m`](matlab/reference-model/thermal_node_check.m) | Sensör başına sıcaklık: gecikme, gradyan, öz-ısınma, histerezis | ✅ C1–C4 makine hassasiyetinde · ortak mod artık kusurlu |
-| 6 | [`g1_prototype_v0.m`](matlab/reference-model/g1_prototype_v0.m) | G1 ilk prototip: ortak mod / kanala özgü ayrıştırma | ✅ ısıtıcı tuzağı çözüldü · ⚠️ histerezis, gecikme ve pencere uyumu zayıflıkları |
+| 5 | [`thermal_node_check.m`](matlab/checks/thermal_node_check.m) | Sensör başına sıcaklık: gecikme, gradyan, öz-ısınma, histerezis | ✅ C1–C4 makine hassasiyetinde · ortak mod artık kusurlu |
+| 6 | [`g1_prototype_v0.m`](matlab/g1/g1_prototype_v0.m) | G1 ilk prototip: ortak mod / kanala özgü ayrıştırma | ✅ ısıtıcı tuzağı çözüldü · ⚠️ histerezis, gecikme ve pencere uyumu zayıflıkları |
 
 **Kritik kurallar** (MATLAB referans modelinde her zaman uygulanacak):
 
@@ -67,7 +67,7 @@ Rapor bu tuzakları "müfredat sınıf 8" olarak topluyor. G1'in değeri kolay s
 
 ## 1. Beyaz gürültü yoğunluğu (N)
 
-**Script:** [`matlab/reference-model/first_allan_check.m`](matlab/reference-model/first_allan_check.m)
+**Script:** [`matlab/checks/first_allan_check.m`](matlab/checks/first_allan_check.m)
 **Commit:** `3851487`
 
 **Amaç:** İ7 ilkesi, yani "sensör modeli kendi kendini doğrular" ([`mihenk.md` §2](mihenk.md)). CI kapısı #3'ün (Allan tutarlılığı) ve [ADR-014](mihenk.md)'ün MATLAB tarafındaki ilk örneği. Modele verilen gürültü parametresi üretilen veriden geri çıkarılamıyorsa, bu modelle üretilen hiçbir sonuca güvenilemez.
@@ -103,7 +103,7 @@ Rapor bu tuzakları "müfredat sınıf 8" olarak topluyor. G1'in değeri kolay s
 
 ## 2. Rate random walk (K) ve bias instability (B)
 
-**Script:** [`matlab/reference-model/allan_noise_terms_check.m`](matlab/reference-model/allan_noise_terms_check.m)
+**Script:** [`matlab/checks/allan_noise_terms_check.m`](matlab/checks/allan_noise_terms_check.m)
 **Commit:** `d0169a2`
 
 **Amaç:** Beyaz gürültü dışındaki iki stokastik terimin IEEE Std 952 tanımlarına uyup uymadığını görmek. Bu, olmazsa olmaz #4 ile ilgili ("Allan-tutarlı gürültü sentezi, 1/f dahil"). Bu doğrulama yapılmazsa [§11](mihenk.md)'deki "sentetik gürültünün kolaylığı" riski gerçekleşir: yöntem beyaz gürültüde çalışır, gerçek 1/f gürültüsünde çöker.
@@ -149,7 +149,7 @@ Rapor bu tuzakları "müfredat sınıf 8" olarak topluyor. G1'in değeri kolay s
 
 ## 3. Termal model
 
-**Script:** [`matlab/reference-model/thermal_model_check.m`](matlab/reference-model/thermal_model_check.m)
+**Script:** [`matlab/checks/thermal_model_check.m`](matlab/checks/thermal_model_check.m)
 **Commit:** `41128f7`
 
 **Amaç:** Sıcaklık, merkezi katkının (G1) fiziksel dayanağı ([`mihenk.md` §S1-B](mihenk.md), [ADR-020](mihenk.md)). Referans modelin sıcaklık etkisini nasıl ve ne kadar doğru uyguladığını bilmek gerekiyor. Ayrıca MIHENK senaryolarında sıcaklık sürekli değişeceği için, sıcaklık güncellemelerinin gürültü üretimini bozmadığından emin olmak gerekiyor.
@@ -186,7 +186,7 @@ Rapor bu tuzakları "müfredat sınıf 8" olarak topluyor. G1'in değeri kolay s
 
 **Bulgu 3C: Ham Allan eğrisi termal kaymayla bozuluyor** *(önce hesapla öngörüldü, sonra figürle teyit edildi)*.
 - Öngörü: Rampa sırasındaki kayma hızı R = 0,005 dps/°C × 20 °C/h ≈ 4,8e-7 rad/s². Bu kayma Allan eğrisine `R·τ/√2` terimini ekliyor. τ ≈ 1000 s civarında bu terim (~3,4e-4), K teriminden (~1,8e-4) büyük.
-- Figür ([`figures/thermal_figure_2.png`](figures/thermal_figure_2.png)): τ ≈ 40 s'ye kadar iki eğri üst üste. Sonra ham eğri yukarı ayrılıyor; τ ≈ 1000 s'de aradaki fark yaklaşık 2 kat. Öngörüyle uyumlu.
+- Figür ([`matlab/figures/thermal_model_2.png`](matlab/figures/thermal_model_2.png)): τ ≈ 40 s'ye kadar iki eğri üst üste. Sonra ham eğri yukarı ayrılıyor; τ ≈ 1000 s'de aradaki fark yaklaşık 2 kat. Öngörüyle uyumlu.
 - Ek gözlem: Termal terimi çıkarılmış eğri de τ ≳ 1300 s'de beklenen çizginin biraz üstüne çıkıyor. Bu aralık, fit aralığının (τ ≤ T/10 = 1440 s) dışında. 4 saatlik veride o τ değerlerinde yalnızca birkaç bağımsız küme kaldığı için bu istatistiksel belirsizlik.
 
 Sonuç olarak, termal terim çıkarılmadan hesaplanan eğri uzun τ'larda yükselir ve gerçek K'yı maskeler. Bu, gerçek logların Allan analizinde sıcaklığın da kaydedilmesi ve etkisinin ayrıştırılması gerektiğini gösteriyor ([`mihenk.md` §14.2/2](mihenk.md)).
@@ -268,9 +268,9 @@ Sonuç olarak, termal terim çıkarılmadan hesaplanan eğri uzun τ'larda yüks
 
 ## 5. Sensör başına sıcaklık modeli
 
-**Model:** [`matlab/reference-model/thermal_node.m`](matlab/reference-model/thermal_node.m) (fonksiyon; tek başına çalıştırılmaz)
-**Script:** [`matlab/reference-model/thermal_node_check.m`](matlab/reference-model/thermal_node_check.m)
-**Figürler:** [`figures/thermal_node_1.png`](figures/thermal_node_1.png), [`figures/thermal_node_2.png`](figures/thermal_node_2.png). Script figürleri kendisi kaydediyor.
+**Model:** [`matlab/models/thermal_node.m`](matlab/models/thermal_node.m) (fonksiyon; tek başına çalıştırılmaz)
+**Script:** [`matlab/checks/thermal_node_check.m`](matlab/checks/thermal_node_check.m)
+**Figürler:** [`matlab/figures/thermal_node_1.png`](matlab/figures/thermal_node_1.png), [`matlab/figures/thermal_node_2.png`](matlab/figures/thermal_node_2.png). Script figürleri kendisi kaydediyor.
 
 **Amaç:** Bulgu 3D'de tespit edilen eksikleri kapatmak. `imuSensor` tüm sensörlere tek bir sıcaklık uyguluyor ve bu da kusursuz bir ortak mod yaratıyor ([`mihenk.md` §11](mihenk.md) ★ riski). G1'in gerçekten sınanabilmesi için ortak modun **kusurlu** olması gerekiyor: her sensörün kendi sıcaklığı olmalı ([`mihenk.md` §S1-B](mihenk.md): "gradyan, histerezis ve öz-ısınma zorunlu").
 
@@ -328,7 +328,7 @@ ICM sıcaklık okuması ile BME688 kalıp sıcaklığı arasındaki fark: ortala
 **Bulgu 5B: Birim ofseti, gerçek fiziksel farklardan büyük.** Sensörler arasındaki gerçek sıcaklık farkları 0,9–1,3 °C mertebesinde. ICM sıcaklık okumasının ofseti ise tek başına +2,23 °C ve ±5 °C'ye kadar çıkabiliyor. Mutlak sıcaklıkları kaynaklar arasında karşılaştırmak, fiziği değil ofseti ölçer. Bu, Bulgu 4E'deki sonucu sayısal olarak doğruluyor: G1 sıcaklık **değişimlerine** dayanmalı.
 - ICM okuması ile BME688 arasındaki farkın 1,93 °C'lik değişim aralığının neredeyse tamamı iki kaynaktan geliyor. ~1,5 °C'si ısıtıcıdan (kanala özgü öz-ısınma). ~0,44 °C'si iki sensörün gecikme farkından: 80 s × 20 °C/saat.
 
-**Bulgu 5C: Gecikme, ortamdan bakan bir gözlemciye histerezis gibi görünüyor.** ([`figures/thermal_node_2.png`](figures/thermal_node_2.png))
+**Bulgu 5C: Gecikme, ortamdan bakan bir gözlemciye histerezis gibi görünüyor.** ([`matlab/figures/thermal_node_2.png`](matlab/figures/thermal_node_2.png))
 - **Sol panel:** Bias kalıp sıcaklığına göre çizildiğinde döngü yalnızca histerezisten geliyor. Genişliği 1 °C, bias'ta ~0,004 dps.
 - **Sağ panel:** Aynı bias ortam sıcaklığına göre çizildiğinde döngü ~2,3 kat genişliyor. ICM'nin 120 s'lik gecikmesi, 20 °C/saat rampada her yönde ~0,67 °C'lik ek açıklık ekliyor: 1 + 2 × 0,67 ≈ 2,3 °C, bias'ta ~0,01 dps.
 - **G1 için sonucu:** Yalnızca ortam sıcaklığını (BME688) gören bir teşhis yöntemi, gerçek histerezisi gecikmeden ayıramaz. Termal ayrıştırmada her sensörün **kendi** sıcaklığı ya da gecikmeyi hesaba katan bir model kullanılmalı. Bu, ICM'nin çip üstü sıcaklık sensörünün neden kritik olduğunu da gösteriyor (Ek C.1).
@@ -339,8 +339,8 @@ ICM sıcaklık okuması ile BME688 kalıp sıcaklığı arasındaki fark: ortala
 
 ## 6. G1 prototipi v0
 
-**Script:** [`matlab/reference-model/g1_prototype_v0.m`](matlab/reference-model/g1_prototype_v0.m)
-**Figürler:** [`figures/g1_v0_1.png`](figures/g1_v0_1.png), [`figures/g1_v0_2.png`](figures/g1_v0_2.png)
+**Script:** [`matlab/g1/g1_prototype_v0.m`](matlab/g1/g1_prototype_v0.m)
+**Figürler:** [`matlab/figures/g1_v0_1.png`](matlab/figures/g1_v0_1.png), [`matlab/figures/g1_v0_2.png`](matlab/figures/g1_v0_2.png)
 
 **Amaç:** G1'in (bkz. "G1 nedir?") ilk çalışan prototipi. İki soruya yanıt arıyor: en basit ortak mod ayrıştırması bir sensör arızasını ortam değişiminden ve kanala özgü bir termal tuzaktan ayırabiliyor mu? Ve G1'i zorlayan şeyler ilk nerede ortaya çıkıyor? Bu, raporun M1-M izindeki "Katman 1 prototipi" adımı.
 
