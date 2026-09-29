@@ -24,7 +24,7 @@ Tprof = interp1([0 3600 7200 10800 14400], [25 45 45 25 25], t);
 dT    = repelem(Tprof - 25, Fs); % per sample
 
 % Thermal coefficients (provenance: datasheet - ICM-42688-P DS-000347
-% rev 1.5, Table 1, 0-70 degC, "derived from characterization, not tested
+% rev 1.6, Table 1, 0-70 degC, "derived from characterization, not tested
 % in production"). The datasheet gives +- bounds across parts, not the
 % coefficient of a given unit; the upper bound is used here.
 kb = 0.005 * pi/180;             % ZRO variation vs temp  +-0.005 dps/degC -> rad/s/degC
