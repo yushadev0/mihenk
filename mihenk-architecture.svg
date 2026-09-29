@@ -1,0 +1,135 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 800" width="1180" height="800" color="#1d2021" role="img" aria-label="MIHENK mimarisi: fizik ve sensör katmanı ground-truth üretir; bilgi bariyeri bunu firmware'den ayırır; bariyeri geçen tek kanal register gölgesidir; ground-truth yalnız değerlendiriciye akar ve değerlendirici firmware'e hiçbir şey döndürmez.">
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+    </marker>
+    <marker id="arA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#bf4417"/>
+    </marker>
+  </defs>
+
+  <g fill="none" stroke="currentColor" stroke-width="1.4">
+    <rect x="40" y="20" width="1100" height="54" rx="4"/>
+    <rect x="40" y="104" width="1100" height="60" rx="4"/>
+    <rect x="40" y="208" width="520" height="96" rx="4"/>
+    <rect x="40" y="322" width="520" height="92" rx="4"/>
+    <rect x="40" y="432" width="248" height="86" rx="4"/>
+    <rect x="312" y="432" width="248" height="86" rx="4" stroke-dasharray="5 3"/>
+    <rect x="680" y="208" width="460" height="96" rx="4"/>
+    <rect x="680" y="322" width="460" height="92" rx="4"/>
+    <rect x="680" y="432" width="460" height="86" rx="4"/>
+    <rect x="40" y="628" width="1100" height="108" rx="4"/>
+  </g>
+
+  <g font-family="Inter, Helvetica, Arial, sans-serif" fill="currentColor">
+
+    <text x="56" y="42" font-size="13" font-weight="700">MIHENK STUDIO</text>
+    <text x="56" y="61" font-size="11">React + Vite + TS · senaryo editörü · blok diyagram · scope (canvas ada) · arıza zaman çizelgesi · MCU denetçisi</text>
+
+    <text x="56" y="126" font-size="13" font-weight="700">ORCHESTRATOR</text>
+    <text x="56" y="145" font-size="11">Lockstep sanal saat (tek otorite) · tohum ağacı · manifest üretici · sunucu-taraflı kademelendirme</text>
+    <text x="1124" y="126" font-size="11" text-anchor="end">başsız çalışır</text>
+    <text x="1124" y="145" font-size="11" text-anchor="end">CLI + Python API</text>
+
+    <text x="56" y="232" font-size="13" font-weight="700">FİZİK ÇEKİRDEĞİ</text>
+    <text x="56" y="252" font-size="11">A · katı cisim 6-DOF — yörünge, titreşim, şok</text>
+    <text x="56" y="270" font-size="11" font-weight="700" fill="#bf4417">B · TERMAL ALAN — paylaşılan konfounder (merkezi katkı)</text>
+    <text x="56" y="288" font-size="11">C · skaler ortam — gaz, bölge modeli, minimal kimya</text>
+
+    <text x="56" y="346" font-size="13" font-weight="700">SENSÖR &amp; BOZULMA KATMANI</text>
+    <text x="56" y="366" font-size="11">IMU (Allan-tutarlı) · manyetometre · gaz · T/RH/P</text>
+    <text x="56" y="384" font-size="11">analog ön uç · ADC · arıza enjektörü (etiketli, zamanlı)</text>
+    <text x="56" y="402" font-size="11">sanal I²C/SPI register haritaları</text>
+
+    <text x="56" y="456" font-size="12" font-weight="700">DENEY TASARIMI</text>
+    <text x="56" y="475" font-size="11">senaryo DSL · Sobol/LHS</text>
+    <text x="56" y="492" font-size="11">müfredat 1–8 · aktif öğrenme</text>
+    <text x="56" y="509" font-size="11">karşı-örnek madenciliği</text>
+
+    <text x="328" y="456" font-size="12" font-weight="700">MATLAB + SIMULINK</text>
+    <text x="328" y="475" font-size="11">bağımsız referans model</text>
+    <text x="328" y="492" font-size="11">1. aşama testler, prototip</text>
+    <text x="328" y="509" font-size="11">dağıtım hattının parçası değil</text>
+
+    <text x="696" y="232" font-size="13" font-weight="700">MCU EMÜLASYON KATMANI (MEAL)</text>
+    <text x="696" y="252" font-size="11">L0 native · <tspan font-weight="700">L1 simavr — ATmega328P (2 KB) / 2560 (8 KB)</tspan></text>
+    <text x="696" y="270" font-size="11">L2 QEMU — ESP32-S3 · L3 HIL — gerçek donanım</text>
+    <text x="696" y="288" font-size="11">mihenk-avr-bridge (GPL-3.0, ayrı süreç)</text>
+
+    <text x="696" y="346" font-size="13" font-weight="700">FIRMWARE + TANI ÇEKİRDEĞİ</text>
+    <text x="696" y="366" font-size="11">Katman 1 — termal ortak mod, sert kısıtlar, akan Allan</text>
+    <text x="696" y="384" font-size="11">Katman 2 — artık özellikler üzerinde minik NN</text>
+    <text x="696" y="402" font-size="11">çıktı: kalibre sürekli güven skoru (fixed-point)</text>
+
+    <text x="696" y="456" font-size="12" font-weight="700">KAYNAK MUHASEBESİ</text>
+    <text x="696" y="475" font-size="11">cycle · peak stack/heap · flash · enerji/karar</text>
+    <text x="696" y="492" font-size="11">platform başına bütçe kapısı</text>
+
+    <text x="56" y="652" font-size="13" font-weight="700">DEĞERLENDİRİCİ — ground-truth'u görebilen tek bileşen</text>
+    <text x="56" y="674" font-size="11">tespit gecikmesi · yanlış alarm/gün · ECE + reliability diagram · izolasyon doğruluğu</text>
+    <text x="56" y="692" font-size="11">G1 ablasyonu (B4) · temel çizgiler B0–B5 · üç platformlu Pareto · Allan doğrulaması · sim2real</text>
+    <text x="1124" y="674" font-size="11" text-anchor="end" font-style="italic">firmware ile</text>
+    <text x="1124" y="692" font-size="11" text-anchor="end" font-style="italic">hiç konuşmaz</text>
+  </g>
+
+  <g stroke="currentColor" stroke-width="1.4" fill="none" marker-end="url(#ar)">
+    <line x1="300" y1="74" x2="300" y2="102"/>
+    <line x1="300" y1="102" x2="300" y2="74"/>
+    <line x1="220" y1="164" x2="220" y2="206"/>
+    <line x1="900" y1="164" x2="900" y2="206"/>
+    <line x1="300" y1="304" x2="300" y2="320"/>
+    <line x1="164" y1="430" x2="164" y2="416"/>
+    <line x1="436" y1="430" x2="436" y2="416" stroke-dasharray="5 3"/>
+    <line x1="900" y1="304" x2="900" y2="320"/>
+    <line x1="1000" y1="416" x2="1000" y2="430"/>
+    <path d="M 700 414 L 652 450 L 652 626"/>
+    <line x1="900" y1="518" x2="900" y2="626"/>
+  </g>
+
+  <g font-family="Inter, Helvetica, Arial, sans-serif" font-size="11" fill="currentColor">
+    <text x="310" y="94" font-size="10">WebSocket / REST · kademelendirilmiş</text>
+    <text x="230" y="190" font-size="10">Δt ilerlet</text>
+    <text x="910" y="190" font-size="10">N cycle koştur — randevu</text>
+    <text x="180" y="424" font-size="10">senaryo</text>
+    <text x="452" y="424" font-size="10">çapraz doğrulama</text>
+    <text x="1012" y="424" font-size="10">ölçüm</text>
+    <text x="660" y="556" font-size="10">teşhis kararı</text>
+    <text x="912" y="556" font-size="10">kaynak ölçümü</text>
+  </g>
+
+  <g stroke="currentColor" stroke-width="2.6">
+    <line x1="620" y1="190" x2="620" y2="332"/>
+    <line x1="620" y1="436" x2="620" y2="606"/>
+  </g>
+  <text x="620" y="182" font-family="Inter, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" text-anchor="middle" fill="currentColor">BİLGİ BARİYERİ</text>
+
+  <g stroke="currentColor" stroke-width="1.6" fill="none" marker-end="url(#ar)" marker-start="url(#ar)">
+    <line x1="562" y1="360" x2="678" y2="360"/>
+  </g>
+  <g font-family="Inter, Helvetica, Arial, sans-serif" font-size="10" text-anchor="middle" fill="currentColor">
+    <text x="620" y="344">register gölgesi</text>
+    <text x="620" y="382">I²C / SPI baytları</text>
+    <text x="620" y="396">+ konfig yazmaları</text>
+    <text x="620" y="414" font-style="italic">bariyeri geçen</text>
+    <text x="620" y="427" font-style="italic">tek kanal</text>
+  </g>
+
+  <g stroke="#bf4417" stroke-width="2.2" fill="none" marker-end="url(#arA)">
+    <path d="M 40 380 L 22 380 L 22 668 L 38 668"/>
+  </g>
+  <g font-family="Inter, Helvetica, Arial, sans-serif" font-size="10" fill="#bf4417" font-weight="700">
+    <text x="34" y="560">ground-truth izi</text>
+    <text x="34" y="574">bariyeri hiç geçmez</text>
+  </g>
+
+  <g stroke="currentColor" stroke-width="1.4" fill="none" stroke-dasharray="4 3" marker-end="url(#ar)">
+    <path d="M 1000 626 L 1090 626 L 1090 520"/>
+  </g>
+  <g stroke="#bf4417" stroke-width="2" fill="none">
+    <line x1="1078" y1="562" x2="1102" y2="586"/>
+    <line x1="1102" y1="562" x2="1078" y2="586"/>
+  </g>
+  <text x="1064" y="608" font-family="Inter, Helvetica, Arial, sans-serif" font-size="10" text-anchor="end" fill="#bf4417" font-weight="700">geri besleme yok</text>
+
+  <text x="590" y="770" font-family="Inter, Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="currentColor" font-style="italic">Ground-truth soldan değerlendiriciye akar; firmware onu asla görmez. Bariyeri geçen tek şey gerçek bir sensörün yayacağı baytlardır.</text>
+</svg>
