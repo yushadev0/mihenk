@@ -4,7 +4,7 @@
 
 A physics–sensor–microcontroller co-simulation environment for reference-free health estimation on heterogeneous, resource-constrained sensor nodes.
 
-> **Status:** planning / architecture phase (M0 not started). The full design lives in the report — see [Documents](#documents).
+> **Status:** MATLAB reference-model track (M1-M) started — see [`matlab/reference-model/`](matlab/reference-model/) and [`bulgular.md`](bulgular.md). The full design lives in the report — see [Documents](#documents).
 
 ## Research question
 
@@ -59,6 +59,7 @@ M0 skeleton & determinism gate → M0.5 fixed-point feasibility spike on ATmega3
 |---|---|
 | [`mihenk.md`](mihenk.md) | Architecture design & project plan (Turkish, Markdown source) — subsystems, ADRs, quality gates, roadmap, risks, evaluation, hardware list |
 | [`mihenk_rapor.pdf`](mihenk_rapor.pdf) | The same report, typeset as PDF |
+| [`bulgular.md`](bulgular.md) | Findings log (Turkish) — every check script: what it tests, how, why, and what it found |
 
 ## Team
 
