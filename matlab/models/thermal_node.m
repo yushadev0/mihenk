@@ -15,12 +15,18 @@ function [Tdie, Teff] = thermal_node(t, Tamb, P, sensors)
 %   (feed it to imuSensor.Temperature); its temperature readout follows
 %   Tdie. Heating and cooling paths are hystWidth apart.
 %
+%   Optional field hystTau [s] > 0 selects a different, rate-dependent
+%   hysteresis instead: Teff relaxes towards Tdie with its own time constant
+%   (stress relaxation). Used for model-mismatch tests (ADR-012), since the
+%   G1 detector assumes the play form.
+%
 %   Inputs
 %     t        [n x 1]  time [s], uniform step
 %     Tamb     [n x 1]  ambient temperature [degC]
 %     P        [n x m]  power dissipated by each sensor [W]
 %     sensors  [1 x m]  struct with fields
-%                       tau [s], gradient [degC], Rth [degC/W], hystWidth [degC]
+%                       tau [s], gradient [degC], Rth [degC/W], hystWidth [degC],
+%                       optional hystTau [s]
 %   Outputs
 %     Tdie     [n x m]  die temperature [degC]
 %     Teff     [n x m]  temperature seen by the thermal bias (hysteresis applied) [degC]
@@ -41,6 +47,8 @@ for j = 1:m
     u = Tamb(:) + s.gradient + s.Rth .* P(:, j);   % equilibrium temperature
     a = 1 - exp(-dt / s.tau);
     w = s.hystWidth / 2;
+    relax = isfield(s, 'hystTau') && s.hystTau > 0;
+    if relax, ah = 1 - exp(-dt / s.hystTau); end
 
     T = u(1);                    % start in equilibrium
     p = T;
@@ -48,7 +56,11 @@ for j = 1:m
         if k > 1
             T = T + a * (u(k-1) - T);
         end
-        p = min(max(p, T - w), T + w);   % play operator
+        if relax
+            p = p + ah * (T - p);            % relaxation hysteresis
+        else
+            p = min(max(p, T - w), T + w);   % play operator
+        end
         Tdie(k, j) = T;
         Teff(k, j) = p;
     end

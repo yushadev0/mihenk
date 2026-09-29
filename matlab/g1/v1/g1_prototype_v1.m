@@ -7,9 +7,8 @@
 % that confirms the refactor into simulate_node / g1_detect_v0 is faithful.
 
 clear; clc; close all;
-here = fileparts(mfilename('fullpath'));
-addpath(fullfile(here, '..', 'models'));
-figDir = fullfile(here, '..', 'figures');
+addpath(fileparts(fileparts(mfilename('fullpath'))));   % g1/
+figDir = g1_setup();
 
 D  = simulate_node();
 R0 = g1_detect_v0(D);
@@ -45,7 +44,7 @@ fprintf('  common-mode events       : %d blocks\n', nnz(R1.common & R1.valid));
 fprintf('  low-confidence share (gz): %.0f %% of valid blocks\n', 100*mean(R1.lowConf(R1.valid, 3)));
 fprintf('  lag ICM->BME picked      : %d s (final)\n', R1.tauBest(end));
 fprintf('  hysteresis width picked  : %.1f degC vs ICM, %.1f degC vs BME (final)\n', R1.wBest(end, 1), R1.wBest(end, 2));
-fc = D.S.faultCh;
+fc = D.S.faults(1).ch;
 inF = D.truth.fault(:, fc) & R1.valid;
 fprintf('  gz flagged under low confidence: %d of %d flagged fault blocks\n', ...
     nnz(R1.sensorFlag(:, fc) & R1.lowConf(:, fc) & inF), nnz(R1.sensorFlag(:, fc) & inF));
@@ -56,13 +55,13 @@ th = D.tB / h;
 f1 = figure('Position', [100 100 900 750]);
 tiledlayout(3, 1);
 nexttile;
-plot(th, D.Y(:, fc)); grid on; xline(D.S.faultT0/h, 'r--', 'fault onset');
+plot(th, D.Y(:, fc)); grid on; xline(D.S.faults(1).t0/h, 'r--', 'fault onset');
 ylabel('gz [dps]'); title('Gyro z, 60 s means');
 nexttile;
-plot(th, R0.score(:, fc)); grid on; yline(R0.thr, 'k--'); xline(D.S.faultT0/h, 'r--');
+plot(th, R0.score(:, fc)); grid on; yline(R0.thr, 'k--'); xline(D.S.faults(1).t0/h, 'r--');
 set(gca, 'YScale', 'log'); ylabel('|z|'); title('v0: sliding-window score (gz)');
 nexttile;
-plot(th, R1.score(:, fc)); grid on; yline(R1.opt.h, 'k--'); xline(D.S.faultT0/h, 'r--');
+plot(th, R1.score(:, fc)); grid on; yline(R1.opt.h, 'k--'); xline(D.S.faults(1).t0/h, 'r--');
 hold on;
 lc = R1.lowConf(:, fc) & R1.valid;
 plot(th(lc), max(R1.score(lc, fc), 1e-2), 'm.');
@@ -74,10 +73,10 @@ title('v1: memory model + CUSUM (gz)');
 f2 = figure('Position', [100 100 900 650]);
 tiledlayout(2, 1);
 nexttile;
-flagRaster(th, [R0.sensorFlag, R0.tempFlag], [D.names, "T src"], D);
+g1_flag_raster(th, [R0.sensorFlag, R0.tempFlag], [D.names, "T src"], D);
 title('G1 v0 (black = blamed) - red: fault onset, blue: heater burst');
 nexttile;
-flagRaster(th, [R1.sensorFlag, R1.tempFlag], [D.names, "T src"], D);
+g1_flag_raster(th, [R1.sensorFlag, R1.tempFlag], [D.names, "T src"], D);
 xlabel('Time [h]'); title('G1 v1');
 
 exportgraphics(f1, fullfile(figDir, 'g1_v1_1.png'), 'Resolution', 150);
@@ -90,10 +89,4 @@ end
 
 function s = num(v)
     if isnan(v), s = "-"; elseif v == round(v), s = sprintf('%d', v); else, s = sprintf('%.1f', v); end
-end
-
-function flagRaster(th, F, labels, D)
-    imagesc(th, 1:size(F, 2), double(F)');
-    yticks(1:size(F, 2)); yticklabels(labels); colormap(flipud(gray));
-    xline(D.S.faultT0/3600, 'r--'); xline(D.S.heaterOn/3600, 'b--');
 end
