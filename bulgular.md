@@ -9,6 +9,43 @@ Bu dosyada her test/kontrol scripti için şunlar kayıtlıdır: **nerede olduğ
 
 ---
 
+## G1 nedir? (kısa açıklama)
+
+Bu bölüm, rapora dönmeden G1'i anlamak için yazıldı. Ayrıntılar [`mihenk.md`](mihenk.md) §1.1, §S1-B, §S6 ve ADR-019/020'de.
+
+**Sorun.** Bir sensörün okuması zamanla değişir. Bu değişim iki farklı şeyden gelebilir. Birincisi **ortamın** kendisinin değişmesi, örneğin havanın ısınması; bu durumda sensör sağlamdır. İkincisi **sensörün** bozulması, örneğin bias'ın kayması. Sahada bu ikisini ayırmak için genelde bir dış referans gerekir: yedek bir sensör, GNSS, aracın modeli ya da cihazı belirli pozisyonlara çevirmek. MIHENK'in hedef senaryosunda bunların hiçbiri yok.
+
+**Gözlem.** Aynı düğümde farklı fiziksel büyüklükleri ölçen sensörler var: gyro (dönme), ivmeölçer (ivme), manyetometre (manyetik alan), gaz sensörü. Ölçtükleri şeyler farklı, ama hepsi **sıcaklıktan** etkileniyor. Sıcaklık hepsinin ortak **konfounderi**, yani ölçümü etkileyen ama arıza olmayan ortak bir dış etken.
+
+**G1'in fikri: termal ortak mod ayrıştırması.** Her kanaldaki değişim iki parçaya ayrılır:
+- **Ortak mod:** Sıcaklıkla açıklanabilen ve diğer kanallarda da aynı termal imzayla görülen kısım. → **Sebep ortam.**
+- **Kanala özgü mod:** Sıcaklıkla açıklanamayan ve yalnızca o kanalda görülen kısım. → **Sebep o sensör.**
+
+Bu ayrıştırma hiçbir dış referans, yedek sensör, araç modeli veya kullanıcı manevrası gerektirmez. Referans, sensörlerin birbiri olur.
+
+**Neden özgün?**
+- Yedekli sensör yöntemleri **aynı türden** birden fazla sensör ister.
+- Çok-modlu sağlık izleme yöntemleri sensörleri **makineyi** teşhis etmek için kullanır.
+- Farklı türden sensörlerin, paylaştıkları bir konfounder üzerinden **birbirinin** sağlığını teşhis etmesi literatürde boş bir alan.
+- Özet: *"Literatür sensörü dünyayı teşhis etmek için kullanır; MIHENK dünyanın fiziksel kısıtlarını sensörü teşhis etmek için kullanır."*
+
+**Neden zor? (G1'i kolay gösterecek tuzaklar)** Ortak mod gerçekte kusursuz değil:
+- Her sensörün sıcaklık katsayısı farklı ve bilinmiyor; veri sayfası yalnızca ± bir sınır veriyor (Bulgu 4A).
+- Sensörler farklı sıcaklıklarda ve farklı hızlarda ısınıyor: gradyan ve gecikme (Bulgu 5).
+- Öz-ısınma kanala özgü bir termal etki yaratıyor. Örneğin gaz ısıtıcısı yalnızca bir sensörü ısıtıyor (Bulgu 5D).
+- Histerezis nedeniyle ısınma ve soğuma yollarında bias farklı.
+- Her çevresel etki ortak mod değil. Örneğin bir motorun manyetik gürültüsü (EMI) yalnızca manyetometreyi bozar.
+- İki sensör aynı anda ama bağımsız olarak bozulursa bu, ortak mod gibi görünebilir.
+- Sıcaklığı ölçen sensörün kendisi hatalı olabilir; ofseti ±5 °C'ye kadar çıkabiliyor (Bulgu 4E).
+
+Rapor bu tuzakları "müfredat sınıf 8" olarak topluyor. G1'in değeri kolay senaryolarda değil, bu tuzaklarda ölçülecek.
+
+**Nasıl kanıtlanacak?** G1'in katkısı ancak **ablasyonla** gösterilebilir. Aynı teşhis sistemi G1 dahil ve G1 hariç koşulur, aradaki fark ölçülür (raporda B4 temel çizgisi). Bu fark ölçülmeden katkı iddia edilemez. Ayrıca iddia hep niteleyicileriyle kurulur. Çıplak bir "referanssız IMU arıza tespiti" iddiası yasaktır, çünkü o alan literatürde zaten dolu (ADR-019).
+
+**MIHENK'teki yeri.** G1, tanı çekirdeğinin (Katman 1) ilk ve en öncelikli testi. Sonunda ATmega328P'de, 2 KB SRAM içinde, fixed-point aritmetikle çalışması gerekiyor. Çıktısı ikili bir "bozuk / sağlam" bayrağı değil, kalibre edilmiş sürekli bir güven skoru olmalı (ADR-010).
+
+---
+
 ## Özet
 
 | # | Script | Test edilen | Sonuç |
@@ -18,6 +55,7 @@ Bu dosyada her test/kontrol scripti için şunlar kayıtlıdır: **nerede olduğ
 | 3 | [`thermal_model_check.m`](matlab/reference-model/thermal_model_check.m) | Sıcaklık bias'ı ve ölçek faktörü, sıcaklık değişimi altında gürültü sürekliliği | ✅ Formül tam (hata 0) · ✅ N, K |
 | 4 | — (veri sayfası teyidi) | ICM-42688-P parametreleri, DS-000347 Rev 1.6 | Termal katsayılar ve gyro N teyit edildi · B ve K veri sayfasında yok · sıcaklık sensörü ofseti ±5 °C |
 | 5 | [`thermal_node_check.m`](matlab/reference-model/thermal_node_check.m) | Sensör başına sıcaklık: gecikme, gradyan, öz-ısınma, histerezis | ✅ C1–C4 makine hassasiyetinde · ortak mod artık kusurlu |
+| 6 | [`g1_prototype_v0.m`](matlab/reference-model/g1_prototype_v0.m) | G1 ilk prototip: ortak mod / kanala özgü ayrıştırma | ✅ ısıtıcı tuzağı çözüldü · ⚠️ histerezis, gecikme ve pencere uyumu zayıflıkları |
 
 **Kritik kurallar** (MATLAB referans modelinde her zaman uygulanacak):
 
@@ -296,6 +334,82 @@ ICM sıcaklık okuması ile BME688 kalıp sıcaklığı arasındaki fark: ortala
 - **G1 için sonucu:** Yalnızca ortam sıcaklığını (BME688) gören bir teşhis yöntemi, gerçek histerezisi gecikmeden ayıramaz. Termal ayrıştırmada her sensörün **kendi** sıcaklığı ya da gecikmeyi hesaba katan bir model kullanılmalı. Bu, ICM'nin çip üstü sıcaklık sensörünün neden kritik olduğunu da gösteriyor (Ek C.1).
 
 **Bulgu 5D: Isıtıcı patlaması, müfredat sınıf 8'deki "öz-ısınma yanılgısı" tuzağının çalışan ilk örneği.** BME688'in sıcaklığı 15 dakika boyunca +1,5 °C sapıyor, diğer kanallar etkilenmiyor. Ortam değişmediği hâlde kanala özgü bir termal olay var. Bir ortak mod dedektörü bunu "BME688 arızalı" diye yanlış yorumlayabilir. Bu senaryo artık üretilebiliyor.
+
+---
+
+## 6. G1 prototipi v0
+
+**Script:** [`matlab/reference-model/g1_prototype_v0.m`](matlab/reference-model/g1_prototype_v0.m)
+**Figürler:** [`figures/g1_v0_1.png`](figures/g1_v0_1.png), [`figures/g1_v0_2.png`](figures/g1_v0_2.png)
+
+**Amaç:** G1'in (bkz. "G1 nedir?") ilk çalışan prototipi. İki soruya yanıt arıyor: en basit ortak mod ayrıştırması bir sensör arızasını ortam değişiminden ve kanala özgü bir termal tuzaktan ayırabiliyor mu? Ve G1'i zorlayan şeyler ilk nerede ortaya çıkıyor? Bu, raporun M1-M izindeki "Katman 1 prototipi" adımı.
+
+**Senaryo:** Durağan bir düğüm, süre 8 saat. Sensör başına sıcaklıklar `thermal_node.m`'den geliyor. Firmware yalnızca 9 hareket kanalını (gyro, ivmeölçer, manyetometre × 3 eksen) ve 2 sıcaklık okumasını (ICM, BME688) görüyor. Gerçek değerler (ground truth) yalnızca değerlendirmede kullanılıyor.
+
+| Olay | Zaman | Gerçekte | Doğru cevap |
+|---|---|---|---|
+| Ortam 25 → 40 → 25 °C | Rampalar 1–3 saat ve 4–6 saat | Ortam değişiyor | Kimse suçlanmamalı |
+| BME688 ısıtıcısı (+10 mW) | 3,25–3,5 saat | Tuzak: kanala özgü ısınma, arıza yok | Sensör suçlanmamalı; tutarsızlık BME688 sıcaklığına yüklenmeli |
+| Gyro z bias kayması (0,03 dps/saat) | 4,5 saatten itibaren | Gerçek arıza, soğuma rampasıyla üst üste | Gyro z suçlanmalı |
+
+**Yöntem v0:**
+- Kanallar 60 saniyelik ortalamalara indiriliyor.
+- Her kanal c ve her sıcaklık kaynağı r için, test edilen dakikadan 10 dakika önce biten 90 dakikalık bir pencerede `y = a + b·T_r` doğrusu uyduruluyor. `b` için küçük bir ridge cezası var: sıcaklık değişmiyorsa b ≈ 0 kalıyor.
+- Tahmin hatası, pencere içindeki artıkların standart sapmasına bölünüp **z skoru** elde ediliyor. Eşik |z| > 5.
+- **Sensör suçlama:** Kanal, **iki** sıcaklık kaynağıyla da açıklanamıyorsa.
+- **Sıcaklık kaynağı suçlama:** İki kaynak birbirini tutmuyorsa. Hangi kaynağa göre daha çok kanal bozuluyorsa o suçlanıyor.
+- **Temel çizgi (mini ablasyon):** Aynı test, termal model olmadan (b = 0).
+
+Birim katsayıları Bulgu 4A/4E'deki gibi sınırlar içinden örneklendi. Manyetometre gürültüsü ve katsayısı, BME688 ofseti `assumed`.
+
+**v0'ın bilinçli sınırları:** Yalnızca beyaz gürültü var (bias instability ve random walk yok). Uydurulan doğruda histerezis terimi yok. Çıktı sürekli bir skor değil, ikili bayrak (ADR-010 hedefi sonraya kaldı).
+
+**Sonuç (tablo):**
+
+| Ölçüt | G1 v0 | Temel çizgi |
+|---|---|---|
+| Gyro z arızasını yakalama gecikmesi | 2 dk | 0 dk (*aşağıya bakın: güvenilmez*) |
+| Yanlış sensör alarmı, gx / gy / ax / ay [60 s blok] | 7 / 9 / 9 / 11 | 15 / 16 / 17 / 15 |
+| Yanlış sensör alarmı, gz / az / mx / my / mz | 0 / 0 / 0 / 0 / 0 | 1 / 1 / 0 / 2 / 0 |
+| Isıtıcı sırasında sensör suçlama | **0 blok** | — |
+| Isıtıcı sırasında "sıcaklık kaynakları tutarsız" | 16 / 25 blok; 15'i BME688'e, 1'i ICM'ye yüklendi | — |
+| Isıtıcı dışında "sıcaklık kaynakları tutarsız" | **47 blok** | — |
+
+Karar verilen blok sayısı: 380. İlk 1,68 saat pencerenin dolması için bekleniyor.
+
+**Bulgu 6A: Isıtıcı tuzağı doğru çözüldü.** Isıtıcı patlaması sırasında hiçbir sensör arızalı sayılmadı. Tutarsızlık 16 bloğun 15'inde doğru kaynağa, BME688 sıcaklığına yüklendi. "Her kanalı iki bağımsız sıcaklık kaynağına karşı test et; biri tutmuyorsa suçluyu kanal sayısıyla bul" fikri, müfredat sınıf 7/8'in çekirdeği için çalışan bir mekanizma. İki bağımsız sıcaklık kaynağının (Ek C.1) değerini sayısal olarak gösteriyor.
+
+**Bulgu 6B: Termal model yanlış alarmları kabaca yarıya indiriyor, ama sıfırlamıyor.**
+- ICM kanallarında G1 7–11, temel çizgi 15–17 yanlış alarm verdi.
+- Temel çizginin "0 dk" yakalama gecikmesi **güvenilmez.** Figür 2'de temel çizgi 4,5–4,75 saat arasında neredeyse **tüm** ICM kanallarını aynı anda suçluyor. Gyro z'yi "yakalaması" soğumanın başlamasıyla oluşan genel alarmın içinde bir tesadüf; hangi sensörün bozulduğunu söyleyemiyor.
+- G1'in 2 dakikalık tespiti de kısmen karışık. Aynı dakikalarda gx, gy, ax ve ay da yanlış suçlanıyor (Bulgu 6C). Yine de gz'nin z skoru ~20'ye çıkıyor ve bu dört kanaldan daha uzun süre işaretli kalıyor; tespitin büyük kısmı gerçek.
+
+**Bulgu 6C: Histerezis, sıcaklığın yön değiştirdiği yerlerde yanlış alarm üretiyor** (önceden öngörülmüştü).
+- G1'in yanlış alarmları neredeyse yalnızca 4,5–4,7 saat arasında gx, gy, ax, ay'da toplanıyor. Bu, 40 °C'deki dönüşün (4,0 saat) 90 dakikalık pencereye girdiği an.
+- Pencere hem ısınma hem soğuma yolunu içerince, histerezisi bilmeyen tek doğru ikisini birden açıklayamıyor.
+- Kanıt: histerezisi olmayan manyetometre kanallarında hiç yanlış alarm yok. Ayrıca az'da da yok; örneklenen katsayısı küçük olduğundan histerezis açıklığı da küçük (açıklık katsayıyla orantılı).
+- Düzeltme yönü: yön terimi eklemek (ısınma / soğuma için ayrı ofset) veya histerezis modelini uydurmak.
+
+**Bulgu 6D: Gecikme farkı, sıcaklık kaynaklarını yön dönüşlerinde "tutarsız" gösteriyor.**
+- Isıtıcı dışındaki 47 "sıcaklık kaynağı" alarmı ~3,0 ve ~6,0 saatteki rampa sonlarında (ve pencere başlangıcında) toplanıyor.
+- Sebep: BME688 (τ = 200 s) ICM'den (τ = 120 s) daha yavaş. Rampa boyunca ~80 s geride kalıyor, rampa bitince açığı kapatıyor. Bu, iki kaynak arasındaki doğrusal ilişkiyi geçici olarak bozuyor.
+- Bu, Bulgu 5C'nin (gecikme histerezis gibi görünür) sıcaklık kaynakları arasındaki karşılığı.
+- Düzeltme yönü: kaynakları karşılaştırmadan önce gecikmeleri hizalamak (birinci mertebe filtre) veya değer yerine değişim hızını karşılaştırmak.
+
+**Bulgu 6E: Kayan pencere arızaya uyum sağlıyor. Yavaş bir arıza "yeni normal" oluyor.** Bu v0'ın en önemli zayıflığı. Figür 1'in alt paneli:
+- **4,55–5,0 saat:** Arıza tespit ediliyor.
+- **5,0–6,0 saat, maskeleme:** Soğuma rampası sürerken kayma zamanla artıyor, sıcaklık zamanla azalıyor. İkisi pencere içinde neredeyse mükemmel ilişkili. Doğru uydurma kaymayı sahte bir "sıcaklık katsayısı" olarak öğreniyor ve z skoru eşiğin altına düşüyor. Bu, müfredat sınıf 5'in ("konfounder-maskeli arıza") kendiliğinden ortaya çıkmış hâli.
+- **6,1–6,6 saat:** Rampa bitiyor ama kayma sürüyor. Öğrenilen sahte katsayı artık tutmuyor ve arıza yeniden tespit ediliyor.
+- **6,6 saatten sonra:** Pencere tamamen sabit sıcaklıkta ve kayma doğrusal. Standart sapma kaymanın kendisini de içerdiği için z yaklaşık 2'de sabitleniyor. Arıza sürdüğü ve büyüdüğü hâlde (0,1 dps'e kadar) bir daha hiç işaretlenmiyor.
+- Sonuç: v0 bir **değişimi** yakalıyor, ama bir **durumu** takip edemiyor. Oysa MIHENK'in çıktısı sürekli bir sağlık kestirimi olmalı (ADR-010). Arızanın varlığını hatırlayan bir yapı gerekiyor: sağlıklı dönemde öğrenilip dondurulan (veya çok yavaş güncellenen) bir termal model, artık üzerinde CUSUM benzeri birikimli bir test, ya da modele açık bir kayma terimi.
+
+**Bulgu 6F: Tek yönlü bir rampada yavaş kayma ile sıcaklık katsayısı ayırt edilemez.** Bu v0'ın değil, problemin kendi sınırı.
+- Monoton bir rampada sıcaklık zamanla doğrusal değişiyor, kayma da öyle. İki etki matematiksel olarak eş doğrusal (collinear).
+- Bu senaryoda sahte katsayı değişimi: 0,03 dps/saat ÷ 7,5 °C/saat = 0,004 dps/°C. Bu değer veri sayfasının ±0,005 dps/°C sınırının **içinde**. Yani veri sayfası sınırı da maskelemeyi açığa çıkaramıyor.
+- İki etki ancak sıcaklık **yön değiştirdiğinde** veya **sabit kaldığında** ayrılabiliyor. 6,1 saatteki yeniden tespit tam da bu.
+- G1'in iddia kapsamı için sonucu: "Referanssız ayrıştırma, yavaş kaymayı termal etkiden ancak yeterli **termal uyarım** (yön değişimi veya sabit bölge) varken ayırabilir." Bu cümle, teşhis kestiricisinin formel tanımına ([§14.2/4](mihenk.md)) ve geçerlilik zarfına girmeli.
+
+**v1 için yapılacaklar:** Histerezis veya yön terimi (6C); kaynaklar arasında gecikme hizalama (6D); dondurulan referans model + birikimli test (6E); tanımlanabilirlik koşulunu açıkça ölçen bir "termal uyarım" göstergesi (6F); ardından bias instability ve random walk ekleyip aynı ölçütleri yeniden almak.
 
 ---
 
