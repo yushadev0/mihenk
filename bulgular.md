@@ -56,6 +56,7 @@ Rapor bu tuzakları "müfredat sınıf 8" olarak topluyor. G1'in değeri kolay s
 | 4 | — (veri sayfası teyidi) | ICM-42688-P parametreleri, DS-000347 Rev 1.6 | Termal katsayılar ve gyro N teyit edildi · B ve K veri sayfasında yok · sıcaklık sensörü ofseti ±5 °C |
 | 5 | [`thermal_node_check.m`](matlab/checks/thermal_node_check.m) | Sensör başına sıcaklık: gecikme, gradyan, öz-ısınma, histerezis | ✅ C1–C4 makine hassasiyetinde · ortak mod artık kusurlu |
 | 6 | [`g1_prototype_v0.m`](matlab/g1/g1_prototype_v0.m) | G1 ilk prototip: ortak mod / kanala özgü ayrıştırma | ✅ ısıtıcı tuzağı çözüldü · ⚠️ histerezis, gecikme ve pencere uyumu zayıflıkları |
+| 7 | [`g1_prototype_v1.m`](matlab/g1/g1_prototype_v1.m) | G1 v1: hafızalı model, CUSUM, histerezis ve gecikme seçimi | ✅ kapsama %98, yanlış alarm 0 · ⚠️ tek senaryoya ayarlı, histerezis modeli simülatörle aynı |
 
 **Kritik kurallar** (MATLAB referans modelinde her zaman uygulanacak):
 
@@ -413,6 +414,80 @@ Karar verilen blok sayısı: 380. İlk 1,68 saat pencerenin dolması için bekle
 
 ---
 
+## 7. G1 prototipi v1
+
+**Script:** [`matlab/g1/g1_prototype_v1.m`](matlab/g1/g1_prototype_v1.m). v1, v0 ve temel çizgiyi aynı veri üzerinde karşılaştırıyor.
+**Dedektör:** [`matlab/g1/g1_detect_v1.m`](matlab/g1/g1_detect_v1.m) · **Senaryo:** [`matlab/models/simulate_node.m`](matlab/models/simulate_node.m) · **Değerlendirme:** [`matlab/g1/g1_evaluate.m`](matlab/g1/g1_evaluate.m)
+**Figürler:** [`matlab/figures/g1_v1_1.png`](matlab/figures/g1_v1_1.png), [`matlab/figures/g1_v1_2.png`](matlab/figures/g1_v1_2.png)
+
+**Amaç:** Bulgu 6C–6F'deki zayıflıkları gidermek. Bunu v0 ile **aynı senaryo, aynı veri ve aynı ölçütler** üzerinde göstermek.
+
+**Yeniden düzenleme ve doğrulaması:**
+- v0'ın senaryosu `simulate_node.m`'e, yöntemi `g1_detect_v0.m`'e, ölçütleri `g1_evaluate.m`'e taşındı. Rastgele sayı çekiliş sırası korundu.
+- v1 scriptindeki v0 sütunu, §6'daki koşuyla **birebir aynı** çıktı: yanlış alarmlar 7/9/9/11, temel çizgi 15/16/17/15, ısıtıcı 16 (15/1), ısıtıcı dışı 47. Taşıma sonucu değiştirmedi.
+- Tek fark yazdırmada: gecikmeler artık yuvarlanmıyor (2 → 2,5 dk, 0 → 0,5 dk).
+
+**v1'de ne değişti:**
+
+| Bulgu | v0'daki sorun | v1'deki çözüm |
+|---|---|---|
+| 6E | Kayan pencere, yavaş arızayı "yeni normal" kabul ediyor | **Hafızalı model:** Her kanal ve her sıcaklık kaynağı için özyinelemeli bir Bayes doğrusal modeli var (RLS, ~24 saatlik unutma). Model yalnızca artık küçükse güncelleniyor. Tek başına bozulan kanalın modeli donuyor. Kanıtlar CUSUM ile birikiyor. |
+| 6F | Model henüz öğrenmemişken de kesin konuşuyor | Sıcaklık katsayısının başlangıç bilgisi veri sayfası sınırı. Tahmin varyansına parametre belirsizliği de ekleniyor. Öğrenilmemiş bir model geniş, dürüst bir tahmin veriyor; tahmin/gürültü oranı > 1,5 ise karar **düşük güven** olarak işaretleniyor. |
+| 6C | Histerezis yön dönüşlerinde yanlış alarm veriyor | Modele yön terimi eklendi: `y = a + b·T + c·d(w)`, `d = (T − play(T, w))/(w/2)`. Histerezis genişliği w bilinmiyor; 0,2–2 °C adayları arasından seçiliyor. |
+| 6D | Sıcaklık kaynakları arasındaki gecikme yanlış alarm veriyor | BME688 sıcaklığı, gecikmeli ICM sıcaklığıyla tahmin ediliyor. Gecikme 0–300 s adayları arasından seçiliyor. |
+| — | — | **Ortak mod olayı:** Sıcaklık hareket ederken ≥ 3 kanal birlikte saparsa bu ortam sayılıyor. Modeller güncelleniyor ve CUSUM birikmiyor. |
+
+Aday seçimleri (gecikme, histerezis genişliği) çalışma sırasında, **yalnızca tutarlı bloklardan** ve blok başına katkısı sınırlanarak öğreniliyor. Bu kuralın neden gerekli olduğu aşağıdaki Bulgu 7B'de.
+
+**Sonuç** (her iki yöntemin karar verdiği 380 ortak blok üzerinde; 3. koşu):
+
+| Ölçüt | Temel çizgi | G1 v0 | G1 v1 |
+|---|---|---|---|
+| gz arızası: tespit gecikmesi | 0,5 dk* | 2,5 dk | 4,5 dk |
+| gz arızası: **kapsama** (arızalı blokların işaretli kalma oranı) | %13,8 | %28,1 | **%98,1** |
+| Yanlış sensör alarmı (toplam) | 67 | 36 | **0** |
+| Isıtıcı: yanlış sensör suçlama | — | 0 | 0 |
+| Isıtıcı: "sıcaklık kaynakları tutarsız" (BME688 / ICM'ye yüklenen) | — | 16 (15 / 1) | 24 (24 / 0) |
+| Isıtıcı dışında "sıcaklık kaynakları tutarsız" | — | 47 | **0** |
+
+\* Temel çizginin gecikmesi güvenilmez; tüm ICM kanallarını birlikte suçluyor (Bulgu 6B).
+
+Tam karar aralığında (0,51 saatten itibaren, 450 blok): yanlış sensör alarmı 0; ortak mod olayı 0; gz için düşük güven payı %2; düşük güven altında verilen gz arıza kararı 206'nın 0'ı. Seçilen gecikme **80 s** (gerçek: 200 − 120 = 80 s). Seçilen histerezis genişliği ICM'ye göre **1,0 °C** (gerçek: 1,0 °C), BME688'e göre 0,5 °C.
+
+**Bulgu 7A: 6C–6F bu senaryoda giderildi.**
+- **6E:** Kapsama %28'den %98'e çıktı. Figür 1'in alt panelinde v1'in skoru arıza boyunca kesintisiz yükseliyor; v0'ın skoru iki kez eşiğin altına düşüyordu.
+- **6C, 6D:** Yanlış alarmlar sıfırlandı. Gecikme ve histerezis genişliği, simülasyonun gerçek değerleri olarak **kendiliğinden** bulundu.
+- **Bedeli:** Tespit gecikmesi 2 dakika uzadı. Birikimli test karar vermeden önce kanıt topluyor.
+
+**Bulgu 7B: Aday seçimi, aykırı dönemlerden öğrenirse bozuluyor** (1. koşudaki hata).
+- 1. koşuda ısıtıcı dışındaki "T src" alarmları 47'den **88'e çıktı**. Alarm ısıtıcıyla başlayıp ~5,15 saate kadar sürdü.
+- Sebep: gecikme adaylarının birikmiş hatası ısıtıcı sırasında da toplanıyordu. Isıtıcının dev hatası (z ≈ 75), adaylar arasındaki küçük farkları büyüterek seçimi kısa bir gecikmeye kaydırdı. Soğuma rampası başlayınca bu yanlış gecikme tutarsızlık üretti.
+- Düzeltme: biriken hata yalnızca tutarlı bloklarda toplanıyor, blok başına katkı zU² ile sınırlı.
+- **Genel ders:** "Aykırı dönemde öğrenme" koruması, modelin **her** öğrenen parçasına uygulanmalı; yalnızca kanal modellerine değil, hiperparametre seçimlerine de.
+
+**Bulgu 7C: Dondurma mekanizması, eksik model yapısıyla birleşince kendini kilitleyen yanlış alarm üretiyor** (2. koşudaki hata). v1'in ana tasarım gerilimi bu.
+- 2. koşuda (histerezis genişliği 0,2 °C'de sabitken) `ay`'de 47 yanlış alarm çıktı (4,25–5,05 saat) ve gz'nin tespiti 10,5 dakikaya uzadı.
+- Sebep: 0,2 °C'lik yön dedektörü, gerçek 1 °C'lik histerezisin geçişini 5 kat hızlı varsayıyordu. Her dönüşte ~4σ'lık bir uyumsuzluk oluşuyordu.
+- 1. koşuda bu uyumsuzluk "ortak mod" olarak öğrenilmişti, çünkü BME referansı (hata yüzünden) devre dışıydı ve 4 ICM kanalı birlikte sapıyordu. 6D düzelince yalnızca `ay` eşiği aştı. Model onu "tek başına bozulan kanal" sayıp dondurdu ve dondurulan model geçişi hiç öğrenemedi.
+- Aynı olay gz'yi de etkiledi: `ay` + gz birlikte saptığı için ortak mod sayıldı ve gz'nin CUSUM'u sıfırlandı.
+- **Gerilim:** Arızayı unutmamak için donmak gerekiyor. Ama model yapısı eksikse, dondurma gerçek ama yeni bir davranışın öğrenilmesini de engelliyor. Tek başına bozulan bir kanalın "arızalı" mı, yoksa "modelin bilmediği bir yeni rejimde" mi olduğu yerel olarak ayırt edilemiyor.
+- Çıkan dersler:
+  - (a) Termal model yapısı (histerezis tipi, gecikme) gerçeğe yeterince yakın olmalı. Bu da termal salınım kaydının önemini artırıyor.
+  - (b) "Ortak mod olayı" kaçış kapısı kırılgan: 2. koşuda yanlış yerde açıldı, 3. koşuda hiç kullanılmadı.
+  - (c) Bu kilitlenme türü, müfredat sınıf 8'e "model yapısı uyumsuzluğu" olarak eklenmeli.
+
+**Bulgu 7D: Bu sonuçlar henüz genellenemez.** v1'i olduğundan iyi gösteren koşullar:
+- **Aynı senaryoya ayarlandı.** v1 üç iterasyonda, **aynı** senaryo ve tohumla, sonuçlara bakılarak düzeltildi (ortak mod eşiği 2 → 3, aday ızgaraları). Bu bir aşırı uyum (overfitting) riski. v1, görmediği senaryolar ve tohumlarla test edilmeli.
+- **Dairesellik (İ6).** Dedektörün histerezis modeli (play operatörü), simülatörün histerezis modeliyle **aynı yapıda**. Doğru genişlik bulununca model tanım gereği tam oluyor. Gerçek sensörün histerezisi başka biçimde olabilir. Bu, raporun "model-uyuşmazlığı testi zorunlu" kuralının (ADR-012) tam uygulanacağı yer.
+- **Kolay gürültü.** Yalnızca beyaz gürültü var; bias instability ve random walk eklenmedi.
+- **Tek tip arıza.** Yalnızca tek bir arıza türü (tek kanalda doğrusal kayma) ve tek bir tuzak (ısıtıcı) denendi. EMI, eşzamanlı bağımsız arızalar ve sıcaklık sensörünün kendi arızası yok.
+- **Kısa süre.** 7,5 saatte 0 yanlış alarm, yanlış alarm oranı hakkında bir şey kanıtlamaz.
+- **Kalibre olmayan skor.** CUSUM sınırsız büyüyor (10⁴'e kadar). Bu, ADR-010'un istediği kalibre edilmiş güven skoru değil.
+
+**v2 için yapılacaklar:** Birden çok tohum ve birden çok senaryoyla (farklı profiller; müfredat sınıf 5–8 tuzakları) istatistiksel değerlendirme. Simülatörde farklı bir histerezis biçimiyle model-uyuşmazlığı testi. Bias instability ve random walk. Skoru olasılığa çevirip kalibrasyonunu ölçmek (ECE, reliability diagram).
+
+---
+
 ## Açık konular
 
 - [x] ~~Termal katsayıları ICM-42688-P veri sayfasından teyit etmek~~ → Bulgu 4
@@ -426,5 +501,9 @@ Karar verilen blok sayısı: 380. İlk 1,68 saat pencerenin dolması için bekle
 - [x] ~~Sensör başına ayrı sıcaklık ve dış termal model (gradyan, histerezis, öz-ısınma, gecikme)~~ → Bulgu 5
 - [ ] Termal model parametrelerini (τ, gradyan, R_th, histerezis) termal salınım kaydından ölçmek (`assumed` → ölçüm)
 - [ ] Sıcaklık sensörü kazanç hatasını modele eklemek (şu an yalnız ofset ve kuantizasyon var)
-- [ ] Termal modeli ivmeölçer ve manyetometre bias'larına da bağlamak (şu an yalnızca gyro x)
+- [x] ~~Termal modeli ivmeölçer ve manyetometre bias'larına da bağlamak~~ → `simulate_node.m` (§6)
+- [ ] G1 v1'i birden çok tohum ve senaryoyla değerlendirmek; müfredat sınıf 5–8 tuzakları (Bulgu 7D)
+- [ ] Model-uyuşmazlığı testi: simülatörde play operatöründen farklı bir histerezis biçimi (Bulgu 7D, ADR-012)
+- [ ] G1 skorunu kalibre edilmiş bir güven skoruna çevirmek (ECE, reliability diagram; ADR-010)
+- [ ] "Model yapısı uyumsuzluğu" (Bulgu 7C) ve "termal uyarım yetersizliği" (Bulgu 6F) koşullarını teşhis kestiricisinin formel tanımına yazmak ([§14.2/4](mihenk.md))
 - [ ] Çapraz doğrulama toleransını, karşılaştırmaya başlamadan **önce** yazılı olarak ilan etmek ([§14.2/7](mihenk.md))
