@@ -17,6 +17,7 @@ Bu dosyada her test/kontrol scripti için şunlar kayıtlıdır: **nerede olduğ
 | 2 | [`allan_noise_terms_check.m`](matlab/reference-model/allan_noise_terms_check.m) | Rate random walk (K), bias instability (B) | ✅ K, ✅ B (1/f filtresiyle) · ❌ B (varsayılan filtre) |
 | 3 | [`thermal_model_check.m`](matlab/reference-model/thermal_model_check.m) | Sıcaklık bias'ı ve ölçek faktörü, sıcaklık değişimi altında gürültü sürekliliği | ✅ Formül tam (hata 0) · ✅ N, K |
 | 4 | — (veri sayfası teyidi) | ICM-42688-P parametreleri, DS-000347 Rev 1.6 | Termal katsayılar ve gyro N teyit edildi · B ve K veri sayfasında yok · sıcaklık sensörü ofseti ±5 °C |
+| 5 | [`thermal_node_check.m`](matlab/reference-model/thermal_node_check.m) | Sensör başına sıcaklık: gecikme, gradyan, öz-ısınma, histerezis | ✅ C1–C4 makine hassasiyetinde · ortak mod artık kusurlu |
 
 **Kritik kurallar** (MATLAB referans modelinde her zaman uygulanacak):
 
@@ -227,6 +228,77 @@ Sonuç olarak, termal terim çıkarılmadan hesaplanan eğri uzun τ'larda yüks
 
 ---
 
+## 5. Sensör başına sıcaklık modeli
+
+**Model:** [`matlab/reference-model/thermal_node.m`](matlab/reference-model/thermal_node.m) (fonksiyon; tek başına çalıştırılmaz)
+**Script:** [`matlab/reference-model/thermal_node_check.m`](matlab/reference-model/thermal_node_check.m)
+**Figürler:** [`figures/thermal_node_1.png`](figures/thermal_node_1.png), [`figures/thermal_node_2.png`](figures/thermal_node_2.png). Script figürleri kendisi kaydediyor.
+
+**Amaç:** Bulgu 3D'de tespit edilen eksikleri kapatmak. `imuSensor` tüm sensörlere tek bir sıcaklık uyguluyor ve bu da kusursuz bir ortak mod yaratıyor ([`mihenk.md` §11](mihenk.md) ★ riski). G1'in gerçekten sınanabilmesi için ortak modun **kusurlu** olması gerekiyor: her sensörün kendi sıcaklığı olmalı ([`mihenk.md` §S1-B](mihenk.md): "gradyan, histerezis ve öz-ısınma zorunlu").
+
+**Model:** Her sensör birinci mertebe bir ısıl kütle olarak ele alınıyor:
+
+```
+τ · dT/dt = T_ortam + gradyan + R_th · P − T        (sıfırıncı mertebe tutma ile tam çözüm)
+T_eff     = play(T, genişlik)                       (histerezis, backlash operatörü)
+```
+
+- `T` (kalıp sıcaklığı) sensörün **sıcaklık okumasına** gidiyor. `T_eff` ise **termal bias'a** gidiyor ve `imuSensor.Temperature`'a veriliyor. İkisinin farkı histerezisin kendisi.
+- ICM ivmeölçeri ve gyrosu aynı kalıpta olduğu için aynı sıcaklığı paylaşıyor. Manyetometre ve BME688 ayrı çipler, dolayısıyla ayrı sıcaklıkları var.
+- Birim bazında örnekleme yapılıyor: gyro termal katsayısı her eksen için ±0,005 dps/°C içinden (Bulgu 4A), sıcaklık okuma ofseti ±5 °C içinden (Bulgu 4E) seçiliyor. Tohum sabit.
+
+**Parametreler:**
+
+| Sensör | τ [s] | Gradyan [°C] | R_th [°C/W] | P [mW] | Histerezis [°C] |
+|---|---|---|---|---|---|
+| ICM-42688-P | 120 | 0 | 150 | 1,58 (`datasheet`: 0,88 mA × 1,8 V, Tablo 3) | 1,0 |
+| Manyetometre | 90 | +0,5 | 150 | 1 | 0 |
+| BME688 | 200 | −0,3 | 150 | 1, 2,0–2,25 saat arasında +10 (gaz ısıtıcısı) | 0 |
+
+ICM gücü dışındaki tüm değerler `assumed` yer tutucular. Gerçek değerler termal salınım kaydından çıkacak ([§14.2/2](mihenk.md), Ek C.3).
+
+**Ne test ediyor ve nasıl:**
+- **C1:** Parametreleri aynı olan üç sensör, 10 °C genlikli sinüs ortamında aynı sıcaklığı vermeli.
+- **C2:** Ortam 25 → 35 °C basamak yaptığında her sensör t = τ anında basamağın %63,2'sine ulaşmalı.
+- **C3:** 10 mW'lık güç basamağından sonra kalıcı sıcaklık artışı R_th·P olmalı.
+- **C4:** Gyro bias'ı `imuSensor` üzerinden üretiliyor. Profil 5 saat: 25 → 45 → 25 °C, rampalar 1'er saat. Aynı kalıp sıcaklığında (35 °C) soğuma ve ısınma yollarındaki bias farkı `k_b · genişlik` olmalı.
+
+**Sonuç:**
+
+| Test | Ölçüt | Sonuç | Durum |
+|---|---|---|---|
+| C1 aynı sensörler | maks. \|ΔT\| < 1e-12 °C | 0 | ✅ |
+| C2 termal gecikme | maks. hata < 1e-9 °C | 1,07e-14 °C | ✅ |
+| C3 öz-ısınma | göreli hata < 1e-9 | 2,37e-13 | ✅ |
+| C4 histerezis farkı | göreli hata < 1e-6 | 9,16e-16 (beklenen = ölçülen = −7,3948e-05 rad/s; örneklenen k_b,x = −0,0042 dps/°C) | ✅ |
+
+**Ortak modun kusurluluğu** (5 saatlik profilde, bilgi amaçlı):
+
+| Sensör | maks. \|T_kalıp − T_ortam\| |
+|---|---|
+| ICM-42688-P | 0,91 °C |
+| Manyetometre | 1,15 °C |
+| BME688 | 1,33 °C |
+
+ICM sıcaklık okuması ile BME688 kalıp sıcaklığı arasındaki fark: ortalama +2,55 °C, değişim aralığı 1,93 °C. Birime atanan ofset +2,23 °C.
+
+**Bulgu 5A: Model tasarlandığı gibi çalışıyor.** C1–C4 makine hassasiyetinde geçti. Figürdeki sayılar elle yapılan hesaplarla da tutuyor:
+- Kalıcı durumda ICM ortamın +0,24 °C üstünde (150 °C/W × 1,58 mW). Manyetometre +0,65 °C (gradyan 0,5 + öz-ısınma 0,15), BME688 −0,15 °C.
+- BME688 en yavaş sensör (τ = 200 s), rampalarda en çok o geride kalıyor.
+- Isıtıcı patlaması BME688'i ~1,5 °C ısıtıyor, diğer sensörler etkilenmiyor.
+
+**Bulgu 5B: Birim ofseti, gerçek fiziksel farklardan büyük.** Sensörler arasındaki gerçek sıcaklık farkları 0,9–1,3 °C mertebesinde. ICM sıcaklık okumasının ofseti ise tek başına +2,23 °C ve ±5 °C'ye kadar çıkabiliyor. Mutlak sıcaklıkları kaynaklar arasında karşılaştırmak, fiziği değil ofseti ölçer. Bu, Bulgu 4E'deki sonucu sayısal olarak doğruluyor: G1 sıcaklık **değişimlerine** dayanmalı.
+- ICM okuması ile BME688 arasındaki farkın 1,93 °C'lik değişim aralığının neredeyse tamamı iki kaynaktan geliyor. ~1,5 °C'si ısıtıcıdan (kanala özgü öz-ısınma). ~0,44 °C'si iki sensörün gecikme farkından: 80 s × 20 °C/saat.
+
+**Bulgu 5C: Gecikme, ortamdan bakan bir gözlemciye histerezis gibi görünüyor.** ([`figures/thermal_node_2.png`](figures/thermal_node_2.png))
+- **Sol panel:** Bias kalıp sıcaklığına göre çizildiğinde döngü yalnızca histerezisten geliyor. Genişliği 1 °C, bias'ta ~0,004 dps.
+- **Sağ panel:** Aynı bias ortam sıcaklığına göre çizildiğinde döngü ~2,3 kat genişliyor. ICM'nin 120 s'lik gecikmesi, 20 °C/saat rampada her yönde ~0,67 °C'lik ek açıklık ekliyor: 1 + 2 × 0,67 ≈ 2,3 °C, bias'ta ~0,01 dps.
+- **G1 için sonucu:** Yalnızca ortam sıcaklığını (BME688) gören bir teşhis yöntemi, gerçek histerezisi gecikmeden ayıramaz. Termal ayrıştırmada her sensörün **kendi** sıcaklığı ya da gecikmeyi hesaba katan bir model kullanılmalı. Bu, ICM'nin çip üstü sıcaklık sensörünün neden kritik olduğunu da gösteriyor (Ek C.1).
+
+**Bulgu 5D: Isıtıcı patlaması, müfredat sınıf 8'deki "öz-ısınma yanılgısı" tuzağının çalışan ilk örneği.** BME688'in sıcaklığı 15 dakika boyunca +1,5 °C sapıyor, diğer kanallar etkilenmiyor. Ortam değişmediği hâlde kanala özgü bir termal olay var. Bir ortak mod dedektörü bunu "BME688 arızalı" diye yanlış yorumlayabilir. Bu senaryo artık üretilebiliyor.
+
+---
+
 ## Açık konular
 
 - [x] ~~Termal katsayıları ICM-42688-P veri sayfasından teyit etmek~~ → Bulgu 4
@@ -237,5 +309,8 @@ Sonuç olarak, termal terim çıkarılmadan hesaplanan eğri uzun τ'larda yüks
 - [ ] Termal katsayıların birim bazında ±sınır içinden örneklenmesi (Bulgu 4A)
 - [ ] Manyetometre (MMC5983MA / LIS2MDL) ve BME688 veri sayfalarını da aynı şekilde teyit etmek
 - [ ] `first_allan_check.m`'e sabit tohum eklemek
-- [ ] Sensör başına ayrı sıcaklık ve dış termal model (gradyan, histerezis, öz-ısınma, gecikme) — Bulgu 3D
+- [x] ~~Sensör başına ayrı sıcaklık ve dış termal model (gradyan, histerezis, öz-ısınma, gecikme)~~ → Bulgu 5
+- [ ] Termal model parametrelerini (τ, gradyan, R_th, histerezis) termal salınım kaydından ölçmek (`assumed` → ölçüm)
+- [ ] Sıcaklık sensörü kazanç hatasını modele eklemek (şu an yalnız ofset ve kuantizasyon var)
+- [ ] Termal modeli ivmeölçer ve manyetometre bias'larına da bağlamak (şu an yalnızca gyro x)
 - [ ] Çapraz doğrulama toleransını, karşılaştırmaya başlamadan **önce** yazılı olarak ilan etmek ([§14.2/7](mihenk.md))
