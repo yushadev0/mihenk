@@ -1,0 +1,56 @@
+Allan fit on the 12 h static log (colored noise)
+ch        N sim      N fit   K sim /rh   K fit /rh      B sim     sg fit  Tg [s]
+gx       0.0028    0.00613     0.00139     0.00225    0.00139    0.00123     120
+gy       0.0028    0.00662     0.00139     0.00269    0.00139    0.00157     300
+gz       0.0028     0.0059     0.00139     0.00199    0.00139     0.0014     120
+ax        0.065      0.205        0.02       0.039       0.04     0.0456     600
+ay        0.065      0.193        0.02      0.0314       0.04     0.0497     600
+az         0.07      0.154        0.02       0.041       0.04     0.0404     120
+mx          0.1      0.114           0     0.00282       0.01     0.0111     600
+my          0.1      0.105           0      0.0131       0.01     0.0113     120
+mz          0.1      0.109           0     0.00673       0.01     0.0122     600
+White-noise log: K fit /rh max 0, sg fit max 0.0182 (relative to N: 1)
+
+base         done (63 s)
+hold-fault   done (130 s)
+accel-step   done (200 s)
+two-faults   done (272 s)
+emi          done (329 s)
+bme-fault    done (389 s)
+hyst-relax   done (453 s)
+day-cycle    done (521 s)
+
+Regression vs v2: 90 rows compared, max relative difference 3.7e-15 (OK)
+
+scenario / noise       | detected                 | delay [min]              | coverage                 | false / h
+                       |     v0    v1   v3a    v3 |     v0    v1   v3a    v3 |     v0    v1   v3a    v3 |     v0    v1   v3a    v3
+base / white           |   100%  100%  100%  100% |    2.5   5.5   5.5   4.5 |    28%   98%   98%   98% |    4.0   0.0   0.0   0.0
+base / colored         |   100%  100%  100%  100% |   17.5   0.5  95.5  16.5 |     7%   92%   58%   92% |    0.7 138.8   0.0  11.5
+hold-fault / white     |   100%  100%  100%  100% |    9.5  11.5  10.5   7.5 |    19%   90%   91%   93% |    4.2   0.0   0.0   0.0
+hold-fault / colored   |    40%  100%    0%  100% |   38.5   0.5     -  60.5 |     0%   88%    0%   39% |    0.7 155.9   0.0  11.5
+accel-step / white     |    80%  100%  100%  100% |    1.5   0.5   0.5   0.5 |     5%  100%  100%  100% |    4.2   0.0   0.0   0.0
+accel-step / colored   |    40%  100%  100%  100% |    2.0   2.5   1.5   1.5 |     2%   96%   99%   99% |    0.7 151.7   0.0  11.5
+two-faults / white     |   100%  100%  100%  100% |    5.5   6.5   6.5   5.5 |    24%   97%   97%   98% |    3.1   0.0   0.0   0.0
+two-faults / colored   |    60%  100%  100%  100% |   51.5  25.5 171.5  31.5 |     4%   81%   40%   88% |    0.6 115.6   0.0  11.5
+emi / white            |      -     -     -     - |      -     -     -     - |      -     -     -     - |   10.4  53.4  53.4  53.4
+emi / colored          |      -     -     -     - |      -     -     -     - |      -     -     -     - |    6.9 193.8  52.3  74.5
+bme-fault / white      |      -     -     -     - |      -     -     -     - |      -     -     -     - |    4.2   0.0   0.0  12.6
+bme-fault / colored    |      -     -     -     - |      -     -     -     - |      -     -     -     - |    0.8 179.5   0.0  12.2
+hyst-relax / white     |   100%  100%  100%  100% |    3.5   4.5   4.5   3.5 |    28%   98%   98%   98% |    0.4  69.6  72.9 124.8
+hyst-relax / colored   |   100%  100%  100%  100% |   17.5   0.5  95.5  16.5 |     6%   89%   59%   92% |    0.7 138.2   0.0  10.7
+day-cycle / white      |   100%  100%  100%  100% |    4.5   4.5   4.5   4.5 |    39%   98%   98%   98% |   15.5   0.0   0.0   0.0
+day-cycle / colored    |   100%  100%  100%  100% |   22.5   0.5  43.5  20.5 |    15%   96%   74%   88% |    0.8 128.6   0.7  15.2
+
+  Traps (mean over seeds)                     v0    v1   v3a    v3
+[white]
+  heater: sensor flags / run                 1.9   2.3   2.3   2.4
+  T-src flags outside events / run          36.9   0.7   0.7   0.7
+  emi: share with a mag blamed               52%    0%    0%    0%
+  bme-fault: share blaming BME688             0%   73%   80%   81%
+  bme-fault: share with a sensor blamed       0%    0%    0%   18%
+[colored]
+  heater: sensor flags / run                 0.1  25.0   0.4  13.0
+  T-src flags outside events / run          36.9   0.7   0.7   0.7
+  emi: share with a mag blamed               53%   57%    0%    0%
+  bme-fault: share blaming BME688             0%   31%    1%    1%
+  bme-fault: share with a sensor blamed       0%  100%    0%   23%
