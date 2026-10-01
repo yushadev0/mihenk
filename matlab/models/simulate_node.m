@@ -32,7 +32,7 @@ def = struct( ...
     'Tend',      8*h, ...
     'profileT',  [0 1 3 4 6 8]*h, ...       % ambient breakpoints [s]
     'profileC',  [25 25 40 40 25 25], ...   % ambient values [degC]
-    'heaterOn',  [3.25 3.50]*h, ...         % BME688 heater burst [s]; [] = none
+    'heaterOn',  [3.25 3.50]*h, ...         % BME688 heater bursts [s], one row [on off] each; [] = none
     'heaterP',   10e-3, ...                 % [W]
     'B',         60, ...                    % block length [s]
     'unitSeed',  7, 'icmSeed', 11, 'magSeed', 12, 'noiseSeed', 13, ...
@@ -67,8 +67,8 @@ if S.hystType == "relax"
     sensors(1).hystTau   = S.hystTau;
 end
 P = repmat([ICM_P, 1e-3, 1e-3], nT, 1);
-if ~isempty(S.heaterOn)
-    heater = tT >= S.heaterOn(1) & tT < S.heaterOn(2);
+for i = 1:size(S.heaterOn, 1)                 % one burst per row [on off]
+    heater = tT >= S.heaterOn(i, 1) & tT < S.heaterOn(i, 2);
     P(heater, 3) = P(heater, 3) + S.heaterP;
 end
 [Tdie, Teff] = thermal_node(tT, Tamb, P, sensors);
@@ -173,8 +173,9 @@ for f = S.faults(:)'
 end
 D.truth.fault  = fault;
 D.truth.heater = false(nB, 1);
-if ~isempty(S.heaterOn)
-    D.truth.heater = D.tB >= S.heaterOn(1) & D.tB < S.heaterOn(2) + 3*sensors(3).tau;
+for i = 1:size(S.heaterOn, 1)
+    D.truth.heater = D.truth.heater | ...
+        (D.tB >= S.heaterOn(i, 1) & D.tB < S.heaterOn(i, 2) + 3*sensors(3).tau);
 end
 D.truth.emi = false(nB, 1);
 if ~isempty(S.emi)

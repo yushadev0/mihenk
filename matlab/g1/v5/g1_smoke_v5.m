@@ -30,8 +30,9 @@ for i = [1, find([SC.name] == "emi"), find([SC.name] == "hyst-relax")]
         nm = NM.(char(nz));
         R4   = g1_detect_v4(D, nm);
         R4nf = g1_detect_v4(D, nm, struct('modelHorizon', Inf));
-        R5a  = g1_detect_v5(D, nm, setfield(offAll, 'floorMode', "always"));
-        R5b  = g1_detect_v5(D, nm, setfield(offAll, 'floorMode', "off"));
+        oA = offAll;  oA.floorMode = "always";  oB = offAll;  oB.floorMode = "off";
+        R5a  = g1_detect_v5(D, nm, oA);
+        R5b  = g1_detect_v5(D, nm, oB);
         w = max([w, nnz(R4.sensorFlag ~= R5a.sensorFlag), max(abs(R4.score - R5a.score), [], 'all'), ...
             nnz(R4nf.sensorFlag ~= R5b.sensorFlag), max(abs(R4nf.score - R5b.score), [], 'all')]);
         for v = 1:numel(variants)

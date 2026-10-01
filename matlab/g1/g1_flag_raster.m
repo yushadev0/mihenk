@@ -7,6 +7,6 @@ for f = D.S.faults(:)'
     xline(f.t0/3600, 'r--');
 end
 if ~isempty(D.S.heaterOn)
-    xline(D.S.heaterOn/3600, 'b--');
+    xline(D.S.heaterOn(:)/3600, 'b--');
 end
 end

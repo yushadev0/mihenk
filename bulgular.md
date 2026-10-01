@@ -863,6 +863,77 @@ Bu script ve aşağıdaki iki ek kontrol, kullanıcının bu görev için verdi�
 
 **Duman testi (v5, metrikler okunmadı):** v5, v4'ün seçenekleriyle v4'e, v4nf'nin seçenekleriyle v4nf'ye bit düzeyinde eşit (fark 0; 3 senaryo × 2 gürültü). Varsayılan v5 hatasız çalışıyor ve S ≤ Smax. `checkcode`: v5 prototipi, v5 dedektörü ve `g1_evaluate.m` için uyarı yok. v5'in tam değerlendirmesi, kabul ölçütleri yazılana kadar bilerek koşulmadı.
 
+**v5'e sonradan eklenenler (kullanıcı onayıyla, hiçbir v5 sonucu görülmeden):** 10F'deki C (büyümeye bakan serbest bırakma; W = 30 blok, tek yönlü α = 0,01, |z| < 3) ve D (histerezis genişliği seçimi değişince, suçlu olmayan kanalların CUSUM'u sıfırlanıyor). İkinci duman testi ([`g1_smoke_v5.m`](matlab/g1/v5/g1_smoke_v5.m), kullanıcı koştu): v4 ve v4nf ile eşdeğerlik farkı 0; tüm v5 varyantları çalışıyor. `checkcode` yalnızca smoke scriptinde iki biçim uyarısı verdi (`setfield`); bunlar giderildi.
+
+---
+
+## 11. G1 simülasyon aşamasının kabul ölçütleri (önceden ilan)
+
+**Durum:** Bu bölüm, ölçütler, test senaryoları ve test scripti, **v5'in hiçbir sonucu görülmeden** yazılıp commit'lendi. Amaç, "G1 ne zaman bitti?" sorusuna sonuçlardan bağımsız bir cevap vermek (§14.2/7'deki "toleransı önceden ilan et" ilkesi) ve aynı 8 senaryoya aşırı uyumu kesmek.
+
+**Scriptler:** [`matlab/g1/test/g1_scenarios_test.m`](matlab/g1/test/g1_scenarios_test.m) (ayrılmış senaryolar) · [`matlab/g1/test/g1_acceptance_test.m`](matlab/g1/test/g1_acceptance_test.m) (tek atışlık test; geçti/kaldı kararını kendisi veriyor)
+
+### Sektörde neye bakılıyor? (araştırma özeti)
+
+Bizim problem sınıfı, yani düşük maliyetli düğümlerde referanssız sağlık tahmini için **hazır bir standart sayı yok**. Komşu alanlardaki referanslar:
+- **Literatürdeki ölçütler:** Arıza tespiti çalışmaları başarıyı üç ölçütle raporluyor: tespit gecikmesi, yanlış alarm oranı ve kaçırılan tespit oranı ([PMC8124649](https://pmc.ncbi.nlm.nih.gov/articles/PMC8124649/)). Sayılar uygulamaya özgü. İHA ve quadrotor çalışmalarında gecikmeler milisaniye mertebesinde ([arXiv 2102.06439](https://arxiv.org/pdf/2102.06439)), ama bunlar ani ve büyük arızalar. Bizim yavaş termal kayma problemimizle doğrudan karşılaştırılamaz.
+- **Havacılık ve GNSS bütünlüğü (RAIM/FDE):** Yanlış uyarı ≤ 10⁻⁵/saat (FDE) ya da 0,002/saat (hassas olmayan yaklaşma); kaçırılan tespit < 10⁻⁷ ([Navipedia: RAIM](https://gssc.esa.int/navipedia/index.php/RAIM_Algorithms), [Navipedia: Integrity](https://gssc.esa.int/navipedia/index.php/Integrity), [Wikipedia: RAIM](https://en.wikipedia.org/wiki/Receiver_autonomous_integrity_monitoring)). Bunlar can güvenliği seviyesi; düşük maliyetli MEMS düğümleri için hedef değil, ama ölçütün **saat başına olay** cinsinden tanımlandığını gösteriyor.
+- **Endüstriyel alarm yönetimi (ISA-18.2 / EEMUA 191):** Operatör başına ortalama ≤ 6 alarm/saat "çok büyük olasılıkla kabul edilebilir" (yaklaşık 10 dakikada 1), 12/saat "yönetilebilecek en üst sınır" ([Emerson](https://www.emerson.com/documents/automation/alarm-management-by-numbers-en-38292.pdf), [Chemical Engineering](https://www.chemengonline.com/alarm-management-numbers/)). Bu bizim kullanım senaryomuza en yakın olanı: bir operatör ya da sunucu birçok düğümün alarmını izliyor.
+- **İstatistiksel süreç kontrolü (CUSUM):** Yanlış alarm toleransı tasarımcı tarafından ARL0 olarak seçilir; eşik h bu toleransa göre ayarlanır. Düşük yanlış alarm, daha uzun tespit gecikmesi demektir ([NIST e-Handbook](https://www.itl.nist.gov/div898/handbook/pmc/section3/pmc3131.htm)).
+
+**Bundan çıkan sonuç:**
+- Ölçütler bizim tanımımız. Ama gerekçeli olmalı ve hem **olay sayısı** hem **etkilenen süre** cinsinden verilmeli.
+- Şimdiye kadar yalnızca "suçlu blok/saat" ölçüyorduk. Bu, kilitlenmeyi iyi gösteriyor ama kaç kez alarm verildiğini göstermiyor. Bu yüzden olay tabanlı bir ölçüt ekledim (K1c).
+- **Yorum:** Bunlar sahada kullanılabilirlik hedefi değil, **simülasyonda tutarlılık hedefi**. Sahada geçerli olup olmadıkları gerçek veriyle ayrıca sınanacak.
+
+### Yapı: iki aşama
+
+1. **Geliştirme (v5 koşusu, [`g1_prototype_v5.m`](matlab/g1/v5/g1_prototype_v5.m), mevcut 8 senaryo × 10 tohum).** G1'i geçirmez ya da kaldırmaz; yalnızca aday seçer.
+   **Seçim kuralı:** Varsayılan aday v5. Bir ablasyon (v5a, v5noC, v5noD) aşağıdaki geliştirme ölçütlerinin hiçbirinde v5'ten kötü değilse ve en az birinde daha iyiyse, daha basit olan o ablasyon seçilir. Geliştirme ölçütleri, K1–K3'ün geliştirme kümesindeki karşılıkları: yanlış alarm medyanı ve en kötü tohum, tespit, gecikme medyanı, kapsama, ısıtıcı, EMI sonrası ve BME ölçütleri.
+2. **Ayrılmış test (tek atış, [`g1_acceptance_test.m`](matlab/g1/test/g1_acceptance_test.m)).** 10 yeni senaryo × 2 gürültü × 20 tohum (100–119) = 400 koşu. Gürültü karakterizasyonu geliştirmedekiyle aynı.
+   - **Geçerse** G1'in simülasyon aşaması kapanır.
+   - **Kalırsa** kalan ölçüt yazılır, iddianın kapsamı daraltılır. Test kümesine bakarak yeniden ayar **yapılmaz**.
+   - İzin verilen tek müdahale, dedektörün mantığını değiştirmeyen hata düzeltmesi.
+
+### Ölçütler (her gürültü tipi için ayrı ayrı sağlanmalı)
+
+| # | Ölçüt | Eşik | Gerekçe |
+|---|---|---|---|
+| K1a | Yanlış suçlama (arızasız kanallar, blok/saat), medyan koşu | ≤ 0,5 | Tipik bir koşuda saatte en fazla yarım dakika yanlış suçlama |
+| K1b | Aynı, **her koşu** | ≤ 6 | Saatin %10'u. Tüm koşu boyunca kilitlenen bir kanal (60/saat) bu ölçütle kesin kalır (10E) |
+| K1c | Yanlış alarm **olayı** (yeni başlayan yanlış suçlama)/saat, ortalama | ≤ 0,12 | ISA-18.2: operatör başına ≤ 6/saat. Bir operatöre **50 düğüm** düşerse (`assumed`), düğüm başına ≤ 0,12/saat (günde ~3) |
+| K2a | Arızalı koşularda 120 dk içinde tespit oranı | ≥ %95 | Kaçırılan tespit ≤ %5 |
+| K2b | Gecikme medyanı | beyaz ≤ 15 dk, renkli ≤ 40 dk | Geliştirmede v4nf: beyaz 4,5–5,5, renkli 15–31,5 dk; pay bırakıldı. Termal kayma saatler ölçeğinde bir süreç |
+| K2c | Ortalama kapsama | ≥ %80 | Arıza başladıktan sonra çoğu blokta suçlu olmalı (unutmama, 8C) |
+| K2d | Sabit sıcaklıkta yavaş kayma: 180 dk içinde tespit oranı | ≥ %80 | Algılanabilirlik sınırına yakın (9D), bu yüzden daha gevşek. Büyüklük 1 saatte ≥ 5·K·√(1 saat) olacak şekilde seçildi |
+| K3a | Isıtıcı sırasında sensör suçlama, koşu başına blok | ≤ 1 | Tuzak sınıf 8 (6A) |
+| K3b | Olay dışında "T src" alarmı, koşu başına blok | ≤ 1 | 6D, 8A |
+| K3c | EMI **sonrasında** manyetometrenin suçlanma oranı | ≤ %10 | EMI sırasında suçlama kapsam dışı (G1 tek başına çözemez, 8D), ama olay bitince serbest bırakma çalışmalı (10B) |
+| K3d | BME arızasında hareket kanalı suçlanıyor | ≤ %5 | 8E, 9F |
+| K3e | BME arızasında ICM suçlanıyor | ≤ %5 | 9F |
+| K3f | BME arızasında "BME suçlu" ya da "belirsiz" | ≥ %90 | Belirsizlik, yanlış suçlamadan iyidir (10D) |
+
+K1 hesabında EMI olayı sırasındaki manyetometre suçlamaları sayılmıyor (K3c'deki gerekçeyle).
+
+### Ayrılmış test senaryoları
+
+Hepsi 8 saatlik simülasyon. Isıtıcı patlaması her senaryoda var, ama zamanı farklı.
+
+| # | Senaryo | Sınıf | Neyi sınıyor | Geliştirmeden farkı |
+|---|---|---|---|---|
+| T1 | t1-fast-ramp | arıza | gz kayması 0,02 °/s/saat, aşağı rampanın ortasında | 20→35→20 °C, rampalar 10 °C/saat |
+| T2 | t2-plateau-step | arıza | ax'te 0,2 mg basamak, platoda | Farklı kanal, büyüklük ve sıcaklık bölgesi |
+| T3 | t3-slow-sine | arıza | gy kayması, 25 ± 5 °C ve 6 saat periyotlu sinüs | Daha yavaş ve küçük döngü, farklı kanal |
+| T4 | t4-mag-drift | arıza | mz'de 0,3 µT/saat kayma | **Manyetometre arızası ilk kez** |
+| T5 | t5-two-heaters | yok | İki ısıtıcı patlaması (rampada ve durgunken) | Çoklu ısıtıcı (simülatör genişletildi) |
+| T6 | t6-emi-plateau | yok | Platoda EMI, genlik [−1 2 −0,5] µT | Sabit sıcaklıkta EMI |
+| T7 | t7-bme-step | yok | BME688'de +1 °C basamak | Kayma yerine basamak |
+| T8 | t8-cycle-clean | yok | 25 ± 8 °C, 3 saat periyot, arızasız | Saf yanlış alarm ölçümü |
+| T9 | t9-relax-az | arıza | az kayması 0,3 mg/saat, gevşeme histerezisi τ = 300 s | Farklı τ ve kanal |
+| T10 | t10-slow-drift | yavaş | Sabit 28 °C'de gx kayması 0,015 °/s/saat | K2d için |
+
+**Simülatör değişikliği:** `simulate_node.m`'de `heaterOn` artık satır başına bir patlama alıyor. Tek satırlık varsayılan yol bit düzeyinde aynı; bunu v5 koşusundaki v4 regresyonu doğrulayacak.
+
 ---
 
 ## Açık konular
@@ -893,7 +964,8 @@ Bu script ve aşağıdaki iki ek kontrol, kullanıcının bu görev için verdi�
 - [x] ~~v5'e C (büyümeye bakan serbest bırakma; W = 30 blok, tek yönlü α = 0,01, sonuçlardan önce ilan edildi) ve D (model seçimi değişince CUSUM sıfırlama) eklemek (10F)~~ → `g1_detect_v5.m`
 - [ ] İlişkili artıklar (10F tetiği): ikinci Gauss-Markov terimi ya da beyazlatma; v5'te yalnızca tanı olarak ölçülüyor (`innovAC1max`)
 - [ ] Beyaz tohum 9'da (v3, v4nf) mz'nin 1,39 saatte kilitlenmesinin tetiğini bulmak (10F)
-- [ ] G1 simülasyon aşamasının kabul ölçütlerini sonuçları görmeden yazmak; ayrılmış senaryo ve tohum kümesiyle tek seferlik test
+- [x] ~~G1 simülasyon aşamasının kabul ölçütlerini sonuçları görmeden yazmak~~ → §11
+- [ ] v5 geliştirme koşusu → §11'deki kurala göre aday seçimi → ayrılmış test (`g1_acceptance_test.m`, tek atış)
 - [ ] Bellek bütçesi: v4'te 90 Kalman filtresi × 14 sayı ≈ 5 KB (float) veya ~2,5 KB (16 bit), ATmega328P'nin 2 KB'ını aşıyor; sadeleştirme gerekiyor (örneğin genişlik ızgarası)
 - [ ] "En küçük algılanabilir kayma hızı"nı K ve izin verilen gecikme cinsinden formel tanıma yazmak (9D)
 - [ ] G1 skorunu kalibre edilmiş bir güven skoruna çevirmek (ECE, reliability diagram; ADR-010)
