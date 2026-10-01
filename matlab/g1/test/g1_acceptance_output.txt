@@ -1,0 +1,66 @@
+t1-fast-ramp     done (194 s)
+t2-plateau-step  done (388 s)
+t3-slow-sine     done (578 s)
+t4-mag-drift     done (769 s)
+t5-two-heaters   done (959 s)
+t6-emi-plateau   done (1149 s)
+t7-bme-step      done (1339 s)
+t8-cycle-clean   done (1532 s)
+t9-relax-az      done (1724 s)
+t10-slow-drift   done (1916 s)
+
+Candidate: v5
+
+[white]
+  K1a false flags/h, median <= 0.5                    0.000  PASS
+  K1b false flags/h, every run <= 6                  62.053  FAIL
+  K1c false episodes/h, mean <= 0.12                  0.532  FAIL
+  K2a detected within 120 min, share >= 0.95          1.000  PASS
+  K2b median delay [min] (w <= 15, c <= 40)           5.500  PASS
+  K2c mean coverage >= 0.80                           0.925  PASS
+  K2d slow drift within 180 min, share >= 0.80        1.000  PASS
+  K3a heater sensor flags/run, mean <= 1              0.370  PASS
+  K3b T-src flags outside/run, mean <= 1             23.175  FAIL
+  K3c EMI: mag flagged after event <= 0.10            0.160  FAIL
+  K3d BME fault: motion channel blamed <= 0.05        0.005  PASS
+  K3e BME fault: ICM blamed <= 0.05                   0.000  PASS
+  K3f BME fault: BME or ambiguous >= 0.90             1.000  PASS
+
+[colored]
+  K1a false flags/h, median <= 0.5                    0.000  PASS
+  K1b false flags/h, every run <= 6                  26.053  FAIL
+  K1c false episodes/h, mean <= 0.12                  0.140  FAIL
+  K2a detected within 120 min, share >= 0.95          0.980  PASS
+  K2b median delay [min] (w <= 15, c <= 40)          27.000  PASS
+  K2c mean coverage >= 0.80                           0.666  FAIL
+  K2d slow drift within 180 min, share >= 0.80        1.000  PASS
+  K3a heater sensor flags/run, mean <= 1              0.300  PASS
+  K3b T-src flags outside/run, mean <= 1             23.175  FAIL
+  K3c EMI: mag flagged after event <= 0.10            0.142  FAIL
+  K3d BME fault: motion channel blamed <= 0.05        0.021  PASS
+  K3e BME fault: ICM blamed <= 0.05                   0.001  PASS
+  K3f BME fault: BME or ambiguous >= 0.90             0.999  PASS
+
+OVERALL: FAIL
+
+Per scenario (median over seeds): false flags/h, delay [min]
+  t1-fast-ramp     white       0.00 [max   2.68]      5.5
+  t1-fast-ramp     colored     0.00 [max   9.00]     30.0
+  t2-plateau-step  white       0.00 [max   3.63]      0.5
+  t2-plateau-step  colored     0.00 [max   4.89]      2.5
+  t3-slow-sine     white       0.00 [max   1.26]      5.5
+  t3-slow-sine     colored     0.00 [max   4.89]     60.5
+  t4-mag-drift     white       0.00 [max   1.11]      7.5
+  t4-mag-drift     colored     0.00 [max  12.16]     15.0
+  t5-two-heaters   white       0.00 [max   8.05]      NaN
+  t5-two-heaters   colored     0.00 [max  11.21]      NaN
+  t6-emi-plateau   white      10.34 [max  21.16]      NaN
+  t6-emi-plateau   colored    10.03 [max  26.05]      NaN
+  t7-bme-step      white       0.00 [max   2.68]      NaN
+  t7-bme-step      colored     0.00 [max   5.05]      NaN
+  t8-cycle-clean   white       0.00 [max   1.89]      NaN
+  t8-cycle-clean   colored     0.00 [max   9.32]      NaN
+  t9-relax-az      white      45.63 [max  62.05]      7.5
+  t9-relax-az      colored     0.00 [max  13.58]     48.5
+  t10-slow-drift   white       0.00 [max   0.00]      5.5
+  t10-slow-drift   colored     0.00 [max  11.84]     39.5

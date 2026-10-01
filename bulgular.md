@@ -62,6 +62,7 @@ Rapor bu tuzakları "müfredat sınıf 8" olarak topluyor. G1'in değeri kolay s
 | 10 | [`g1_prototype_v4.m`](matlab/g1/v4/g1_prototype_v4.m) | G1 v4: çok elemanlı ortak mod, belirsiz kaynak durumu, model hatası tabanı (10 tohum) | ✅ 9E ve 9F mekanizmaları doğrulandı · ✅ hyst-relax kilitlenmesi çözüldü · ❌ model hatası tabanı gecikmeyi ~45 dk artırıyor · ❌ CUSUM doyması, baştan kilitli kanal (tanı 10F: ilişkili artık + donmuş z sıfıra dönmüyor; model tanımlanmadan dondurma) |
 | 11 | [`g1_acceptance_test.m`](matlab/g1/test/g1_acceptance_test.m) | G1 simülasyon aşamasının kabul ölçütleri ve ayrılmış test kümesi (önceden ilan) | Ölçütler, senaryolar ve test v5 sonuçlarından önce commit'lendi |
 | 12 | [`g1_prototype_v5.m`](matlab/g1/v5/g1_prototype_v5.m) | G1 v5 geliştirme koşusu: CUSUM üst sınırı, dondurulmuş kanalda taban, serbest bırakma testi, model değişiminde sıfırlama | ✅ aday v5 · ✅ baştan kilitlenme gitti · ❌ geliştirmede K1b, K3a, K3c, K3d kalıyor · ⚠️ basamak arızası serbest bırakılıyor |
+| 13 | [`g1_acceptance_test.m`](matlab/g1/test/g1_acceptance_test.m) | Kabul testi, ayrılmış küme (10 senaryo × 2 gürültü × 20 tohum), tek atış | ❌ **FAIL** (K1b, K1c, K2c renkli, K3b, K3c) · ✅ tespit, gecikme, manyetometre arızası, BME basamağı genelleniyor |
 
 **Kritik kurallar** (MATLAB referans modelinde her zaman uygulanacak):
 
@@ -1007,6 +1008,66 @@ Not: Geliştirme CSV'sinde K1 hesabına EMI olayı sırasındaki manyetometre su
 
 ---
 
+## 13. G1 kabul testi (ayrılmış küme, tek atış): FAIL
+
+**Script:** [`matlab/g1/test/g1_acceptance_test.m`](matlab/g1/test/g1_acceptance_test.m) (cbf4b01'deki ilan edilmiş hâliyle, değiştirilmeden) · **Ham sonuçlar:** [`g1_acceptance_results.csv`](matlab/g1/test/g1_acceptance_results.csv) (400 koşu) · **Çıktı:** [`g1_acceptance_output.txt`](matlab/g1/test/g1_acceptance_output.txt)
+
+**Ne yapıldı:** Aday v5 (§12), 10 ayrılmış senaryo × 2 gürültü × 20 tohum (100–119) üzerinde bir kez koşuldu. Koşuyu kullanıcı çalıştırdı. Hata düzeltmesi gerekmedi. **Sonuç: FAIL.** §11'deki kurala göre bu sonuç üzerinden ayar yapılmayacak; bu küme artık "görülmüş" sayılıyor. Bundan sonraki bir sürüm yeni bir ayrılmış kümeyle sınanmalı.
+
+| Ölçüt | Beyaz | Renkli |
+|---|---|---|
+| K1a yanlış alarm medyanı ≤ 0,5/saat | ✅ 0,00 | ✅ 0,00 |
+| K1b her koşu ≤ 6/saat | ❌ 62,1 | ❌ 26,1 |
+| K1c yanlış alarm olayı ≤ 0,12/saat | ❌ 0,53 | ❌ 0,14 |
+| K2a 120 dk içinde tespit ≥ %95 | ✅ %100 | ✅ %98 |
+| K2b gecikme medyanı (≤ 15 / ≤ 40 dk) | ✅ 5,5 | ✅ 27,0 |
+| K2c kapsama ≥ %80 | ✅ %92,5 | ❌ %66,6 |
+| K2d yavaş kayma, 180 dk içinde ≥ %80 | ✅ %100 | ✅ %100 |
+| K3a ısıtıcı ≤ 1 blok/koşu | ✅ 0,37 | ✅ 0,30 |
+| K3b olay dışı "T src" ≤ 1 blok/koşu | ❌ 23,2 | ❌ 23,2 |
+| K3c EMI sonrası ≤ %10 | ❌ %16,0 | ❌ %14,2 |
+| K3d BME arızasında hareket kanalı ≤ %5 | ✅ %0,5 | ✅ %2,1 |
+| K3e BME arızasında ICM ≤ %5 | ✅ %0,0 | ✅ %0,1 |
+| K3f BME veya belirsiz ≥ %90 | ✅ %100 | ✅ %99,9 |
+
+**Bulgu 13A: Çekirdek tespit genelleniyor.**
+- Tespit oranı, gecikme ve yavaş kayma ölçütleri yeni senaryolarda da geçiyor.
+- **İlk kez test edilen manyetometre arızası (T4):** kapsama %97 (beyaz) / %93 (renkli), gecikme medyanı 7,5 / 15 dk.
+- **İlk kez test edilen BME basamak arızası (T7):** BME suçlu ya da belirsiz %100. Hareket kanalı suçlama %0,5 / %2,1.
+- Yanlış alarm medyanı her yerde 0. Tipik bir koşu temiz; sorun kuyrukta ve belirli senaryolarda.
+- **İddia için anlamı:** "Sıcaklık değişimi altında kayma tipi arızaları, sağlam kanalları tipik olarak suçlamadan tespit etme" iddiası ayrılmış kümede destekleniyor.
+
+**Bulgu 13B: K1b ve K1c kalıyor. Kaynak öngörülen iki mekanizma: model uyuşmazlığı ve EMI.**
+- **T9 (gevşeme histerezisi, τ = 300 s) / beyaz:** yanlış alarm medyanı 45,6/saat, en kötüsü 62,1; olay oranı 3,86/saat. Bu, 12C'nin genellenmesi. Daha uzun τ ile uyuşmazlık daha da büyüyor.
+  - Renkli gürültüde aynı senaryonun medyanı 0. Geniş gürültü bütçesi uyuşmazlığı yutuyor (9H'deki iki yönlü sonuç). Yani bu sorun yalnız gürültüsüz modelde görünür oluyor.
+- **T6 (EMI):** medyan ~10/saat, olay oranı ~1/saat (12D).
+- Diğer senaryolarda en kötü tohum 1,1–13,6/saat. K1b, T9 ve T6 olmadan da renkli gürültüde kalırdı (T4 12,2; T9 13,6; T10 11,8; T5 11,2).
+
+**Bulgu 13C: K2c (renkli) kalıyor. Kaynak basamak arızası, tam 12B'nin öngördüğü gibi.**
+- **T2 (platoda 0,2 mg basamak) / renkli: kapsama %11.** Beyazda %73.
+- Serbest bırakma testi basamağı "büyümeyen sapma" olarak görüp bırakıyor. Kaba bir hesap: ivmeölçerin uydurulan K değeri ~0,04 mg/√saat. Random walk'un 3σ'sı 0,2 mg'a yaklaşık 3 saatte ulaşıyor. Bu süreden sonra basamak istatistiksel olarak random walk'tan ayrılamıyor.
+- Diğer kapsama düşüşleri: T3 %77 ve T9 %65 (renkli).
+- **Sonuç:** Bu bir ayar hatası değil, "kalıcı ofset arıza mıdır?" sorusunun cevapsız kalması (12B). Formel tanımda karar verilmeli.
+
+**Bulgu 13D: K3b'de yeni ve beklenmedik bir arıza biçimi: sıcaklık kaynağı modelinin kilitlenmesi.**
+- Olay dışı "T src" alarmları **yalnızca üç senaryoda**: T2'de koşu başına 179 blok (~3 saat), T8'de 40, T5'te 12,7. Değerler beyaz ve renkli gürültüde **birebir aynı**. Bu alarm yalnız sıcaklık okumalarına bakıyor; aynı tohumda aynı sıcaklıklar üretildiği için gürültüden bağımsız olması bekleniyor.
+- Bu üç senaryoda ısıtıcı rampa sırasında (T2, T5) ya da sinüs içinde (T8) çalışıyor. Ama ısıtıcısı rampa sırasında olan T7'de alarm yok. Yani tek açıklama ısıtıcı değil.
+- **Muhtemel mekanizma (doğrulanmadı):** Sıcaklık kaynağı modeli (T_bme ≈ lag(T_icm)) yalnız |zT| < 3 iken güncelleniyor. Bir kez dışarı çıkınca bir daha öğrenemiyor. Bu, 7C'deki "dondurma = kilit" sorununun sıcaklık kanalındaki hâli. C'nin bir karşılığı bu kanalda yok.
+- Geliştirme kümesinde bu hiç görülmedi (orada olay dışı alarm 0,4). Ayrılmış testin değeri tam olarak bu.
+
+**Bulgu 13E: K3c'nin ölçütü ile pencere uzunluğu çelişiyordu. Bu benim ilan hatam.**
+- EMI sonrası suçlama %14–16. Serbest bırakma için pencerede 30 blok |z| < 3 gerekiyor. EMI bittikten sonra bu en az 30 dk demek. T6'da EMI sonrası ~4 saat var; 3 manyetometre kanalının her biri en az 30 dk suçlu kalırsa oran zaten ~%12 eder.
+- Yani W = 30 ile K3c ≤ %10 neredeyse ulaşılamazdı. İkisini aynı anda ilan ederken bu tutarlılığı kontrol etmedim.
+- Ölçüt geriye dönük olarak değiştirilmeyecek; bu not kayıt için.
+
+**Genel değerlendirme:**
+- G1 v5, simülasyon kabul testini geçmedi. Çekirdek tespit (K2a, K2b, K2d) ve tuzakların çoğu (K3a, K3d–K3f) yeni senaryolara genelleniyor.
+- Kalan beş ölçütün dördünün nedeni önceden biliniyordu: model uyuşmazlığı (12C), EMI'den yavaş çıkış (12D), basamak arızası (12B) ve K3c'deki ölçüt çelişkisi (13E).
+- Biri yeni: sıcaklık kaynağı kilidi (13D).
+- **İddia kapsamı (ADR-019):** Şu an savunulabilecek ifade şu: "Termal ortak mod ayrıştırması, sıcaklık değişimi altında kayma tipi IMU arızalarını, tipik koşuda yanlış alarm üretmeden ve uydurulmuş gürültü modeliyle tutarlı bir gecikmeyle tespit eder." Kuyruk davranışı (en kötü koşu), basamak arızası, histerezis biçim uyuşmazlığı ve sıcaklık kaynağı kilidi açıkça sınırlama olarak yazılmalı.
+
+---
+
 ## Açık konular
 
 - [x] ~~Termal katsayıları ICM-42688-P veri sayfasından teyit etmek~~ → Bulgu 4
@@ -1037,7 +1098,9 @@ Not: Geliştirme CSV'sinde K1 hesabına EMI olayı sırasındaki manyetometre su
 - [ ] Beyaz tohum 9'da (v3, v4nf) mz'nin 1,39 saatte kilitlenmesinin tetiğini bulmak (10F)
 - [x] ~~G1 simülasyon aşamasının kabul ölçütlerini sonuçları görmeden yazmak~~ → §11
 - [x] ~~v5 geliştirme koşusu → §11'deki kurala göre aday seçimi~~ → §12, aday v5
-- [ ] Ayrılmış test (`g1_acceptance_test.m`, tek atış)
+- [x] ~~Ayrılmış test (`g1_acceptance_test.m`, tek atış)~~ → §13, FAIL
+- [ ] Tanı: sıcaklık kaynağı modelinin T2, T5 ve T8'de kilitlenmesi (13D)
+- [ ] Yeni sürüm için **yeni** bir ayrılmış küme (tohum 200+, yeni senaryolar); §13'teki küme artık görülmüş sayılıyor
 - [ ] Basamak arızasında doğru davranış: kalıcı ofset "arıza" mı, "yeni normal" mi? Formel tanıma yazmak (12B)
 - [ ] Artık öz-ilişkisini "model güvenilmez" durumu için kullanmayı değerlendirmek (12E, ADR-010)
 - [ ] Bellek bütçesi: v4'te 90 Kalman filtresi × 14 sayı ≈ 5 KB (float) veya ~2,5 KB (16 bit), ATmega328P'nin 2 KB'ını aşıyor; sadeleştirme gerekiyor (örneğin genişlik ızgarası)
