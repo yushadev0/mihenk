@@ -55,17 +55,26 @@ if hasT
     M.tempFlagsOutside = nnz(R.tempFlag & ~heater & ~D.truth.tempFault & valid);
 end
 
-% EMI: environmental, but only the magnetometer sees it (not common mode)
-M.emiMagFlags = NaN;
+% EMI: environmental, but only the magnetometer sees it (not common mode).
+% emiMagFlags covers the event window only; emiAfterMagFlags the rest of
+% the run after it (lock-in, finding 9E); emiCommon the share of event
+% blocks taken as a common-mode event (the 9E mechanism).
+[M.emiMagFlags, M.emiAfterMagFlags, M.emiCommon] = deal(NaN);
 if any(D.truth.emi)
-    M.emiMagFlags = nnz(any(F(:, 7:9), 2) & D.truth.emi & valid) / nnz(D.truth.emi & valid);
+    ev = D.truth.emi & valid;
+    M.emiMagFlags = nnz(any(F(:, 7:9), 2) & ev) / nnz(ev);
+    after = tB >= D.S.emi.t1 & ~D.truth.emi & valid;
+    M.emiAfterMagFlags = nnz(any(F(:, 7:9), 2) & after) / nnz(after);
+    if hasT, M.emiCommon = nnz(R.common & ev) / nnz(ev); end
 end
 
 % The confounder sensor (BME688 temperature) itself fails
-[M.tempFaultBlameBme, M.tempFaultSensorFlags] = deal(NaN);
+[M.tempFaultBlameBme, M.tempFaultSensorFlags, M.tempFaultBlameIcm, M.tempFaultAmbig] = deal(NaN);
 tf = D.truth.tempFault & valid;
 if any(tf) && hasT
     M.tempFaultBlameBme    = nnz(R.blameBme & tf) / nnz(tf);
     M.tempFaultSensorFlags = nnz(any(F & ~fault, 2) & tf) / nnz(tf);
+    M.tempFaultBlameIcm    = nnz(R.blameIcm & tf) / nnz(tf);
+    if isfield(R, 'tempAmbig'), M.tempFaultAmbig = nnz(R.tempAmbig & tf) / nnz(tf); end
 end
 end

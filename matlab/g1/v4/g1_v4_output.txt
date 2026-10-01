@@ -1,0 +1,78 @@
+Equivalence v4(v3 options) vs v3: max difference 0 (OK)
+
+base         done (123 s)
+hold-fault   done (247 s)
+accel-step   done (368 s)
+two-faults   done (493 s)
+emi          done (624 s)
+bme-fault    done (756 s)
+hyst-relax   done (890 s)
+day-cycle    done (1023 s)
+
+Regression vs v3: 160 rows compared, max relative difference 3.7e-15 (OK)
+
+Faults (10 seeds; detected and coverage: mean, delay: median)
+scenario / noise       | detected                 | delay [min]              | coverage
+                       |     v1    v3  v4nf    v4 |     v1    v3  v4nf    v4 |     v1    v3  v4nf    v4
+base / white           |   100%  100%  100%  100% |    5.5   4.5   4.5  49.5 |    98%   98%   98%   77%
+base / colored         |   100%  100%  100%  100% |    0.5  15.0  15.0  57.0 |    95%   92%   92%   73%
+hold-fault / white     |   100%  100%  100%  100% |   11.0   7.5   7.5  15.5 |    90%   92%   92%   85%
+hold-fault / colored   |   100%   90%   90%   70% |    0.5  56.5  56.5  62.5 |    90%   42%   42%   30%
+accel-step / white     |   100%  100%  100%  100% |    0.5   0.5   0.5   1.5 |   100%  100%  100%   99%
+accel-step / colored   |   100%  100%  100%  100% |    3.0   1.5   1.5   2.0 |    97%   99%   99%   99%
+two-faults / white     |   100%  100%  100%  100% |    6.5   5.5   5.5  65.0 |    97%   98%   98%   73%
+two-faults / colored   |   100%  100%  100%  100% |   24.0  31.5  31.5  76.0 |    85%   88%   88%   69%
+emi / white            |      -     -     -     - |      -     -     -     - |      -     -     -     -
+emi / colored          |      -     -     -     - |      -     -     -     - |      -     -     -     -
+bme-fault / white      |      -     -     -     - |      -     -     -     - |      -     -     -     -
+bme-fault / colored    |      -     -     -     - |      -     -     -     - |      -     -     -     -
+hyst-relax / white     |   100%  100%  100%  100% |    5.0   3.5   3.5  49.5 |    98%   99%   99%   77%
+hyst-relax / colored   |   100%  100%  100%  100% |    0.5  16.0  16.0  56.5 |    94%   92%   92%   73%
+day-cycle / white      |   100%  100%  100%  100% |    4.5   4.5   4.5  39.5 |    97%   98%   98%   78%
+day-cycle / colored    |   100%  100%  100%  100% |    0.5  17.0  16.5  45.0 |    97%   90%   90%   75%
+
+False sensor flags per hour: median [worst seed]
+scenario / noise       |             v1            v3          v4nf            v4
+base / white           |      0.0 [0.0]    0.0 [60.0]    0.0 [60.0]    0.0 [60.0]
+base / colored         |  140.0 [161.2]    3.9 [67.4]    0.9 [60.2]    0.0 [60.0]
+hold-fault / white     |      0.0 [0.0]    0.0 [60.0]    0.0 [60.0]    0.0 [60.0]
+hold-fault / colored   |  152.4 [175.9]    3.9 [67.4]    0.9 [60.2]    0.0 [60.0]
+accel-step / white     |      0.0 [0.0]    0.0 [60.0]    0.0 [60.0]    0.0 [60.0]
+accel-step / colored   |  156.2 [182.7]    3.9 [67.4]    0.9 [60.2]    0.0 [60.0]
+two-faults / white     |      0.0 [0.0]    0.0 [60.0]    0.0 [60.0]    0.0 [60.0]
+two-faults / colored   |  106.3 [137.1]    3.9 [67.4]    0.9 [60.2]    0.0 [60.0]
+emi / white            |    53.4 [53.5]  53.5 [110.5]  85.3 [120.3]  85.3 [145.3]
+emi / colored          |  188.4 [222.2]  67.9 [128.7]  86.2 [145.3]  85.3 [145.3]
+bme-fault / white      |      0.0 [0.3]    2.3 [60.9]    0.0 [60.0]    0.0 [60.0]
+bme-fault / colored    |  181.9 [215.7]    7.4 [87.9]    0.4 [60.0]    0.0 [60.0]
+hyst-relax / white     |   70.3 [141.2] 150.6 [204.3] 152.3 [198.2]     0.0 [0.0]
+hyst-relax / colored   |  135.2 [161.1]    3.7 [64.9]    0.9 [60.2]    0.0 [60.0]
+day-cycle / white      |      0.0 [0.0]     0.0 [0.2]     0.0 [0.2]     0.0 [0.0]
+day-cycle / colored    |  125.0 [161.2]    3.4 [63.9]    0.0 [60.2]     0.0 [0.0]
+
+  Traps (mean over seeds)                         v1    v3  v4nf    v4
+[white]
+  heater: sensor flags / run                     2.5   6.5   6.7   1.9
+  T-src flags outside events / run               0.4   0.4   0.4   0.4
+  emi: share with a mag blamed (event)            0%   10%  100%  100%
+  emi: share with a mag blamed (after)           73%   76%  100%  100%
+  emi: share taken as common mode               100%   98%    0%    0%
+  bme-fault: share blaming BME688                77%   84%   83%    2%
+  bme-fault: share blaming ICM                   15%    8%    0%    0%
+  bme-fault: share ambiguous                       -     -    9%   91%
+  bme-fault: share with a sensor blamed           0%   24%   11%   10%
+[colored]
+  heater: sensor flags / run                    24.9  11.8   2.5   2.2
+  T-src flags outside events / run               0.4   0.4   0.4   0.4
+  emi: share with a mag blamed (event)           32%    0%  100%  100%
+  emi: share with a mag blamed (after)           81%   91%  100%  100%
+  emi: share taken as common mode                99%   97%    1%    0%
+  bme-fault: share blaming BME688                35%    2%    0%    0%
+  bme-fault: share blaming ICM                   58%   90%    0%    0%
+  bme-fault: share ambiguous                       -     -   92%   92%
+  bme-fault: share with a sensor blamed         100%   32%   21%   10%
+
+v4 heater flags per channel (sum over scenarios and seeds)
+            gx    gy    gz    ax    ay    az    mx    my    mz
+white      150     0     0     0     0     0     0     0     0
+colored    175     0     0     0     0     0     0     0     0

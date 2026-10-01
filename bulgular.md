@@ -59,6 +59,7 @@ Rapor bu tuzakları "müfredat sınıf 8" olarak topluyor. G1'in değeri kolay s
 | 7 | [`g1_prototype_v1.m`](matlab/g1/v1/g1_prototype_v1.m) | G1 v1: hafızalı model, CUSUM, histerezis ve gecikme seçimi | ✅ kapsama %98, yanlış alarm 0 · ⚠️ tek senaryoya ayarlı, histerezis modeli simülatörle aynı |
 | 8 | [`g1_prototype_v2.m`](matlab/g1/v2/g1_prototype_v2.m) | v0 ve v1'in 9 senaryo × 5 tohumla sınavı | ✅ v1 beyaz gürültüde tohumdan bağımsız · ❌ v1 renkli gürültüde çöküyor (saatte 115–195 yanlış alarm) · ❌ EMI çözülemiyor |
 | 9 | [`g1_prototype_v3.m`](matlab/g1/v3/g1_prototype_v3.m) | G1 v3: Allan'dan türetilmiş Kalman sıfır modeli, faktöriyel değerlendirme (8 senaryo × 2 gürültü × 5 tohum) | ✅ renkli gürültüde yanlış alarm ~10× azaldı, kapsama korundu · ❌ EMI sonrası kilitlenme, BME suçu ICM'ye gidiyor, model uyuşmazlığında beyaz gürültüde kilitlenme |
+| 10 | [`g1_prototype_v4.m`](matlab/g1/v4/g1_prototype_v4.m) | G1 v4: çok elemanlı ortak mod, belirsiz kaynak durumu, model hatası tabanı (10 tohum) | ✅ 9E ve 9F mekanizmaları doğrulandı · ✅ hyst-relax kilitlenmesi çözüldü · ❌ model hatası tabanı gecikmeyi ~45 dk artırıyor · ❌ CUSUM doyması, baştan kilitli kanal |
 
 **Kritik kurallar** (MATLAB referans modelinde her zaman uygulanacak):
 
@@ -718,6 +719,113 @@ Gösterilmeyen beyaz satırlarda (accel-step, two-faults, day-cycle) üç dedekt
 
 ---
 
+## 10. G1 v4: §9'un üç düzeltmesi, 10 tohum
+
+**Script:** [`matlab/g1/v4/g1_prototype_v4.m`](matlab/g1/v4/g1_prototype_v4.m) · **Dedektör:** [`g1_detect_v4.m`](matlab/g1/v4/g1_detect_v4.m) · **Değerlendirme:** [`g1_evaluate.m`](matlab/g1/g1_evaluate.m) (yeni alanlar eklendi, eskiler değişmedi)
+**Ham sonuçlar:** [`g1_v4_results.csv`](matlab/g1/v4/g1_v4_results.csv) (640 satır: 8 senaryo × 2 gürültü × 10 tohum × 4 dedektör) · **Konsol çıktısı:** [`g1_v4_output.txt`](matlab/g1/v4/g1_v4_output.txt)
+**Figürler:** [`g1_v4_1.png`](matlab/figures/g1_v4_1.png) (kapsama; yanlış alarm medyanı ve en kötü tohum), [`g1_v4_2.png`](matlab/figures/g1_v4_2.png) (v4 suçlama grafiği, renkli, tohum 0), [`g1_v4_3.png`](matlab/figures/g1_v4_3.png) (aynısı, beyaz)
+
+**Amaç:** §9'un sonundaki v4 yönünün ilk üç maddesini uygulamak ve 9E/9F mekanizmalarını blok düzeyinde ölçmek.
+
+**Ne yapıldı:** v3'e üç düzeltme eklendi. Her biri bir seçenek, böylece ayrı ayrı kapatılabiliyor:
+1. **Ortak mod (9E):** ≥3 kanalın bozulması artık yetmiyor; kanallar en az **iki farklı algılama elemanından** (gyro, ivmeölçer, manyetometre) gelmeli.
+2. **Belirsiz durum (9F):** Sıcaklık kaynağı suçlamasında beraberlik olursa kimse suçlanmıyor. Durum `tempAmbig` olarak kaydediliyor, iki referans da kullanılmaya devam ediyor.
+3. **Model hatası tabanı (9H, 9I):** Sıcaklık katsayısı b ve histerezis c de random walk kabul edildi: 24 saatte veri sayfası sınırı (sb) kadar değişebiliyorlar. 24 saat, v1'den beri kullanılan unutma ufku; yeni bir ayar değil.
+
+Dedektörler: v1, v3, **v4nf** (v4'ün 3. düzeltme olmadan hâli, ablasyon) ve v4. Tohum sayısı 10'a çıkarıldı (9B). Puanlama penceresi v3 ile aynı.
+
+**Kontroller:**
+- **Eşdeğerlik:** v4, v3'ün seçenekleriyle çalıştırıldığında v3'le aynı sonucu veriyor; fark 0.
+- **Regresyon:** v1 ve v3'ün 0–4 tohumları v3 CSV'siyle karşılaştırıldı (160 satır); en büyük göreli fark 3,7e-15.
+
+**Sonuç — arızalar** (tespit ve kapsama tohum ortalaması, gecikme tohum medyanı; v3 / v4nf / v4):
+
+| Senaryo / gürültü | Gecikme [dk] | Kapsama |
+|---|---|---|
+| base / beyaz | 4,5 / 4,5 / **49,5** | %98 / %98 / **%77** |
+| base / renkli | 15,0 / 15,0 / **57,0** | %92 / %92 / **%73** |
+| hold-fault / beyaz | 7,5 / 7,5 / 15,5 | %92 / %92 / %85 |
+| hold-fault / renkli | 56,5 / 56,5 / 62,5 (tespit %90 / %90 / %70) | %42 / %42 / %30 |
+| accel-step / renkli | 1,5 / 1,5 / 2,0 | %99 / %99 / %99 |
+| two-faults / beyaz | 5,5 / 5,5 / **65,0** | %98 / %98 / **%73** |
+| two-faults / renkli | 31,5 / 31,5 / **76,0** | %88 / %88 / **%69** |
+| day-cycle / renkli | 17,0 / 16,5 / 45,0 | %90 / %90 / %75 |
+
+**Sonuç — yanlış alarm/saat** (medyan [en kötü tohum]; v3 / v4nf / v4):
+
+| Senaryo / gürültü | v3 | v4nf | v4 |
+|---|---|---|---|
+| base / renkli | 3,9 [67,4] | 0,9 [60,2] | **0,0** [60,0] |
+| emi / beyaz | 53,5 [110,5] | 85,3 [120,3] | 85,3 [145,3] |
+| emi / renkli | 67,9 [128,7] | 86,2 [145,3] | 85,3 [145,3] |
+| bme-fault / renkli | 7,4 [87,9] | 0,4 [60,0] | **0,0** [60,0] |
+| hyst-relax / beyaz | 150,6 [204,3] | 152,3 [198,2] | **0,0 [0,0]** |
+| day-cycle / renkli | 3,4 [63,9] | 0,0 [60,2] | **0,0 [0,0]** |
+
+Diğer satırlar: beyaz gürültüde ve tuzak dışı senaryolarda medyan her yerde 0. En kötü tohum ise neredeyse her yerde tam 60,0 (Bulgu 10E).
+
+**Sonuç — tuzaklar** (tohum ortalaması; v3 / v4nf / v4):
+
+| Ölçüt | Beyaz | Renkli |
+|---|---|---|
+| EMI sırasında ortak mod sayılan blok | %98 / %0 / %0 | %97 / %1 / %0 |
+| EMI sırasında manyetometre suçlanıyor | %10 / %100 / %100 | %0 / %100 / %100 |
+| EMI **sonrasında** manyetometre suçlanıyor | %76 / %100 / %100 | %91 / %100 / %100 |
+| BME arızasında BME688 suçlanıyor | %84 / %83 / **%2** | %2 / %0 / %0 |
+| BME arızasında ICM suçlanıyor | %8 / %0 / %0 | **%90** / %0 / %0 |
+| BME arızasında belirsiz | — / %9 / %91 | — / **%92** / %92 |
+| BME arızasında hareket kanalı suçlanıyor | %24 / %11 / %10 | %32 / %21 / %10 |
+| Isıtıcı sırasında sensör suçlama (koşu başına blok) | 6,5 / 6,7 / 1,9 | 11,8 / 2,5 / 2,2 |
+
+**Bulgu 10A: 9E ve 9F mekanizmaları doğrulandı.**
+- **9E:** v3'te EMI bloklarının %97–98'i ortak mod sayılıyormuş. 1. düzeltmeyle bu oran %0–1'e iniyor. EMI'nin tek bir sensörün üç ekseni üzerinden ortak mod sanıldığı hipotezi doğru.
+- **9F:** v3 renkli gürültüde BME arızasında suçu %90 oranında ICM'ye veriyormuş. 2. düzeltmeyle bu blokların %92'si belirsiz oluyor; yani v3'teki ICM suçlamalarının neredeyse hepsi 0 = 0 beraberliğinden geliyormuş. Hipotez doğru.
+- **9B'nin açık sorusu da büyük olasılıkla cevaplandı:** Renkli gürültüde ısıtıcı sırasındaki sensör suçlaması v3'te 11,8, v4nf'te 2,5. Muhtemel mekanizma 9F ile aynı: ısıtıcıda beraberlik → ICM suçlanıyor → kanallar ısınan BME'ye göre değerlendiriliyor → my suçlanıyor. v4nf 1. ve 2. düzeltmeyi birlikte içerdiğinden ikisinin payı ayrı ayrı ölçülmedi. v4'te kalan ısıtıcı suçlamalarının tamamı gx'te; bunlar da Bulgu 10E'deki kilitli tohumlardan geliyor.
+
+**Bulgu 10B: 1. düzeltme doğru, ama altındaki asıl sorunu açığa çıkarıyor: CUSUM doyması.**
+- EMI artık modele öğretilmiyor. Manyetometre EMI sırasında %100 suçlanıyor; G1 tek başına bunu ayırt edemeyeceği için bu beklenen ve dürüst davranış (8D).
+- Ama EMI bittikten sonra da kanallar %100 suçlu kalıyor (Figür 2 ve 3, emi: 5,0 saatten gün sonuna kadar).
+- **Mekanizma (kod okumasıyla):** Model donduğu için EMI bitince artıklar normale dönüyor. Ama CUSUM EMI sırasında çok büyük değerler biriktirdi: her blokta z yüzler mertebesinde ve EMI ~20 blok sürüyor. Artık normale dönünce CUSUM bloğu başına yalnızca k = 0,5 azalıyor; boşalması binlerce blok sürer.
+- Yani kilitlenmenin bir kaynağı model değil, **karar istatistiğinin kendisi**. 9E'de bu durum ortak mod emilimiyle gizleniyordu.
+- **Düzeltme yönü:** CUSUM'ı üstten sınırlamak, örneğin S ≤ 2h. Eşiğin üstündeki değer karara bilgi katmıyor. Bu sınırla olay bittikten sonra serbest bırakma en fazla (2h − h)/k = 20 blok sürer.
+
+**Bulgu 10C: 3. düzeltme hedefini vuruyor, ama bedeli kabul edilemez.**
+- **Kazanç:** hyst-relax / beyaz'da yanlış alarm 150,6'dan **0'a** iniyor, 10 tohumun hepsinde. day-cycle / renkli'de en kötü tohum bile 0. Model hatası tabanı serbest bırakmayı gerçekten mümkün kılıyor (9H, 9I).
+- **Bedel 1, gecikme:** base / beyaz'da gecikme 4,5'ten 49,5 dk'ya çıkıyor, kapsama %98'den %77'ye iniyor; two-faults'ta gecikme 65 dk. Bu **beyaz gürültüde, 10 tohumun hepsinde** 48,5–50,5 dk: rastgele değil, yapısal.
+  - **Mekanizma:** Arıza 4,5 saatte, aşağı rampa sırasında başlıyor. b serbestçe değişebildiği için, sıcaklıkla doğrusal ilerleyen kaymanın bir kısmı "sıcaklık katsayısı değişti" diye açıklanıyor. Bu, Bulgu 6F'deki özdeşleştirilebilirlik sorunu: monoton rampada kayma ile sıcaklık katsayısı birbirinden ayrılamıyor. Sıcaklığın sabit olduğu hold-fault / beyaz'da gecikme yalnızca 7,5'ten 15,5 dk'ya çıkıyor; bu da mekanizmayı destekliyor.
+- **Bedel 2, BME ayrımı:** Beyaz gürültüde BME arızasında BME688'in doğru suçlanma oranı v4nf'te %83, v4'te **%2**. Bunun yerine %91 belirsiz. Kanalların BME referanslı modelleri BME'nin kaymasını b'ye yediriyor; böylece "hangi referansa karşı daha çok kanal bozuluyor" ayrımı kayboluyor.
+- **Sonuç:** Model hatası tabanı, öğrenme sırasında da açık olduğu sürece dedektörü fazla uyumlu yapıyor. Bu, 8C'deki "sağlam ama unutkan" ucuna geri kaymak demek. Bu biçimiyle kabul edilemez.
+- **Düzeltme yönü:** Tabanı yalnızca **dondurulmuş** kanallara uygulamak. Amaç zaten serbest bırakmaydı. Kanal öğrenirken model katı kalır, kayma b'ye emilmez. Kanal donduğunda tahmin varyansı model hatası kadar büyür ve serbest bırakma mümkün olur. Gerçek bir kayma t ile büyür, b'den gelen tahmin belirsizliği √t ile. Bu yüzden gerçek arıza yine suçlu kalmalı. Bunu önceden kayda geçiriyorum: bu bir hipotez, v5'te ölçülecek.
+
+**Bulgu 10D: Belirsiz durum dürüst, ama ısıtıcı tuzağındaki eski başarıyı da belirsizliğe çeviriyor olabilir.**
+- Figür 2 ve 3'te, tohum 0'da, ısıtıcı aralığının neredeyse tamamı "T amb" (belirsiz) olarak işaretli. v1'de ısıtıcı 24/24 blok BME'ye yükleniyordu (Bulgu 7).
+- v4'te ısıtıcı sırasında BME suçlama oranı CSV'ye yazılmadı. Bu yüzden düşüşün 2. düzeltmeden mi (eski suçlamalar zaten gerçek ayrıma mı dayanıyordu) yoksa 3. düzeltmenin b emiliminden mi geldiği bilinmiyor. Ölçülmesi gerekiyor.
+- Belirsizlik, yanlış bir suçlamadan iyidir. Ama sık görülen bir olayda sürekli "bilmiyorum" demek de değerli bir çıktı değil. ADR-010'daki kalibre edilmiş güven, bu iki ucun arasını doldurmalı.
+
+**Bulgu 10E: 10 tohum yeni bir arıza biçimi gösterdi: koşunun başından itibaren kilitli kanal.**
+- Bazı koşularda yanlış alarm oranı **tam olarak 60,0/saat**. Blok süresi 1 dk, yani tek bir kanal puanlanan **bütün** bloklarda suçlu.
+- Bunu yaşayan koşular:
+  - v3 ve v4nf: beyaz tohum 9 ve renkli tohum 8.
+  - v4: beyaz tohum 4 ve renkli tohum 8.
+- Senaryodan bağımsız: aynı tohumda base, hold-fault, accel-step, two-faults ve bme-fault'ta aynı oran var. Isıtıcı sırasındaki suçlamaların kanal dağılımına göre suçlu kanal **gx**: v4 beyazda 150, renklide 175 blok, hepsi gx.
+- 0–4 tohumlarında beyaz gürültüde görülmediği için v3'te fark edilmemişti; tek görünür izi tohum 3'teki 44/saat'ti (9B). **5 tohum yetmezdi; 9B'deki uyarı doğrulandı.**
+- **Mekanizma bilinmiyor.** En olası adaylar, sıcaklığın sabit olduğu ilk saatteki ısınma dönemi ya da birim bazında örneklenen sıcaklık katsayısının dedektörün varsaydığı sb sınırını aşması. Bunun için bir tanı scripti gerekiyor.
+
+**Genel değerlendirme:**
+- 1. ve 2. düzeltme kalıcı olmalı. İkisi de bir mekanizmayı doğruladı ve yanlış yorumları kaldırdı.
+- 3. düzeltme bu biçimiyle geri alınmalı; yerine "yalnızca dondurulmuş kanallarda taban" denenmeli.
+- Yeni iki sorun var: CUSUM doyması (10B) ve baştan kilitlenen kanal (10E).
+- Genellenebilirlik uyarısı (7D, 9) aynen geçerli.
+
+**v5 için yön:**
+1. CUSUM'ı üstten sınırlamak: S ≤ 2h (10B).
+2. Model hatası tabanını yalnızca dondurulmuş kanallara uygulamak (10C).
+3. Tanı: beyaz tohum 4 ve 9, renkli tohum 8'de gx'in neden baştan kilitlendiği (10E).
+4. Isıtıcı sırasında BME suçlama ve belirsizlik oranlarını kaydetmek (10D).
+5. Ardından kabul ölçütlerini sonuçları görmeden yazmak ve ayrılmış test kümesini kurmak.
+
+---
+
 ## Açık konular
 
 - [x] ~~Termal katsayıları ICM-42688-P veri sayfasından teyit etmek~~ → Bulgu 4
@@ -737,10 +845,14 @@ Gösterilmeyen beyaz satırlarda (accel-step, two-faults, day-cycle) üç dedekt
 - [x] ~~Faktöriyel değerlendirme: her tuzak için beyaz ve renkli gürültü (Bulgu 8F)~~ → Bulgu 9
 - [ ] EMI için G1 dışı kaldıraçlar: `‖m‖` sabitliği ve üç yönlü oylama (Bulgu 8D)
 - [x] ~~Model-uyuşmazlığı testi: simülatörde play operatöründen farklı bir histerezis biçimi (Bulgu 7D, ADR-012)~~ → Bulgu 9H: v1 ve v3 beyaz gürültüde başarısız
-- [ ] **G1 v4:** ortak mod kuralı farklı fiziksel sensörler gerektirsin (9E); sıcaklık kaynağı beraberliğinde belirsiz durum (9F); model hatası için süreç gürültüsü tabanı (9H); dondurulmuş kanalda sıcaklığa bağlı hata (9I)
-- [ ] Değerlendirme: tuzak ölçütlerine olay sonrası penceresi; yanlış alarmı medyan ve en kötü tohumla raporlamak; tohum sayısını artırmak (9B, 9E)
-- [ ] Renkli gürültüde ısıtıcı sırasında my suçlamasının nedenini bulmak (9B)
-- [ ] Blok düzeyinde doğrulama: EMI sırasında `R.common`, BME arızasında `blameIcm` oranı (9E, 9F mekanizmaları kod okumasına dayanıyor)
+- [x] ~~**G1 v4:** ortak mod kuralı farklı fiziksel sensörler gerektirsin (9E); sıcaklık kaynağı beraberliğinde belirsiz durum (9F); model hatası için süreç gürültüsü tabanı (9H); dondurulmuş kanalda sıcaklığa bağlı hata (9I)~~ → Bulgu 10 (taban bu biçimiyle reddedildi, 10C)
+- [x] ~~Değerlendirme: tuzak ölçütlerine olay sonrası penceresi; yanlış alarmı medyan ve en kötü tohumla raporlamak; tohum sayısını artırmak (9B, 9E)~~ → Bulgu 10
+- [x] ~~Renkli gürültüde ısıtıcı sırasında my suçlamasının nedenini bulmak (9B)~~ → Bulgu 10A (muhtemelen beraberlikte ICM'nin suçlanması)
+- [x] ~~Blok düzeyinde doğrulama: EMI sırasında `R.common`, BME arızasında `blameIcm` oranı~~ → Bulgu 10A, iki mekanizma da doğrulandı
+- [ ] **G1 v5:** CUSUM üst sınırı (10B); model hatası tabanı yalnızca dondurulmuş kanallarda (10C); ısıtıcı sırasında BME suçlama ve belirsizlik ölçütü (10D)
+- [ ] Tanı: beyaz tohum 4 ve 9, renkli tohum 8'de gx'in baştan kilitlenmesi (10E)
+- [ ] G1 simülasyon aşamasının kabul ölçütlerini sonuçları görmeden yazmak; ayrılmış senaryo ve tohum kümesiyle tek seferlik test
+- [ ] Bellek bütçesi: v4'te 90 Kalman filtresi × 14 sayı ≈ 5 KB (float) veya ~2,5 KB (16 bit), ATmega328P'nin 2 KB'ını aşıyor; sadeleştirme gerekiyor (örneğin genişlik ızgarası)
 - [ ] "En küçük algılanabilir kayma hızı"nı K ve izin verilen gecikme cinsinden formel tanıma yazmak (9D)
 - [ ] G1 skorunu kalibre edilmiş bir güven skoruna çevirmek (ECE, reliability diagram; ADR-010)
 - [ ] "Model yapısı uyumsuzluğu" (Bulgu 7C) ve "termal uyarım yetersizliği" (Bulgu 6F) koşullarını teşhis kestiricisinin formel tanımına yazmak ([§14.2/4](mihenk.md))

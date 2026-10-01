@@ -12,7 +12,7 @@ Findings and the reasoning behind every script are logged in [`../bulgular.md`](
 |---|---|---|
 | [`models/`](models/) | Reusable model functions: per-sensor thermal model, synthetic node | No — called by scripts |
 | [`checks/`](checks/) | Self-checks of the reference model (Allan terms, thermal model) | Yes |
-| [`g1/`](g1/) | G1 (thermal common-mode decomposition): shared helpers at the root, one folder per version (`v0/` … `v3/`) | `g1_prototype_*.m` |
+| [`g1/`](g1/) | G1 (thermal common-mode decomposition): shared helpers at the root, one folder per version (`v0/` … `v4/`) | `g1_prototype_*.m` |
 | [`figures/`](figures/) | Figures referenced from `bulgular.md` | — |
 
 | File | Kind | What |
@@ -36,6 +36,8 @@ Findings and the reasoning behind every script are logged in [`../bulgular.md`](
 | `g1/v3/g1_detect_v3.m` | function | v3 detector: Kalman null model from Allan parameters + signed CUSUM |
 | `g1/v3/g1_allan_fit.m` | function | Allan variance fit (N, K, Gauss-Markov) -> block-level Kalman parameters |
 | `g1/v3/g1_scenarios_v3.m` | function | v3 scenario set (v2 scenarios without the noise setting) |
+| `g1/v4/g1_prototype_v4.m` | script | v1, v3, v4 and ablation v4nf over the v3 scenarios x white/colored x 10 seeds |
+| `g1/v4/g1_detect_v4.m` | function | v4 detector: v3 + multi-element common mode, ambiguous source state, model-error floor |
 
 Detectors receive only firmware-visible inputs.
 
