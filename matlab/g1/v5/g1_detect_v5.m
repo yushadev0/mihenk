@@ -1,6 +1,6 @@
 function R = g1_detect_v5(D, NM, opt)
-%G1_DETECT_V5 G1 v5 detector: v4 (g1_detect_v4.m) with two changes from
-%   bulgular.md section 10. Fixes 1 and 2 of v4 stay as they are.
+%G1_DETECT_V5 G1 v5 detector: v4 (g1_detect_v4.m) with four changes from
+%   bulgular.md section 10 (A-D). Fixes 1 and 2 of v4 stay as they are.
 %
 %   A. CUSUM cap (opt.Smax, finding 10B). During a large excursion (EMI:
 %      |z| in the hundreds for ~20 blocks) the CUSUM collected thousands of
@@ -20,6 +20,23 @@ function R = g1_detect_v5(D, NM, opt)
 %      drift grows like t, the floor's prediction std like sqrt(t), so a
 %      fault should stay flagged. "always" restores v4, "off" v4nf.
 %
+%   C. Growth-based release (opt.release, finding 10F). A frozen channel's
+%      innovation does not return to zero after a benign deviation: the
+%      deviation and the prediction std grow alike, z stays at ~0.8 with a
+%      fixed sign, and a CUSUM with k = 0.5 never drains. Under a drift z
+%      grows like sqrt(t). So a flagged channel is released (CUSUM reset)
+%      when, over the last Wrel = 30 blocks, z has no significant growth
+%      (one-sided t-test of the slope of z vs sqrt(time since freeze),
+%      alpha 0.01) and |z| < zU. Wrel and alpha were declared before any
+%      v5 result was seen.
+%
+%   D. CUSUM reset on a model switch (opt.resetOnSwitch, 10F). Before the
+%      first thermal excitation the hysteresis width is not identified; at
+%      the first ramp the wrong width gives a 3-4 sigma transient that can
+%      reach the alarm level before the width choice catches up. When the
+%      width choice of either reference changes, the CUSUM of unflagged
+%      channels is reset.
+%
 %   Everything else is v4 unchanged. Uses only firmware-visible fields of
 %   D (Y, TicmB, TbmeB, Ticm, S), NM and the channel grouping.
 
@@ -35,6 +52,10 @@ o = struct( ...
     'modelHorizon', 24*60, ...      % blocks over which b, c may move by sb (v4 fix 3)
     'floorMode',   "frozen", ...    % model-error floor: "frozen" (B) | "always" (v4) | "off" (v4nf)
     'Smax',        20, ...          % CUSUM cap (A), 2h; Inf = v4
+    'release',     true, ...        % growth-based release test for flagged channels (C)
+    'Wrel',        30, ...          % ... window [blocks] (declared before any v5 result)
+    'tCrit',       2.467, ...       % ... one-sided t, alpha 0.01, df = Wrel - 2 = 28
+    'resetOnSwitch', true, ...      % reset CUSUM of unflagged channels when the width choice changes (D)
     'lambda',      1 - 1/(24*60), ...  % forgetting of grid scores and T-source model: ~24 h
     'cusum',       "signed", ...    % "signed" (Page, two one-sided) | "abs" (v1: |z| - kappa)
     'kSigned',     0.5, ...         % signed CUSUM reference: detects a 1-sigma mean shift
@@ -110,8 +131,12 @@ R.zT = nan(nB, 1);   R.tauBest = nan(nB, 1);  R.wBest = nan(nB, 2);
 R.common = false(nB, 1);
 R.sensorFlag = false(nB, nC);
 R.tempFlag = false(nB, 1);  R.blameBme = R.tempFlag;  R.blameIcm = R.tempFlag;  R.tempAmbig = R.tempFlag;
+R.released = false(nB, nC);  R.switchReset = false(nB, 1);
 
 Sp = zeros(1, nC);  Sn = Sp;
+iwPrev = [];                       % width choice of the previous block (D)
+zHist  = zeros(o.Wrel, nC);        % signed z of flagged channels, ring buffer (C)
+nFroz  = zeros(1, nC);             % blocks flagged in a row (C)
 for k = 1:nB
     decide = k > o.warm;
 
@@ -179,6 +204,16 @@ for k = 1:nB
     brk = a > o.zU;
     com = decide && moved && nnz(brk) >= o.nCommon && ...
         numel(unique(o.group(brk))) >= 2;          % >= 2 sensing elements (fix 1)
+    zRaw = zs;                                     % before common-mode zeroing (C)
+
+    % (D) innovations collected under a rejected width hypothesis are no
+    % evidence against a channel: reset the CUSUM of unflagged channels
+    % when the width choice of either reference changes
+    sw = o.resetOnSwitch && ~isempty(iwPrev) && any(iwb(:) ~= iwPrev(:));
+    if sw
+        Sp(~flag) = 0;  Sn(~flag) = 0;
+    end
+    iwPrev = iwb;
     if o.cusum == "signed"
         if com, zs(:) = 0; end                     % drain both sides
         Sp = max(0, Sp + zs - o.kSigned);
@@ -192,6 +227,35 @@ for k = 1:nB
     if ~decide, Sp(:) = 0; Sn(:) = 0; end
     S = max(Sp, Sn);
     flag = decide & (S > o.h);
+
+    % (C) release test. A frozen channel's innovation stays at a constant
+    % level when the deviation is benign (prediction std and deviation grow
+    % alike, finding 10F), but grows like sqrt(t) under a drift. Over the
+    % last Wrel flagged blocks, regress the signed z (oriented to the alarm
+    % side) on sqrt(blocks since freeze); release unless the slope is
+    % significantly positive (one-sided t-test) or any |z| >= zU.
+    rel = false(1, nC);
+    nFroz(~flag) = 0;
+    for c = find(flag)
+        nFroz(c) = nFroz(c) + 1;
+        zHist(mod(nFroz(c) - 1, o.Wrel) + 1, c) = zRaw(c);
+        if ~o.release || nFroz(c) < o.Wrel, continue; end
+        n  = (nFroz(c) - o.Wrel + 1 : nFroz(c))';
+        zw = zHist(mod(n - 1, o.Wrel) + 1, c);
+        y  = sign(sum(zw)) * zw;
+        u  = sqrt(n) - mean(sqrt(n));
+        beta = (u' * (y - mean(y))) / (u' * u);
+        res  = y - mean(y) - beta * u;
+        se   = sqrt((res' * res) / (o.Wrel - 2) / (u' * u));
+        tst  = beta / max(se, eps);
+        if tst < o.tCrit && max(abs(zw)) < o.zU
+            rel(c) = true;
+        end
+    end
+    if any(rel)
+        Sp(rel) = 0;  Sn(rel) = 0;  S(rel) = 0;
+        flag(rel) = false;  nFroz(rel) = 0;
+    end
 
     % --- measurement updates (gated), for every width candidate
     for r = 1:2
@@ -226,6 +290,7 @@ for k = 1:nB
     R.common(k) = com;
     R.score(k, :) = S;  R.sensorFlag(k, :) = flag;
     R.tempFlag(k) = tf;  R.blameBme(k) = bB;  R.blameIcm(k) = bI;  R.tempAmbig(k) = amb;
+    R.released(k, :) = rel;  R.switchReset(k) = sw;
 end
 
 R.name    = "G1 v5";

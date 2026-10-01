@@ -39,8 +39,9 @@ Findings and the reasoning behind every script are logged in [`../bulgular.md`](
 | `g1/v4/g1_prototype_v4.m` | script | v1, v3, v4 and ablation v4nf over the v3 scenarios x white/colored x 10 seeds |
 | `g1/v4/g1_detect_v4.m` | function | v4 detector: v3 + multi-element common mode, ambiguous source state, model-error floor |
 | `g1/v4/g1_diag_gx_lock.m` | script | Diagnosis of the channel locked from the start (bulgular 10E/10F) |
-| `g1/v5/g1_prototype_v5.m` | script | v3, v4nf, v5a, v5 over the v3 scenarios x white/colored x 10 seeds (not run yet) |
-| `g1/v5/g1_detect_v5.m` | function | v5 detector: v4 + CUSUM cap, model-error floor only on frozen channels |
+| `g1/v5/g1_prototype_v5.m` | script | v4nf, v5 and ablations v5a, v5noC, v5noD over the v3 scenarios x white/colored x 10 seeds |
+| `g1/v5/g1_smoke_v5.m` | script | Quick equivalence and run check before the v5 evaluation (no metrics) |
+| `g1/v5/g1_detect_v5.m` | function | v5 detector: v4 + CUSUM cap, floor only on frozen channels, growth-based release, reset on model switch |
 
 Detectors receive only firmware-visible inputs.
 

@@ -890,7 +890,8 @@ Bu script ve aşağıdaki iki ek kontrol, kullanıcının bu görev için verdi�
 - [x] ~~Blok düzeyinde doğrulama: EMI sırasında `R.common`, BME arızasında `blameIcm` oranı~~ → Bulgu 10A, iki mekanizma da doğrulandı
 - [ ] **G1 v5:** CUSUM üst sınırı (10B); model hatası tabanı yalnızca dondurulmuş kanallarda (10C); ısıtıcı sırasında BME suçlama ve belirsizlik ölçütü (10D). Kod hazır, duman testi geçti, tam değerlendirme koşulmadı.
 - [x] ~~Tanı: beyaz tohum 4 ve 9, renkli tohum 8'de gx'in baştan kilitlenmesi (10E)~~ → Bulgu 10F
-- [ ] v5'e eklenmesi önerilenler (10F): C) z'nin büyümesine bakan serbest bırakma testi; D) model seçimi değişince CUSUM sıfırlama veya "model hazır değil" durumu; ilişkili artıklar için ARL0 / beyazlatma
+- [x] ~~v5'e C (büyümeye bakan serbest bırakma; W = 30 blok, tek yönlü α = 0,01, sonuçlardan önce ilan edildi) ve D (model seçimi değişince CUSUM sıfırlama) eklemek (10F)~~ → `g1_detect_v5.m`
+- [ ] İlişkili artıklar (10F tetiği): ikinci Gauss-Markov terimi ya da beyazlatma; v5'te yalnızca tanı olarak ölçülüyor (`innovAC1max`)
 - [ ] Beyaz tohum 9'da (v3, v4nf) mz'nin 1,39 saatte kilitlenmesinin tetiğini bulmak (10F)
 - [ ] G1 simülasyon aşamasının kabul ölçütlerini sonuçları görmeden yazmak; ayrılmış senaryo ve tohum kümesiyle tek seferlik test
 - [ ] Bellek bütçesi: v4'te 90 Kalman filtresi × 14 sayı ≈ 5 KB (float) veya ~2,5 KB (16 bit), ATmega328P'nin 2 KB'ını aşıyor; sadeleştirme gerekiyor (örneğin genişlik ızgarası)

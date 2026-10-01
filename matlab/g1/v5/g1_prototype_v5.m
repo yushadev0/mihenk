@@ -1,17 +1,20 @@
 %% g1_prototype_v5.m
-% G1 v5: v4 with the CUSUM cap and the model-error floor only on frozen
-% channels (g1_detect_v5.m; bulgular.md section 10), on the v3 factorial
-% scenario set with 10 seeds.
+% G1 v5: v4 with changes A-D of g1_detect_v5.m (CUSUM cap, model-error
+% floor only on frozen channels, growth-based release, CUSUM reset on a
+% model switch; bulgular.md section 10), on the v3 factorial scenario set
+% with 10 seeds.
 %
-% 0. Equivalence: v5 with v4 options (floorMode "always", Smax Inf) must
+% 0. Equivalence: v5 with v4 options (A-D off, floor "always") must
 %    reproduce g1_detect_v4 exactly.
 % 1. Characterization: the same 12 h static logs and Allan fit as v3.
-% 2. Evaluation: 8 scenarios x 2 noise types x 10 seeds, detectors v3,
-%    v4nf (v4 without its floor), v5a (v4nf + CUSUM cap, ablation of the
-%    frozen-only floor) and v5, on the blocks scored in v3. Written to
-%    g1_v5_results.csv.
-% 3. Regression: v3/v4nf rows must equal g1_v4_results.csv.
-% Runtime: roughly 20-35 min.
+% 2. Evaluation: 8 scenarios x 2 noise types x 10 seeds, detectors v4nf
+%    (v4 without its floor, the reference), v5 and three ablations of it:
+%    v5a (no floor, B off), v5noC (no release test), v5noD (no switch
+%    reset); on the blocks scored in v3. Written to g1_v5_results.csv,
+%    with the lag-1 autocorrelation of the v5 innovations as a diagnostic
+%    of the correlated-innovation trigger (10F).
+% 3. Regression: v4nf rows must equal g1_v4_results.csv.
+% Runtime: roughly 30-45 min.
 
 clear; clc; close all;
 addpath(fileparts(fileparts(mfilename('fullpath'))));   % g1/
@@ -39,7 +42,7 @@ seedS = @(S, s) setfield(setfield(setfield(setfield(S, ...
     'unitSeed', 7 + 100*s), 'icmSeed', 11 + 100*s), 'magSeed', 12 + 100*s), 'noiseSeed', 13 + 100*s);
 
 %% 0. Equivalence: v5 with v4 options == v4
-asV4 = struct('floorMode', "always", 'Smax', Inf);
+asV4 = struct('floorMode', "always", 'Smax', Inf, 'release', false, 'resetOnSwitch', false);
 eqWorst = 0;
 for i = [1, find([SC.name] == "emi"), find([SC.name] == "hyst-relax")]
     for nz = noises
@@ -56,7 +59,7 @@ fprintf('Equivalence v5(v4 options) vs v4: max difference %.2g %s\n\n', eqWorst,
 
 %% 2. Evaluation
 seeds = 0:9;
-dets  = ["v3", "v4nf", "v5a", "v5"];         % v5a: v5 without the frozen-only floor (ablation)
+dets  = ["v4nf", "v5a", "v5noC", "v5noD", "v5"];   % v5 and its ablations
 nS    = numel(SC);
 names = Dc.names;
 
@@ -71,10 +74,14 @@ for i = 1:nS
             S = SC(i).S;  S.noise = nz;
             D = simulate_node(seedS(S, s));
             nmz = NM.(char(nz));
-            R = {g1_detect_v3(D, nmz), g1_detect_v4(D, nmz, struct('modelHorizon', Inf)), ...
-                 g1_detect_v5(D, nmz, struct('floorMode', "off")), g1_detect_v5(D, nmz)};
+            R = {g1_detect_v4(D, nmz, struct('modelHorizon', Inf)), ...
+                 g1_detect_v5(D, nmz, struct('floorMode', "off")), ...
+                 g1_detect_v5(D, nmz, struct('release', false)), ...
+                 g1_detect_v5(D, nmz, struct('resetOnSwitch', false)), g1_detect_v5(D, nmz)};
             % same scoring window as v3 (v0 decides from block 101 on)
-            both = R{1}.valid & R{2}.valid & R{3}.valid & R{4}.valid & g1_detect_v0(D).valid;
+            both = g1_detect_v0(D).valid;
+            for d = 1:numel(R), both = both & R{d}.valid; end
+            ac = innovAC(R{end}, both, D.truth.fault);
             for d = 1:numel(dets)
                 Rc = R{d};  Rc.valid = both;
                 M  = g1_evaluate(D, Rc);
@@ -88,10 +95,10 @@ for i = 1:nS
                     M.falsePerH, M.heaterSensorFlags, M.tempFlagsOutside, ...
                     M.emiMagFlags, M.tempFaultBlameBme, M.tempFaultSensorFlags, ...
                     M.emiAfterMagFlags, M.emiCommon, M.tempFaultBlameIcm, M.tempFaultAmbig, ...
-                    M.heaterBlameBme / M.heaterBlocks, M.heaterAmbig / M.heaterBlocks}; %#ok<SAGROW>
+                    M.heaterBlameBme / M.heaterBlocks, M.heaterAmbig / M.heaterBlocks, ac}; %#ok<SAGROW>
             end
-            heaterCh(in, :) = heaterCh(in, :) + sum(R{4}.sensorFlag & D.truth.heater & both, 1);
-            if s == 0, show.(char(extractBefore(nz, 2))){i} = {R{4}, D}; end
+            heaterCh(in, :) = heaterCh(in, :) + sum(R{end}.sensorFlag & D.truth.heater & both, 1);
+            if s == 0, show.(char(extractBefore(nz, 2))){i} = {R{end}, D}; end
         end
     end
     fprintf('%-12s done (%.0f s)\n', SC(i).name, toc);
@@ -100,15 +107,15 @@ end
 T = cell2table(rows, 'VariableNames', {'scenario', 'noise', 'seed', 'detector', 'detected', ...
     'delayMaxMin', 'coverage', 'falsePerH', 'heaterSensorFlags', 'tSrcFlagsOutside', ...
     'emiMagFlagShare', 'bmeFaultBlameShare', 'bmeFaultSensorFlagShare', ...
-    'emiAfterMagFlagShare', 'emiCommonShare', 'bmeFaultBlameIcmShare', 'bmeFaultAmbigShare', 'heaterBlameBmeShare', 'heaterAmbigShare'});
+    'emiAfterMagFlagShare', 'emiCommonShare', 'bmeFaultBlameIcmShare', 'bmeFaultAmbigShare', 'heaterBlameBmeShare', 'heaterAmbigShare', 'innovAC1max'});
 T.scenario = string(T.scenario);
 T.noise    = string(T.noise);
 T.detector = string(T.detector);
 writetable(T, fullfile(here, 'g1_v5_results.csv'));
 
-%% 3. Regression against v4 (v3 and v4nf, all seeds)
+%% 3. Regression against v4 (v4nf, all seeds)
 V3 = readtable(fullfile(here, '..', 'v4', 'g1_v4_results.csv'), 'TextType', 'string');
-V3 = V3(ismember(V3.detector, ["v3", "v4nf"]), :);
+V3 = V3(V3.detector == "v4nf", :);
 metrics = ["detected", "delayMaxMin", "coverage", "falsePerH", "heaterSensorFlags", ...
     "tSrcFlagsOutside", "emiMagFlagShare", "bmeFaultBlameShare", "bmeFaultSensorFlagShare", ...
     "emiAfterMagFlagShare", "emiCommonShare", "bmeFaultBlameIcmShare", "bmeFaultAmbigShare"];
@@ -171,6 +178,13 @@ for nz = noises
     trap(B, nz, dets, 'bme-fault: share blaming ICM', "bmeFaultBlameIcmShare", @pct);
     trap(B, nz, dets, 'bme-fault: share ambiguous', "bmeFaultAmbigShare", @pct);
     trap(B, nz, dets, 'bme-fault: share with a sensor blamed', "bmeFaultSensorFlagShare", @pct);
+end
+
+T5 = T(T.detector == "v5", :);
+for nz = noises
+    v = T5.innovAC1max(T5.noise == nz);
+    fprintf('\nv5 innovations, max lag-1 autocorrelation over channels [%s]: median %.2f, max %.2f, runs > 0.3: %d of %d\n', ...
+        nz, median(v), max(v), nnz(v > 0.3), numel(v));
 end
 
 fprintf('\nv5 heater flags per channel (sum over scenarios and seeds)\n');
@@ -243,4 +257,16 @@ function trap(T, nz, dets, label, var, fmt)
     v = arrayfun(@(d) mean(T.(var)(T.noise == nz & T.detector == d), 'omitnan'), dets);
     c = arrayfun(fmt, v, 'UniformOutput', false);
     fprintf('  %-44s%s\n', label, strjoin(compose("%6s", string(c)), ""));
+end
+
+function ac = innovAC(R, scored, fault)
+    % Largest lag-1 autocorrelation over channels of the v5 innovations
+    % (vs ICM) on scored, fault-free blocks - diagnostic of 10F's trigger
+    ok = scored & ~any(fault, 2);
+    ac = -Inf;
+    for c = 1:size(R.zI, 2)
+        z = R.zI(ok, c);
+        z = z(~isnan(z));
+        if numel(z) > 10, cc = corrcoef(z(1:end-1), z(2:end)); ac = max(ac, cc(1, 2)); end
+    end
 end
