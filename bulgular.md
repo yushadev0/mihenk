@@ -60,6 +60,8 @@ Rapor bu tuzakları "müfredat sınıf 8" olarak topluyor. G1'in değeri kolay s
 | 8 | [`g1_prototype_v2.m`](matlab/g1/v2/g1_prototype_v2.m) | v0 ve v1'in 9 senaryo × 5 tohumla sınavı | ✅ v1 beyaz gürültüde tohumdan bağımsız · ❌ v1 renkli gürültüde çöküyor (saatte 115–195 yanlış alarm) · ❌ EMI çözülemiyor |
 | 9 | [`g1_prototype_v3.m`](matlab/g1/v3/g1_prototype_v3.m) | G1 v3: Allan'dan türetilmiş Kalman sıfır modeli, faktöriyel değerlendirme (8 senaryo × 2 gürültü × 5 tohum) | ✅ renkli gürültüde yanlış alarm ~10× azaldı, kapsama korundu · ❌ EMI sonrası kilitlenme, BME suçu ICM'ye gidiyor, model uyuşmazlığında beyaz gürültüde kilitlenme |
 | 10 | [`g1_prototype_v4.m`](matlab/g1/v4/g1_prototype_v4.m) | G1 v4: çok elemanlı ortak mod, belirsiz kaynak durumu, model hatası tabanı (10 tohum) | ✅ 9E ve 9F mekanizmaları doğrulandı · ✅ hyst-relax kilitlenmesi çözüldü · ❌ model hatası tabanı gecikmeyi ~45 dk artırıyor · ❌ CUSUM doyması, baştan kilitli kanal (tanı 10F: ilişkili artık + donmuş z sıfıra dönmüyor; model tanımlanmadan dondurma) |
+| 11 | [`g1_acceptance_test.m`](matlab/g1/test/g1_acceptance_test.m) | G1 simülasyon aşamasının kabul ölçütleri ve ayrılmış test kümesi (önceden ilan) | Ölçütler, senaryolar ve test v5 sonuçlarından önce commit'lendi |
+| 12 | [`g1_prototype_v5.m`](matlab/g1/v5/g1_prototype_v5.m) | G1 v5 geliştirme koşusu: CUSUM üst sınırı, dondurulmuş kanalda taban, serbest bırakma testi, model değişiminde sıfırlama | ✅ aday v5 · ✅ baştan kilitlenme gitti · ❌ geliştirmede K1b, K3a, K3c, K3d kalıyor · ⚠️ basamak arızası serbest bırakılıyor |
 
 **Kritik kurallar** (MATLAB referans modelinde her zaman uygulanacak):
 
@@ -938,6 +940,73 @@ Hepsi 8 saatlik simülasyon. Isıtıcı patlaması her senaryoda var, ama zaman�
 
 ---
 
+## 12. G1 v5: geliştirme koşusu ve aday seçimi
+
+**Script:** [`matlab/g1/v5/g1_prototype_v5.m`](matlab/g1/v5/g1_prototype_v5.m) · **Dedektör:** [`g1_detect_v5.m`](matlab/g1/v5/g1_detect_v5.m)
+**Ham sonuçlar:** [`g1_v5_results.csv`](matlab/g1/v5/g1_v5_results.csv) (800 satır: 8 senaryo × 2 gürültü × 10 tohum × 5 dedektör) · **Konsol çıktısı:** [`g1_v5_output.txt`](matlab/g1/v5/g1_v5_output.txt)
+**Figürler:** [`g1_v5_1.png`](matlab/figures/g1_v5_1.png) (kapsama ve yanlış alarm), [`g1_v5_2.png`](matlab/figures/g1_v5_2.png) (v5 suçlama grafiği, renkli, tohum 0), [`g1_v5_3.png`](matlab/figures/g1_v5_3.png) (aynısı, beyaz)
+
+**Ne yapıldı:** §11'deki 1. aşama. v4nf (karşılaştırma), v5 ve üç ablasyonu (v5a: taban yok, v5noC: serbest bırakma testi yok, v5noD: model değişiminde sıfırlama yok) geliştirme kümesinde koşuldu. Koşuyu kullanıcı çalıştırdı.
+
+**Kontroller:**
+- **Eşdeğerlik:** v5, v4'ün seçenekleriyle v4'e eşit; fark 0.
+- **Regresyon:** v4nf'nin 160 satırı v4 CSV'siyle karşılaştırıldı, en büyük göreli fark 3,3e-15. Bu, simülatördeki çoklu ısıtıcı değişikliğinin eski yolu bozmadığını da doğruluyor.
+
+**Aday seçimi (§11'deki kurala göre): v5.** Her ablasyon en az bir geliştirme ölçütünde v5'ten kötü:
+- **v5noD:** Beyaz gürültüde en kötü tohum 3,8/saat (v5: 1,9).
+- **v5a:** Beyaz gürültüde en kötü tohum 2,7/saat; hyst-relax / beyaz medyanı 89/saat (v5: 25).
+- **v5noC:** Her yerde belirgin biçimde kötü; en kötü tohum 32–60/saat.
+
+**v5'in geliştirme kümesindeki durumu** (kabul ölçütlerinin geliştirme karşılıkları; hold-fault K2d yerine sayıldı; K1c bu CSV'de ölçülmedi):
+
+| Ölçüt | Beyaz | Renkli | Sonuç |
+|---|---|---|---|
+| K1a yanlış alarm medyanı ≤ 0,5 | 0,00 | 0,16 | ✅ |
+| K1b her koşu ≤ 6 | 35,1 | 50,1 | ❌ (EMI ve hyst-relax; renklide tohum 0 her senaryoda 6,47) |
+| K2a 120 dk içinde tespit ≥ %95 | %100 | %100 | ✅ |
+| K2b gecikme medyanı (≤ 15 / ≤ 40 dk) | 4,5 | 16,5 | ✅ |
+| K2c kapsama ≥ %80 | %98 | %87 | ✅ (accel-step / renkli %76) |
+| K2d yavaş kayma, 180 dk içinde ≥ %80 | %100 | %90 | ✅ |
+| K3a ısıtıcı ≤ 1 blok/koşu | **1,54** | 0,00 | ❌ beyaz |
+| K3c EMI sonrası ≤ %10 | **%29** | **%29** | ❌ |
+| K3d BME arızasında hareket kanalı ≤ %5 | %0,0 | **%5,2** | ❌ renkli (kıl payı) |
+| K3e BME arızasında ICM ≤ %5 | %0,1 | %0,3 | ✅ |
+| K3f BME veya belirsiz ≥ %90 | %92 | %92 | ✅ |
+
+Not: Geliştirme CSV'sinde K1 hesabına EMI olayı sırasındaki manyetometre suçlamaları da giriyor; kabul testinde bunlar dışarıda bırakılıyor. Bu yüzden EMI satırları burada biraz kötü görünüyor. Ama EMI sonrası suçlama tek başına K1b'yi aşıyor.
+
+**Bulgu 12A: Serbest bırakma testi (C) çalışıyor; 10E'nin kilitlenmeleri büyük ölçüde gitti.**
+- Baştan kilitlenen kanalların (60/saat) hepsi yok oldu. Beyaz gürültüde en kötü tohum 60 → 1,9/saat, renklide 60,2 → 6,5/saat (EMI ve hyst-relax hariç).
+- Figür 2'de (tohum 0, renkli) az, ~4,8–5,5 saatte suçlanıp kendiliğinden serbest bırakılıyor; v4'te bu gün sonuna kadar sürüyordu.
+- hyst-relax / beyaz: medyan 152 → 25/saat. EMI sonrası suçlama %100 → %29.
+- v5noC ile karşılaştırma: C olmadan en kötü tohum 32–60/saat. Etkinin neredeyse tamamı C'den geliyor.
+
+**Bulgu 12B: C, basamak arızasını da "sağlam sapma" sanıp serbest bırakıyor. Bu yapısal bir sınır.**
+- accel-step / renkli'de kapsama %99 → %76. 10 tohumun 4'ünde kapsama %22–37'ye iniyor (v5noC'de hepsi %98–99).
+- **Mekanizma:** Basamak arızası sabit bir ofsettir; donmuş modelde z büyümez. C'nin ayırt ettiği şey tam olarak "büyüyen" ve "sabit" sapma. Basamak sabit olduğu için serbest bırakılıyor. Renkli gürültüde tahmin belirsizliği büyüdükçe |z| 3'ün altına iniyor ve test geçiyor. Beyazda belirsizlik büyümediği için |z| > 3 kalıyor, kanal suçlu kalıyor (kapsama %100).
+- **Sonuç:** "Büyüme" ölçütü kaymaları korur ama basamakları korumaz. Basamak arızasında doğru davranış tartışmalı: Kalıcı bir ofset "arıza" mı, yoksa yeniden kalibre edilip kabul edilecek "yeni normal" mi? Bu bir tasarım kararı. Teşhis kestiricisinin formel tanımında açıkça seçilmeli (§14.2/4); şimdiki hâliyle G1 renkli gürültüde basamağı bir süre sonra unutuyor.
+- Ayrılmış testte T2 bir basamak arızası. K2c'nin orada kalma riski var.
+
+**Bulgu 12C: Model yapısı uyuşmazlığı hâlâ yanlış alarm kaynağı; ama artık geçici.**
+- hyst-relax / beyaz, Figür 3: aşağı rampa 6 saatte bitince gx, gy, ax ve ay ~6,2–6,8 saat arasında suçlanıyor, sonra serbest bırakılıyor.
+- Gevşeme histerezisi, play operatörüyle temsil edilemiyor (7D). Dönüş noktalarında sistematik bir artık oluşuyor. C kilidi açıyor ama alarmı engellemiyor.
+- Bu alarmlar ortak mod olarak da yakalanmıyor. Birden çok algılama elemanından kanal bozuluyor, ama aynı blokta ≥ 3 kanal eşiği aşmıyor; artıklar zamana yayılıyor.
+
+**Bulgu 12D: EMI sonrası serbest bırakma yavaş ve bazen eksik.**
+- Beyaz gürültüde manyetometreler EMI bittikten sonra 0,5–1,5 saatte serbest bırakılıyor. Renklide (tohum 0) mx gün sonuna kadar suçlu kalıyor.
+- Yavaşlığın nedeni W = 30 blokluk pencere, ve pencere içinde |z| < 3 şartı. EMI sırasında |z| yüzlerle ölçülüyor, bu bloklar pencereden çıkana kadar serbest bırakma mümkün değil. Bu, W'nin önceden ilan edilmiş bir bedeli.
+
+**Bulgu 12E: Artık öz-ilişkisi, model uyuşmazlığının iyi bir göstergesi.**
+- Öz-ilişkisi 0,3'ü aşan koşular: beyaz gürültüde 19/80, bunların 10'u EMI ve 9'u hyst-relax. Renklide 17/80, bunların 10'u EMI, diğer senaryolarda koşu başına en fazla 1.
+- Yani yüksek öz-ilişki büyük ölçüde gürültüden değil, **modelin açıklayamadığı yapıdan** (EMI, yanlış histerezis biçimi) geliyor.
+- Bu, ADR-010'daki "model güvenilmez" durumu için doğrudan kullanılabilecek bir ölçü: kanal suçlanmadan önce "artıklar bağımsız mı?" diye sorulabilir. Henüz kullanılmadı; ileride değerlendirilmeli.
+
+**Bulgu 12F: Geliştirme kümesinde v5 kabul ölçütlerinin dördünde kalıyor.**
+- Kalanlar: K1b (her koşu ≤ 6), K3a (ısıtıcı, beyaz), K3c (EMI sonrası) ve K3d (BME arızası, renkli, kıl payı).
+- Bunların nedenleri biliniyor (12B–12D). Ayrılmış testte de büyük olasılıkla kalacaklar. Test, bunların yeni senaryolara genellenip genellenmediğini ve diğer ölçütlerin (ilk kez test edilen manyetometre arızası, BME basamağı) tutup tutmadığını gösterecek.
+
+---
+
 ## Açık konular
 
 - [x] ~~Termal katsayıları ICM-42688-P veri sayfasından teyit etmek~~ → Bulgu 4
@@ -967,7 +1036,10 @@ Hepsi 8 saatlik simülasyon. Isıtıcı patlaması her senaryoda var, ama zaman�
 - [ ] İlişkili artıklar (10F tetiği): ikinci Gauss-Markov terimi ya da beyazlatma; v5'te yalnızca tanı olarak ölçülüyor (`innovAC1max`)
 - [ ] Beyaz tohum 9'da (v3, v4nf) mz'nin 1,39 saatte kilitlenmesinin tetiğini bulmak (10F)
 - [x] ~~G1 simülasyon aşamasının kabul ölçütlerini sonuçları görmeden yazmak~~ → §11
-- [ ] v5 geliştirme koşusu → §11'deki kurala göre aday seçimi → ayrılmış test (`g1_acceptance_test.m`, tek atış)
+- [x] ~~v5 geliştirme koşusu → §11'deki kurala göre aday seçimi~~ → §12, aday v5
+- [ ] Ayrılmış test (`g1_acceptance_test.m`, tek atış)
+- [ ] Basamak arızasında doğru davranış: kalıcı ofset "arıza" mı, "yeni normal" mi? Formel tanıma yazmak (12B)
+- [ ] Artık öz-ilişkisini "model güvenilmez" durumu için kullanmayı değerlendirmek (12E, ADR-010)
 - [ ] Bellek bütçesi: v4'te 90 Kalman filtresi × 14 sayı ≈ 5 KB (float) veya ~2,5 KB (16 bit), ATmega328P'nin 2 KB'ını aşıyor; sadeleştirme gerekiyor (örneğin genişlik ızgarası)
 - [ ] "En küçük algılanabilir kayma hızı"nı K ve izin verilen gecikme cinsinden formel tanıma yazmak (9D)
 - [ ] G1 skorunu kalibre edilmiş bir güven skoruna çevirmek (ECE, reliability diagram; ADR-010)
