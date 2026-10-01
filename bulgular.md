@@ -110,7 +110,7 @@ Rapor bu tuzakları "müfredat sınıf 8" olarak topluyor. G1'in değeri kolay s
 **Script:** [`matlab/checks/allan_noise_terms_check.m`](matlab/checks/allan_noise_terms_check.m)
 **Commit:** `d0169a2`
 
-**Amaç:** Beyaz gürültü dışındaki iki stokastik terimin IEEE Std 952 tanımlarına uyup uymadığını görmek. Bu, olmazsa olmaz #4 ile ilgili ("Allan-tutarlı gürültü sentezi, 1/f dahil"). Bu doğrulama yapılmazsa [§11](mihenk.md)'deki "sentetik gürültünün kolaylığı" riski gerçekleşir: yöntem beyaz gürültüde çalışır, gerçek 1/f gürültüsünde çöker.
+**Amaç:** Beyaz gürültü dışındaki iki stokastik terimin IEEE Std 952 [R2] tanımlarına uyup uymadığını görmek. Bu, olmazsa olmaz #4 ile ilgili ("Allan-tutarlı gürültü sentezi, 1/f dahil"). Bu doğrulama yapılmazsa [§11](mihenk.md)'deki "sentetik gürültünün kolaylığı" riski gerçekleşir: yöntem beyaz gürültüde çalışır, gerçek 1/f gürültüsünde çöker.
 
 **Ne test ediyor:** Her terim **tek başına** simüle ediliyor ve Allan eğrisinin hem büyüklüğü hem eğimi kontrol ediliyor.
 
@@ -123,7 +123,7 @@ Rapor bu tuzakları "müfredat sınıf 8" olarak topluyor. G1'in değeri kolay s
 - Değerler yer tutucu (`assumed`): K = 20 °/h/√h, B = 5 °/h. Her terim tek başına koşulduğu için yalnızca ölçülen/beklenen oranı önemli.
 - A durumu: 100 Hz, 2 saat, `single-sided` ve `double-sided` ayarları yan yana. K, `σ·√(3/τ)` değerinin medyanından kestiriliyor.
 - B durumu: varsayılan `BiasInstabilityCoefficients` ile. Taban değeri τ ∈ [1 s, T/10] aralığındaki medyan Allan değeri.
-- C durumu: `fractalcoef(2000, 1)` ile (Kasdin 1/f filtresi, 2000 kutup). Maliyeti düşük tutmak için 10 Hz ve 4 saat. Taban değeri τ ∈ [1, 100] s aralığından.
+- C durumu: `fractalcoef(2000, 1)` ile (Kasdin 1/f filtresi [R3], 2000 kutup). Maliyeti düşük tutmak için 10 Hz ve 4 saat. Taban değeri τ ∈ [1, 100] s aralığından.
 - Eğim, log-log düzlemde doğrusal fit ile hesaplanıyor.
 - Sabit tohumlar kullanılıyor.
 
@@ -212,7 +212,7 @@ Sonuç olarak, termal terim çıkarılmadan hesaplanan eğri uzun τ'larda yüks
 ## 4. ICM-42688-P veri sayfası teyidi
 
 **Script:** yok. Bu girdi, veri sayfasından yapılan parametre teyidinin kaydıdır.
-**Kaynak:** TDK InvenSense, *ICM-42688-P Datasheet*, DS-000347, **Rev 1.6 (06/20/2021)**. Dosya repoda: [`docs/ds-000347-icm-42688-p-v1.6.pdf`](docs/ds-000347-icm-42688-p-v1.6.pdf). Değerler Tablo 1 (gyro, s. 11), Tablo 2 (ivmeölçer, s. 12), Tablo 4 (sıcaklık sensörü, s. 14) ve §4.13'ten alındı.
+**Kaynak:** TDK InvenSense, *ICM-42688-P Datasheet*, DS-000347, **Rev 1.6 (06/20/2021)** [R1]. Dosya repoda: [`docs/ds-000347-icm-42688-p-v1.6.pdf`](docs/ds-000347-icm-42688-p-v1.6.pdf). Değerler Tablo 1 (gyro, s. 11), Tablo 2 (ivmeölçer, s. 12), Tablo 4 (sıcaklık sensörü, s. 14) ve §4.13'ten alındı.
 
 **Sürüm karşılaştırması:**
 - Teyit önce Rev 1.5 (05/05/2021) üzerinde yapıldı, sonra Rev 1.6 ile karşılaştırıldı.
@@ -875,11 +875,13 @@ Bu script ve aşağıdaki iki ek kontrol, kullanıcının bu görev için verdi�
 
 ### Sektörde neye bakılıyor? (araştırma özeti)
 
+Kaynakların tam listesi: [Kaynaklar](#kaynaklar).
+
 Bizim problem sınıfı, yani düşük maliyetli düğümlerde referanssız sağlık tahmini için **hazır bir standart sayı yok**. Komşu alanlardaki referanslar:
-- **Literatürdeki ölçütler:** Arıza tespiti çalışmaları başarıyı üç ölçütle raporluyor: tespit gecikmesi, yanlış alarm oranı ve kaçırılan tespit oranı ([PMC8124649](https://pmc.ncbi.nlm.nih.gov/articles/PMC8124649/)). Sayılar uygulamaya özgü. İHA ve quadrotor çalışmalarında gecikmeler milisaniye mertebesinde ([arXiv 2102.06439](https://arxiv.org/pdf/2102.06439)), ama bunlar ani ve büyük arızalar. Bizim yavaş termal kayma problemimizle doğrudan karşılaştırılamaz.
-- **Havacılık ve GNSS bütünlüğü (RAIM/FDE):** Yanlış uyarı ≤ 10⁻⁵/saat (FDE) ya da 0,002/saat (hassas olmayan yaklaşma); kaçırılan tespit < 10⁻⁷ ([Navipedia: RAIM](https://gssc.esa.int/navipedia/index.php/RAIM_Algorithms), [Navipedia: Integrity](https://gssc.esa.int/navipedia/index.php/Integrity), [Wikipedia: RAIM](https://en.wikipedia.org/wiki/Receiver_autonomous_integrity_monitoring)). Bunlar can güvenliği seviyesi; düşük maliyetli MEMS düğümleri için hedef değil, ama ölçütün **saat başına olay** cinsinden tanımlandığını gösteriyor.
-- **Endüstriyel alarm yönetimi (ISA-18.2 / EEMUA 191):** Operatör başına ortalama ≤ 6 alarm/saat "çok büyük olasılıkla kabul edilebilir" (yaklaşık 10 dakikada 1), 12/saat "yönetilebilecek en üst sınır" ([Emerson](https://www.emerson.com/documents/automation/alarm-management-by-numbers-en-38292.pdf), [Chemical Engineering](https://www.chemengonline.com/alarm-management-numbers/)). Bu bizim kullanım senaryomuza en yakın olanı: bir operatör ya da sunucu birçok düğümün alarmını izliyor.
-- **İstatistiksel süreç kontrolü (CUSUM):** Yanlış alarm toleransı tasarımcı tarafından ARL0 olarak seçilir; eşik h bu toleransa göre ayarlanır. Düşük yanlış alarm, daha uzun tespit gecikmesi demektir ([NIST e-Handbook](https://www.itl.nist.gov/div898/handbook/pmc/section3/pmc3131.htm)).
+- **Literatürdeki ölçütler:** Arıza tespiti çalışmaları başarıyı üç ölçütle raporluyor: tespit gecikmesi, yanlış alarm oranı ve kaçırılan tespit oranı ([PMC8124649](https://pmc.ncbi.nlm.nih.gov/articles/PMC8124649/)) [R13]. Sayılar uygulamaya özgü. İHA ve quadrotor çalışmalarında gecikmeler milisaniye mertebesinde ([arXiv 2102.06439](https://arxiv.org/pdf/2102.06439)) [R14], ama bunlar ani ve büyük arızalar. Bizim yavaş termal kayma problemimizle doğrudan karşılaştırılamaz.
+- **Havacılık ve GNSS bütünlüğü (RAIM/FDE):** Yanlış uyarı ≤ 10⁻⁵/saat (FDE) ya da 0,002/saat (hassas olmayan yaklaşma); kaçırılan tespit < 10⁻⁷ ([Navipedia: RAIM](https://gssc.esa.int/navipedia/index.php/RAIM_Algorithms), [Navipedia: Integrity](https://gssc.esa.int/navipedia/index.php/Integrity), [Wikipedia: RAIM](https://en.wikipedia.org/wiki/Receiver_autonomous_integrity_monitoring)) [R10]–[R12]. Bunlar can güvenliği seviyesi; düşük maliyetli MEMS düğümleri için hedef değil, ama ölçütün **saat başına olay** cinsinden tanımlandığını gösteriyor.
+- **Endüstriyel alarm yönetimi (ISA-18.2 / EEMUA 191):** Operatör başına ortalama ≤ 6 alarm/saat "çok büyük olasılıkla kabul edilebilir" (yaklaşık 10 dakikada 1), 12/saat "yönetilebilecek en üst sınır" ([Emerson](https://www.emerson.com/documents/automation/alarm-management-by-numbers-en-38292.pdf), [Chemical Engineering](https://www.chemengonline.com/alarm-management-numbers/)) [R7]–[R9]. Bu bizim kullanım senaryomuza en yakın olanı: bir operatör ya da sunucu birçok düğümün alarmını izliyor.
+- **İstatistiksel süreç kontrolü (CUSUM):** Yanlış alarm toleransı tasarımcı tarafından ARL0 olarak seçilir; eşik h bu toleransa göre ayarlanır. Düşük yanlış alarm, daha uzun tespit gecikmesi demektir ([NIST e-Handbook](https://www.itl.nist.gov/div898/handbook/pmc/section3/pmc3131.htm)) [R5], [R6].
 
 **Bundan çıkan sonuç:**
 - Ölçütler bizim tanımımız. Ama gerekçeli olmalı ve hem **olay sayısı** hem **etkilenen süre** cinsinden verilmeli.
@@ -971,3 +973,31 @@ Hepsi 8 saatlik simülasyon. Isıtıcı patlaması her senaryoda var, ama zaman�
 - [ ] G1 skorunu kalibre edilmiş bir güven skoruna çevirmek (ECE, reliability diagram; ADR-010)
 - [ ] "Model yapısı uyumsuzluğu" (Bulgu 7C) ve "termal uyarım yetersizliği" (Bulgu 6F) koşullarını teşhis kestiricisinin formel tanımına yazmak ([§14.2/4](mihenk.md))
 - [ ] Çapraz doğrulama toleransını, karşılaştırmaya başlamadan **önce** yazılı olarak ilan etmek ([§14.2/7](mihenk.md))
+
+---
+
+## Kaynaklar
+
+Metinde [R#] olarak anılıyor. ISA-18.2 ve EEMUA 191 standartlarının [R7] metnine erişilmedi; sayıları ikincil kaynaklardan [R8]–[R9] alındı. Bu durum ilgili satırda da belirtildi.
+
+**Sensör ve gürültü modeli**
+- **[R1]** TDK InvenSense, *ICM-42688-P Datasheet*, DS-000347, Rev 1.6, 2021. Repoda: [`docs/ds-000347-icm-42688-p-v1.6.pdf`](docs/ds-000347-icm-42688-p-v1.6.pdf). → §4, Rev 1.5 karşılaştırması dahil
+- **[R2]** IEEE Std 952-1997, *IEEE Standard Specification Format Guide and Test Procedure for Single-Axis Interferometric Fiber Optic Gyros*, Ek C (Allan varyansı ve gürültü terimleri N, B, K). → §1, §2
+- **[R3]** N. J. Kasdin, "Discrete simulation of colored noise and stochastic processes and 1/f^α power law noise generation", *Proceedings of the IEEE*, 83(5), 802–827, 1995. MATLAB `fractalcoef` filtresinin dayanağı. → §2, §8
+- **[R4]** MathWorks, *imuSensor* ve *fractalcoef* dokümantasyonu, MATLAB R2026a (Navigation / Sensor Fusion and Tracking Toolbox). → §1–§3
+
+**Karar istatistiği**
+- **[R5]** E. S. Page, "Continuous inspection schemes", *Biometrika*, 41(1/2), 100–115, 1954. CUSUM'ın ilk tanımı. → §7, §9 (işaretli CUSUM)
+- **[R6]** NIST/SEMATECH, *e-Handbook of Statistical Methods*, "Cusum Average Run Length". <https://www.itl.nist.gov/div898/handbook/pmc/section3/pmc3131.htm> → §9 (ARL0), §11
+
+**Alarm yükü ve bütünlük standartları** (§11 ölçütlerinin gerekçesi)
+- **[R7]** ANSI/ISA-18.2, *Management of Alarm Systems for the Process Industries*, ve EEMUA Publication 191, *Alarm Systems – A Guide to Design, Management and Procurement*. Standartların metni okunmadı; sayılar [R8]–[R9]'dan alındı.
+- **[R8]** Emerson Process Management, "Alarm Management by the Numbers". <https://www.emerson.com/documents/automation/alarm-management-by-numbers-en-38292.pdf> → operatör başına ≤ 6 alarm/saat "çok büyük olasılıkla kabul edilebilir", ≤ 12 "yönetilebilir üst sınır"
+- **[R9]** *Chemical Engineering*, "Alarm Management By the Numbers". <https://www.chemengonline.com/alarm-management-numbers/> → [R8] ile aynı sınırlar
+- **[R10]** ESA Navipedia, "RAIM Algorithms". <https://gssc.esa.int/navipedia/index.php/RAIM_Algorithms> → FDE yanlış uyarı ≤ 10⁻⁵/saat
+- **[R11]** ESA Navipedia, "Integrity". <https://gssc.esa.int/navipedia/index.php/Integrity> → uyarı süresi (time-to-alert), bütünlük riski tanımları
+- **[R12]** Wikipedia, "Receiver autonomous integrity monitoring". <https://en.wikipedia.org/wiki/Receiver_autonomous_integrity_monitoring> → genel tanım; birincil kaynak değil
+
+**IMU arıza tespiti literatürü** (ölçüt türleri ve büyüklük mertebeleri)
+- **[R13]** "A Particle Filtering Approach for Fault Detection and Isolation of UAV IMU Sensors: Design, Implementation and Sensitivity Analysis", *Sensors*, 2021. <https://pmc.ncbi.nlm.nih.gov/articles/PMC8124649/> → başarım ölçütleri: tespit gecikmesi, yanlış alarm oranı, kaçırılan tespit oranı
+- **[R14]** "Fast Fault Detection on a Quadrotor using Onboard Sensors and a Kalman Filter Approach", arXiv:2102.06439. <https://arxiv.org/pdf/2102.06439> → ani arızalarda milisaniye mertebesinde gecikme; yavaş termal kaymayla doğrudan karşılaştırılamaz
