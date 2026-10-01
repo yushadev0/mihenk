@@ -1066,6 +1066,16 @@ Not: Geliştirme CSV'sinde K1 hesabına EMI olayı sırasındaki manyetometre su
 - Biri yeni: sıcaklık kaynağı kilidi (13D).
 - **İddia kapsamı (ADR-019):** Şu an savunulabilecek ifade şu: "Termal ortak mod ayrıştırması, sıcaklık değişimi altında kayma tipi IMU arızalarını, tipik koşuda yanlış alarm üretmeden ve uydurulmuş gürültü modeliyle tutarlı bir gecikmeyle tespit eder." Kuyruk davranışı (en kötü koşu), basamak arızası, histerezis biçim uyuşmazlığı ve sıcaklık kaynağı kilidi açıkça sınırlama olarak yazılmalı.
 
+**v6 için yön (öncelik sırasıyla; kullanıcıyla henüz karara bağlanmadı):**
+1. **Önce tanı (13D):** Sıcaklık kaynağı modelinin T2, T5 ve T8'deki kilidi. Gürültüden bağımsız olduğu için tek tohumla incelenebilir. Mekanizma doğrulanırsa, C'nin bir karşılığı bu kanala da uygulanmalı.
+2. **Çok durumlu çıktı (12B, 12E, 13B, 13C; ADR-010):** İkili "suçlu / sağlam" yerine en az şu durumlar:
+   - **"arıza"**: büyüyen sapma.
+   - **"ofset olayı, yeniden kalibre edildi"**: basamak tespit edilip modele kabul edildiyse. Bu bir kaçırılan tespit değil, rapor edilen bir olay.
+   - **"model güvenilmez"**: artıklar ilişkili ya da birden çok elemanda dönüş noktasında yapısal artık varsa. Kanal suçlanmaz.
+   Bu, 12E'deki öz-ilişki göstergesini doğrudan kullanır ve basamak ile histerezis sorunlarını ayar yapmadan, anlam düzeyinde çözer. Değerlendirme ölçütleri de buna göre (önceden) yeniden tanımlanmalı.
+3. **Olay sonu algılama (12D, 13E):** Büyük bir sapmanın (|z| ≫ 3) aniden bitmesi ayrı bir durum. Pencerenin dolmasını beklemeden daha kısa bir onayla serbest bırakmak.
+4. **Yeni ayrılmış küme:** §13'teki küme görüldü. v6 için yeni senaryolar ve tohum 200+ ile yeni bir küme, ölçütlerle birlikte v6 sonuçlarından önce ilan edilmeli. K3c gibi ölçüt ile tasarım parametresi arasındaki tutarlılık (13E) ilan sırasında kontrol edilmeli.
+
 ---
 
 ## Açık konular
