@@ -51,6 +51,10 @@ if any(heater)
         M.heaterBlameIcm  = nnz(R.blameIcm & heater);
     end
 end
+M.heaterAmbig = NaN;
+if any(heater) && hasT && isfield(R, 'tempAmbig')
+    M.heaterAmbig = nnz(R.tempAmbig & heater);
+end
 if hasT
     M.tempFlagsOutside = nnz(R.tempFlag & ~heater & ~D.truth.tempFault & valid);
 end

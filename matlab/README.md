@@ -12,7 +12,7 @@ Findings and the reasoning behind every script are logged in [`../bulgular.md`](
 |---|---|---|
 | [`models/`](models/) | Reusable model functions: per-sensor thermal model, synthetic node | No — called by scripts |
 | [`checks/`](checks/) | Self-checks of the reference model (Allan terms, thermal model) | Yes |
-| [`g1/`](g1/) | G1 (thermal common-mode decomposition): shared helpers at the root, one folder per version (`v0/` … `v4/`) | `g1_prototype_*.m` |
+| [`g1/`](g1/) | G1 (thermal common-mode decomposition): shared helpers at the root, one folder per version (`v0/` … `v5/`) | `g1_prototype_*.m` |
 | [`figures/`](figures/) | Figures referenced from `bulgular.md` | — |
 
 | File | Kind | What |
@@ -38,6 +38,9 @@ Findings and the reasoning behind every script are logged in [`../bulgular.md`](
 | `g1/v3/g1_scenarios_v3.m` | function | v3 scenario set (v2 scenarios without the noise setting) |
 | `g1/v4/g1_prototype_v4.m` | script | v1, v3, v4 and ablation v4nf over the v3 scenarios x white/colored x 10 seeds |
 | `g1/v4/g1_detect_v4.m` | function | v4 detector: v3 + multi-element common mode, ambiguous source state, model-error floor |
+| `g1/v4/g1_diag_gx_lock.m` | script | Diagnosis of the channel locked from the start (bulgular 10E/10F) |
+| `g1/v5/g1_prototype_v5.m` | script | v3, v4nf, v5a, v5 over the v3 scenarios x white/colored x 10 seeds (not run yet) |
+| `g1/v5/g1_detect_v5.m` | function | v5 detector: v4 + CUSUM cap, model-error floor only on frozen channels |
 
 Detectors receive only firmware-visible inputs.
 

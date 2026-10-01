@@ -59,7 +59,7 @@ Rapor bu tuzakları "müfredat sınıf 8" olarak topluyor. G1'in değeri kolay s
 | 7 | [`g1_prototype_v1.m`](matlab/g1/v1/g1_prototype_v1.m) | G1 v1: hafızalı model, CUSUM, histerezis ve gecikme seçimi | ✅ kapsama %98, yanlış alarm 0 · ⚠️ tek senaryoya ayarlı, histerezis modeli simülatörle aynı |
 | 8 | [`g1_prototype_v2.m`](matlab/g1/v2/g1_prototype_v2.m) | v0 ve v1'in 9 senaryo × 5 tohumla sınavı | ✅ v1 beyaz gürültüde tohumdan bağımsız · ❌ v1 renkli gürültüde çöküyor (saatte 115–195 yanlış alarm) · ❌ EMI çözülemiyor |
 | 9 | [`g1_prototype_v3.m`](matlab/g1/v3/g1_prototype_v3.m) | G1 v3: Allan'dan türetilmiş Kalman sıfır modeli, faktöriyel değerlendirme (8 senaryo × 2 gürültü × 5 tohum) | ✅ renkli gürültüde yanlış alarm ~10× azaldı, kapsama korundu · ❌ EMI sonrası kilitlenme, BME suçu ICM'ye gidiyor, model uyuşmazlığında beyaz gürültüde kilitlenme |
-| 10 | [`g1_prototype_v4.m`](matlab/g1/v4/g1_prototype_v4.m) | G1 v4: çok elemanlı ortak mod, belirsiz kaynak durumu, model hatası tabanı (10 tohum) | ✅ 9E ve 9F mekanizmaları doğrulandı · ✅ hyst-relax kilitlenmesi çözüldü · ❌ model hatası tabanı gecikmeyi ~45 dk artırıyor · ❌ CUSUM doyması, baştan kilitli kanal |
+| 10 | [`g1_prototype_v4.m`](matlab/g1/v4/g1_prototype_v4.m) | G1 v4: çok elemanlı ortak mod, belirsiz kaynak durumu, model hatası tabanı (10 tohum) | ✅ 9E ve 9F mekanizmaları doğrulandı · ✅ hyst-relax kilitlenmesi çözüldü · ❌ model hatası tabanı gecikmeyi ~45 dk artırıyor · ❌ CUSUM doyması, baştan kilitli kanal (tanı 10F: ilişkili artık + donmuş z sıfıra dönmüyor; model tanımlanmadan dondurma) |
 
 **Kritik kurallar** (MATLAB referans modelinde her zaman uygulanacak):
 
@@ -807,7 +807,7 @@ Diğer satırlar: beyaz gürültüde ve tuzak dışı senaryolarda medyan her ye
 - Bunu yaşayan koşular:
   - v3 ve v4nf: beyaz tohum 9 ve renkli tohum 8.
   - v4: beyaz tohum 4 ve renkli tohum 8.
-- Senaryodan bağımsız: aynı tohumda base, hold-fault, accel-step, two-faults ve bme-fault'ta aynı oran var. Isıtıcı sırasındaki suçlamaların kanal dağılımına göre suçlu kanal **gx**: v4 beyazda 150, renklide 175 blok, hepsi gx.
+- Senaryodan bağımsız: aynı tohumda base, hold-fault, accel-step, two-faults ve bme-fault'ta aynı oran var. Isıtıcı sırasındaki suçlamaların kanal dağılımına göre suçlu kanal **gx**: v4 beyazda 150, renklide 175 blok, hepsi gx. (Bu sayım yalnız v4 içindir; v3 ve v4nf'nin beyaz tohum 9 kilidinde suçlu kanal mz, bkz. 10F.)
 - 0–4 tohumlarında beyaz gürültüde görülmediği için v3'te fark edilmemişti; tek görünür izi tohum 3'teki 44/saat'ti (9B). **5 tohum yetmezdi; 9B'deki uyarı doğrulandı.**
 - **Mekanizma bilinmiyor.** En olası adaylar, sıcaklığın sabit olduğu ilk saatteki ısınma dönemi ya da birim bazında örneklenen sıcaklık katsayısının dedektörün varsaydığı sb sınırını aşması. Bunun için bir tanı scripti gerekiyor.
 
@@ -820,9 +820,48 @@ Diğer satırlar: beyaz gürültüde ve tuzak dışı senaryolarda medyan her ye
 **v5 için yön:**
 1. CUSUM'ı üstten sınırlamak: S ≤ 2h (10B).
 2. Model hatası tabanını yalnızca dondurulmuş kanallara uygulamak (10C).
-3. Tanı: beyaz tohum 4 ve 9, renkli tohum 8'de gx'in neden baştan kilitlendiği (10E).
+3. Tanı: beyaz tohum 4 ve 9, renkli tohum 8'de gx'in neden baştan kilitlendiği (10E). → Bulgu 10F
 4. Isıtıcı sırasında BME suçlama ve belirsizlik oranlarını kaydetmek (10D).
 5. Ardından kabul ölçütlerini sonuçları görmeden yazmak ve ayrılmış test kümesini kurmak.
+
+### Bulgu 10F: Baştan kilitlenen gx'in tanısı (10E)
+
+**Script:** [`matlab/g1/v4/g1_diag_gx_lock.m`](matlab/g1/v4/g1_diag_gx_lock.m) · **Çıktı:** [`g1_diag_gx_lock_output.txt`](matlab/g1/v4/g1_diag_gx_lock_output.txt) · **Figür:** [`g1_diag_gx_lock.png`](matlab/figures/g1_diag_gx_lock.png)
+Bu script ve aşağıdaki iki ek kontrol, kullanıcının bu görev için verdiği izinle benim tarafımdan (MATLAB `-batch`) koşuldu. Ek kontroller kalıcı birer script değil, geçici dosyalar olarak koşuldu (`diag2.m`: genişlik seçimi ve z'nin işaret oranı; `diag3.m`: beyaz tohum 9'da kilitlenen kanal; `smoke_v5.m`: v5 duman testi). Sonuçları aşağıda.
+
+**Ne yapıldı:**
+- base senaryosunda 10 tohum × 2 gürültü için v3 ve v4'te gx'in ilk suçlanma anı ve puanlanan blokların ne kadarında suçlu olduğu ölçüldü. Simülatörün birim katsayıları da yanına yazıldı (yalnızca tanı için gerçek değerler).
+- Kilitlenen koşularda ilk suçlamanın çevresinde z, CUSUM, seçilen histerezis genişliği ve z'nin işaret istatistikleri incelendi.
+
+**Tablonun ilk sonuçları:**
+- gx'in kilitlendiği koşular: beyaz tohum 4 (yalnız v4) ve renkli tohum 8 (v3 ve v4).
+- Beyaz tohum 9'daki v3 (ve v4nf) kilidi **gx'te değil**. Ek bir kontrolle (`diag3.m`, geçici) baktım: base'de kilitlenen kanal **mz**, 1,39 saatten itibaren 380/380 blokta suçlu. Yani 10E'deki "suçlu kanal gx" çıkarımı yalnız v4'ün ısıtıcı sayımına dayanıyordu ve bu tohum için yanlıştı. mz kilidinin tetiği burada incelenmedi. Rampanın ~0,4 saat içinde ve histerezis genişliği seçimi o anda zaten 1,0 iken oluşuyor; yani mekanizma 2 değil. Beyaz gürültüde manyetometrenin K değeri 0 olduğundan, donduktan sonra serbest bırakılması da mümkün değil (9H).
+- Gerçek gyro sıcaklık katsayıları her tohumda dedektörün sınırının (sb) içinde (|kb/sb| ≤ 0,98). **"Katsayı sınırı aşıyor" adayı elendi.**
+- Kilit ısınma döneminde değil, **ilk suçlamadan sonra** oluşuyor: ilk suçlama 0,9 saatte (renkli 8) veya 1,18 saatte (beyaz 4).
+
+**Mekanizma 1, renkli tohum 8: ilişkili artıklar yanlış alarmı tetikliyor, dondurma sonrası z hiç sıfıra dönmüyor.**
+- **Tetik:** Bu tohumda gx artıklarının birinci gecikmeli öz-ilişkisi (bloklar 31–150) **0,65**; diğer dokuz tohumda −0,00 ile 0,19 arası. Bu tohumdaki 1/f gerçekleşmesinin düşük frekanslı bir sapması var ve tek Gauss-Markov terimi bunu temsil edemiyor (9G). Artıklar arka arkaya +2…+3 oluyor ve CUSUM, sıcaklık henüz sabitken (0,89 saat) eşiği aşıyor. CUSUM'ın ARL0 hesabı (k = 0,5, h = 10 → ~1e5 blok) bağımsız artık varsayımına dayanıyor; ilişkili artıkta bu hesap geçersiz.
+- **Kilit:** Dondurulduktan sonra z'nin %100'ü pozitif, ortalaması 0,83 (v4'te 0,78), öz-ilişkisi 0,70. Figürde z neredeyse sabit bir 0,8 çizgisi. İşaretli CUSUM her blokta z − k ≈ +0,3 ekliyor ve **hiç boşalmıyor** (8 saat sonunda ~100).
+- **v3'teki serbest bırakma gerekçem yanlıştı.** "Tahmin varyansı büyür, sapma açıklanabilir hâle gelir, CUSUM boşalır" diye düşünmüştüm. Ama donmuş bir modelde gerçek sapma ile tahmin belirsizliği aynı hızda büyüyor ve z, sabit işaretli, ~1 büyüklüğünde bir değerde takılıyor. Boşalma için z'nin k = 0,5'in altına inmesi gerekiyor; bu olmuyor.
+
+**Mekanizma 2, beyaz tohum 4 (v4): model henüz tanımlanmadan dondurma (7C'nin bir türü).**
+- İlk saatte sıcaklık sabit, histerezis genişliğinin skorları eşit, seçim varsayılan olarak 0,2 °C'de duruyor (gerçek değer 1,0).
+- 1,0 saatte rampa başlıyor ve geçiş sırasında artıklar 3–4σ'ya çıkıyor:
+  - **v3:** Seçim 69. blokta 1,0'a geçiyor; CUSUM en fazla 3,7'ye çıkıyor, alarm yok.
+  - **v4:** Seçim önce 0,5'e (68. blok), ancak 71. blokta 1,0'a geçiyor. Bu arada CUSUM 11'e ulaşıyor ve kanal donuyor.
+- Donan kanalın modeli doğru genişlikle hiç öğrenemiyor. Artık rampa boyunca +2,2σ (ICM) ve +3…+4σ (BME) düzeyinde sabit kalıyor; CUSUM gün sonuna kadar büyüyor.
+- v3 ile v4 arasındaki fark yalnızca bir blokluk zamanlama. Yani bu, tohuma ve küçük model farklarına bağlı **sınırda** bir olay. Kök neden, model tanımlanmamışken (ilk termal uyarımdan önce) CUSUM'ın kanıt toplaması ve dondurmaya izin verilmesi.
+
+**v5 için sonuç (önemli; v5 tasarlandıktan sonra, ama koşulmadan önce yazıldı):**
+- v5'in iki değişikliği (CUSUM üst sınırı ve yalnızca dondurulmuş kanallarda taban) **10E'yi çözmeyecek**:
+  - Üst sınır S'yi 20'de tutar, ama z − k > 0 olduğu sürece S eşiğin (10) üstünde kalır.
+  - Sabit sıcaklıkta tabanın tahmin varyansına katkısı neredeyse sıfır, çünkü b'nin çarpanı T − T0 ≈ 0.
+- Bu tanıya göre gereken iki ek değişiklik var:
+  - **C. Serbest bırakma testi z'nin düzeyine değil, büyümesine bakmalı.** Gerçek bir kaymada donmuş z zamanla büyür (kayma ∝ t, belirsizlik ∝ √t → z ∝ √t). Sağlam bir sapmada ise z sabit kalır. Dondurulmuş kanalda z'nin eğimi ≤ 0 ve |z| belirli bir sınırın altındaysa kanal serbest bırakılıp CUSUM sıfırlanmalı.
+  - **D. Model seçimi değişince CUSUM sıfırlanmalı, ya da model tanımlanana kadar ("model hazır değil") kanıt toplanmamalı.** Reddedilen bir model hipotezi altında biriken artık, kanalın aleyhine kanıt değil. Bu, ADR-010'daki "güven yok" durumuna da karşılık geliyor.
+- İlişkili artık sorunu (tetik) ayrıca ele alınmalı: ARL0 ilişkili artıkla yeniden hesaplanmalı ya da artıklar beyazlatılmalı.
+
+**Duman testi (v5, metrikler okunmadı):** v5, v4'ün seçenekleriyle v4'e, v4nf'nin seçenekleriyle v4nf'ye bit düzeyinde eşit (fark 0; 3 senaryo × 2 gürültü). Varsayılan v5 hatasız çalışıyor ve S ≤ Smax. `checkcode`: v5 prototipi, v5 dedektörü ve `g1_evaluate.m` için uyarı yok. v5'in tam değerlendirmesi, kabul ölçütleri yazılana kadar bilerek koşulmadı.
 
 ---
 
@@ -849,8 +888,10 @@ Diğer satırlar: beyaz gürültüde ve tuzak dışı senaryolarda medyan her ye
 - [x] ~~Değerlendirme: tuzak ölçütlerine olay sonrası penceresi; yanlış alarmı medyan ve en kötü tohumla raporlamak; tohum sayısını artırmak (9B, 9E)~~ → Bulgu 10
 - [x] ~~Renkli gürültüde ısıtıcı sırasında my suçlamasının nedenini bulmak (9B)~~ → Bulgu 10A (muhtemelen beraberlikte ICM'nin suçlanması)
 - [x] ~~Blok düzeyinde doğrulama: EMI sırasında `R.common`, BME arızasında `blameIcm` oranı~~ → Bulgu 10A, iki mekanizma da doğrulandı
-- [ ] **G1 v5:** CUSUM üst sınırı (10B); model hatası tabanı yalnızca dondurulmuş kanallarda (10C); ısıtıcı sırasında BME suçlama ve belirsizlik ölçütü (10D)
-- [ ] Tanı: beyaz tohum 4 ve 9, renkli tohum 8'de gx'in baştan kilitlenmesi (10E)
+- [ ] **G1 v5:** CUSUM üst sınırı (10B); model hatası tabanı yalnızca dondurulmuş kanallarda (10C); ısıtıcı sırasında BME suçlama ve belirsizlik ölçütü (10D). Kod hazır, duman testi geçti, tam değerlendirme koşulmadı.
+- [x] ~~Tanı: beyaz tohum 4 ve 9, renkli tohum 8'de gx'in baştan kilitlenmesi (10E)~~ → Bulgu 10F
+- [ ] v5'e eklenmesi önerilenler (10F): C) z'nin büyümesine bakan serbest bırakma testi; D) model seçimi değişince CUSUM sıfırlama veya "model hazır değil" durumu; ilişkili artıklar için ARL0 / beyazlatma
+- [ ] Beyaz tohum 9'da (v3, v4nf) mz'nin 1,39 saatte kilitlenmesinin tetiğini bulmak (10F)
 - [ ] G1 simülasyon aşamasının kabul ölçütlerini sonuçları görmeden yazmak; ayrılmış senaryo ve tohum kümesiyle tek seferlik test
 - [ ] Bellek bütçesi: v4'te 90 Kalman filtresi × 14 sayı ≈ 5 KB (float) veya ~2,5 KB (16 bit), ATmega328P'nin 2 KB'ını aşıyor; sadeleştirme gerekiyor (örneğin genişlik ızgarası)
 - [ ] "En küçük algılanabilir kayma hızı"nı K ve izin verilen gecikme cinsinden formel tanıma yazmak (9D)
