@@ -58,6 +58,7 @@ Rapor bu tuzakları "müfredat sınıf 8" olarak topluyor. G1'in değeri kolay s
 | 6 | [`g1_prototype_v0.m`](matlab/g1/v0/g1_prototype_v0.m) | G1 ilk prototip: ortak mod / kanala özgü ayrıştırma | ✅ ısıtıcı tuzağı çözüldü · ⚠️ histerezis, gecikme ve pencere uyumu zayıflıkları |
 | 7 | [`g1_prototype_v1.m`](matlab/g1/v1/g1_prototype_v1.m) | G1 v1: hafızalı model, CUSUM, histerezis ve gecikme seçimi | ✅ kapsama %98, yanlış alarm 0 · ⚠️ tek senaryoya ayarlı, histerezis modeli simülatörle aynı |
 | 8 | [`g1_prototype_v2.m`](matlab/g1/v2/g1_prototype_v2.m) | v0 ve v1'in 9 senaryo × 5 tohumla sınavı | ✅ v1 beyaz gürültüde tohumdan bağımsız · ❌ v1 renkli gürültüde çöküyor (saatte 115–195 yanlış alarm) · ❌ EMI çözülemiyor |
+| 9 | [`g1_prototype_v3.m`](matlab/g1/v3/g1_prototype_v3.m) | G1 v3: Allan'dan türetilmiş Kalman sıfır modeli, faktöriyel değerlendirme (8 senaryo × 2 gürültü × 5 tohum) | ✅ renkli gürültüde yanlış alarm ~10× azaldı, kapsama korundu · ❌ EMI sonrası kilitlenme, BME suçu ICM'ye gidiyor, model uyuşmazlığında beyaz gürültüde kilitlenme |
 
 **Kritik kurallar** (MATLAB referans modelinde her zaman uygulanacak):
 
@@ -583,6 +584,140 @@ Tam karar aralığında (0,51 saatten itibaren, 450 blok): yanlış sensör alar
 
 ---
 
+## 9. G1 v3: Allan'dan türetilmiş Kalman sıfır modeli, faktöriyel değerlendirme
+
+**Script:** [`matlab/g1/v3/g1_prototype_v3.m`](matlab/g1/v3/g1_prototype_v3.m) · **Dedektör:** [`g1_detect_v3.m`](matlab/g1/v3/g1_detect_v3.m) · **Allan uydurma:** [`g1_allan_fit.m`](matlab/g1/v3/g1_allan_fit.m) · **Senaryolar:** [`g1_scenarios_v3.m`](matlab/g1/v3/g1_scenarios_v3.m)
+**Ham sonuçlar:** [`g1_v3_results.csv`](matlab/g1/v3/g1_v3_results.csv) (320 satır: 8 senaryo × 2 gürültü × 5 tohum × 4 dedektör) · **Konsol çıktısı:** [`g1_v3_output.txt`](matlab/g1/v3/g1_v3_output.txt)
+**Figürler:** [`g1_v3_1.png`](matlab/figures/g1_v3_1.png) (kapsama ve yanlış alarm), [`g1_v3_2.png`](matlab/figures/g1_v3_2.png) (v3 suçlama grafiği, renkli gürültü, tohum 0), [`g1_v3_3.png`](matlab/figures/g1_v3_3.png) (Allan uydurması)
+
+**Amaç:** Bulgu 8B'nin çözümünü denemek. Sağlam bir sensörün beklenen gezinmesi, Allan parametrelerinden türetilen bir "stokastik bütçe" olarak modele girecek. Arıza da ancak bu bütçeyi aşan sapma sayılacak. Değerlendirme Bulgu 8F'deki hatayı düzeltecek şekilde faktöriyel kuruldu.
+
+**Ne yapıldı:**
+- **Gürültü modeli ayrı bir kayıttan.** Her gürültü tipi için 12 saatlik statik bir kayıt simüle edildi (tohumlar 9007–9013, senaryo tohumlarından ayrı). Bu kaydın Allan varyansına N, K ve bir Gauss-Markov terimi ağırlıklı NNLS ile uyduruldu, sonra blok düzeyindeki Kalman parametrelerine çevrildi.
+- **Dedektör.** Her kanal × referans × histerezis genişliği için durumu `[a (random walk), g (Gauss-Markov), b (tempco), c (histerezis)]` olan bir Kalman filtresi kullanıldı.
+  - Zaman güncellemesi her blokta çalışıyor, ölçüm güncellemesi ise v1'deki gibi kapılı.
+  - Böylece dondurulmuş bir kanalın tahmin varyansı büyüyor. Amaç, yanlış bir kilitlenmenin kendiliğinden çözülmesi (Bulgu 7C'nin çıkış yolu).
+  - Kapılama, ortak mod olayı, genişlik ve gecikme ızgaraları gibi geri kalan her şey v1 ile aynı, eşikleri de değişmedi.
+- **CUSUM.** İşaretli Page CUSUM kullanıldı (k = 0,5, h = 10). Bu değerler bir senaryoya ayarlanmadı; ARL0'dan (kontrol altındaki ortalama koşu uzunluğu) seçildi. v1'in |z| CUSUM'ı "v3a" adıyla ablasyon olarak koşuldu.
+- **Faktöriyel tasarım.** v2'deki 8 senaryonun her biri hem beyaz hem renkli gürültüyle, 5 tohumla koşuldu.
+
+**Önceden kayda geçmesi gereken bir şey:** İşaretli CUSUM'a geçişi **bir sonuç gördükten sonra** yaptım. İlk duman testinde (base, tohum 0) v3, v1'in |z| CUSUM'ıyla 123,5 dk gecikme verdi. Random walk durumu kaymayı kısmen takip ediyor, artıklar da ~1,8σ düzeyinde ama hep aynı işaretli kalıyor. Bu yüzden |z| − 1,5 neredeyse hiç birikmiyor. Değişikliğin gerekçesi kuramsal olsa da (k ve h ARL0'dan geliyor) karar duman testinden sonra verildi. Bu nedenle v3a ablasyonu sonuçlarda bilerek tutuldu.
+
+**Regresyon:** v0 ve v1'in v2 satırlarıyla 90 satır karşılaştırıldı; en büyük göreli fark 3,7e-15. Genişletmeler eski yolu bozmadı.
+
+**Sonuç — arızalar** (tespit oranı ve kapsama tohum ortalaması, gecikme tohum medyanı; v1 / v3a / v3):
+
+| Senaryo / gürültü | Gecikme [dk] | Kapsama | Yanlış alarm/saat |
+|---|---|---|---|
+| base / beyaz | 5,5 / 5,5 / 4,5 | %98 / %98 / %98 | 0 / 0 / 0 |
+| base / renkli | 0,5 / 95,5 / 16,5 | %92 / %58 / %92 | 138,8 / 0,0 / **11,5** |
+| hold-fault / beyaz | 11,5 / 10,5 / 7,5 | %90 / %91 / %93 | 0 / 0 / 0 |
+| hold-fault / renkli | 0,5 / — / **60,5** | %88 / %0 / **%39** | 155,9 / 0,0 / 11,5 |
+| accel-step / renkli | 2,5 / 1,5 / 1,5 | %96 / %99 / %99 | 151,7 / 0,0 / 11,5 |
+| two-faults / renkli | 25,5 / 171,5 / 31,5 | %81 / %40 / %88 | 115,6 / 0,0 / 11,5 |
+| emi / beyaz | — | — | 53,4 / 53,4 / 53,4 |
+| emi / renkli | — | — | 193,8 / 52,3 / **74,5** |
+| bme-fault / beyaz | — | — | 0 / 0 / **12,6** |
+| hyst-relax / beyaz | 4,5 / 4,5 / 3,5 | %98 / %98 / %98 | 69,6 / 72,9 / **124,8** |
+| hyst-relax / renkli | 0,5 / 95,5 / 16,5 | %89 / %59 / %92 | 138,2 / 0,0 / 10,7 |
+| day-cycle / renkli | 0,5 / 43,5 / 20,5 | %96 / %74 / %88 | 128,6 / 0,7 / 15,2 |
+
+Gösterilmeyen beyaz satırlarda (accel-step, two-faults, day-cycle) üç dedektör de yanlış alarm 0, kapsama %97–100. Tam tablo konsol çıktısında.
+
+**Sonuç — tuzaklar** (tohum ortalaması; v1 / v3a / v3):
+
+| Ölçüt | Beyaz | Renkli |
+|---|---|---|
+| Isıtıcı sırasında sensör suçlama (koşu başına blok) | 2,3 / 2,3 / 2,4 | 25,0 / 0,4 / **13,0** |
+| Olaylar dışında "T src" alarmı (koşu başına blok) | 0,7 / 0,7 / 0,7 | 0,7 / 0,7 / 0,7 |
+| EMI bloklarında manyetometrenin suçlanma oranı | %0 / %0 / %0 | %57 / %0 / %0 |
+| BME arızasında BME688'in suçlanma oranı | %73 / %80 / %81 | %31 / %1 / **%1** |
+| BME arızasında bir hareket kanalının suçlanma oranı | %0 / %0 / **%18** | %100 / %0 / **%23** |
+
+**Bulgu 9A: Gürültüyü bilen sıfır modeli Bulgu 8B'yi büyük ölçüde çözüyor.**
+- Renkli gürültüde yanlış alarm, v1'de saatte 115–195 iken v3'te ortalama 11,5'e iniyor. Medyan ise ~4,3.
+- Kapsama korunuyor: base %92, accel-step %99, two-faults %88 (v1'de %81).
+- Beyaz gürültüde v3, base / accel-step / two-faults / day-cycle senaryolarında v1 ile aynı: 0 yanlış alarm, kapsama %97–100. Bütçe beyaz gürültüde gereksiz bir körlük yaratmıyor.
+- Renkli gürültüdeki gecikmeler (16–31 dk) v1'in 0,5 dk'sından kötü görünüyor. Ama v1'in değeri anlamsızdı (Bulgu 8B); v0'ın 17,5–51,5 dk'sıyla aynı düzeyde ya da daha iyi.
+- Hafıza ve dürüst gürültü modeli birlikte, 8C'deki "sağlam ama unutkan" ile "ısrarcı ama kırılgan" ikilemini renkli gürültüde ilk kez aşıyor.
+
+**Bulgu 9B: Renkli gürültüdeki yanlış alarm oranı arızadan bağımsız, gürültü gerçekleşmesine bağlı. Ortalamayı tek bir tohum çekiyor.**
+- base, hold-fault, accel-step ve two-faults senaryolarında v3'ün tohum bazında yanlış alarmı birebir aynı: 4,3 / 5,8 / 2,7 / **44,2** / 0,3. Aynı tohum aynı gürültü demek; alarmlar arızadan değil, o gürültü dizisinden ve ısıtıcıdan doğuyor.
+- Figür 2'de (tohum 0) bunlar her senaryoda aynı iki olay olarak görünüyor:
+  - Isıtıcı sırasında my'nin suçlanması (3,3–3,6 saat). Renkli gürültüde ısıtıcı başına 13 blok; beyazda 2,4. Bunun nedenini henüz bilmiyorum. Isıtıcı sırasında BME referansı dışlanıyor, ama renkli gürültüde neden daha çok suçlama çıktığı açık değil. Ayrıca incelenmeli.
+  - az'nin ~4,8–4,95 saatte kısa süre suçlanıp **serbest bırakılması**. Serbest bırakma kuralı burada çalışıyor.
+- Tohum 3'ün 44/saat'i ortalamanın büyük kısmını oluşturuyor. 5 tohum, kuyruk davranışını ölçmek için az. Yanlış alarm oranı bundan sonra ortalama yerine medyan ve en kötü tohumla birlikte raporlanmalı.
+
+**Bulgu 9C: İşaretli CUSUM gerekli; v3a ablasyonu bunu gösteriyor.**
+- v3a, renkli gürültüde neredeyse hiç yanlış alarm vermiyor (0–0,7/saat), ama arızayı da göremiyor. Gecikme base'de 95,5 dk, two-faults'ta 171,5 dk; hold-fault'ta tespit oranı %0.
+- Sebep 9. bölümün başında anlatılan mekanizma. Kalman filtresinin random walk durumu yavaş bir kaymanın bir kısmını "sağlam gezinme" olarak yutuyor. Geriye kalan iz büyük değil, ama hep aynı işaretli. Bu izi yalnız işaretli bir istatistik biriktirebiliyor.
+- **Genel sonuç:** Bütçesi doğru bir sıfır modeli, artığı büyüklükten çok **sürekliliğe** taşıyor. Karar istatistiği de buna göre seçilmeli.
+
+**Bulgu 9D: Sabit sıcaklıkta yavaş kayma, gürültü bütçesine yakın; bu bir algılanabilirlik sınırı.**
+- hold-fault / renkli'de v3: gecikme 60,5 dk, kapsama %39. Beyaz gürültüde aynı arıza 7,5 dk'da, %93 kapsamayla yakalanıyor.
+- 0,01 °/s/saat'lik kayma ile gyro random walk'u (K ≈ 0,0014–0,0027 °/s/√saat) birkaç saatlik ölçekte aynı büyüklükte. Bir saat sonunda kayma 0,01, random walk'un 1σ'sı 0,002–0,003 °/s. Kayma zamanla doğrusal büyüyor, random walk √t ile; ama aradaki fark ancak bir saat mertebesinde belirginleşiyor.
+- Allan uydurması gyro K değerini 1,4–1,9× büyük tahmin ediyor (Bulgu 9G). Bu, bütçeyi genişletip gecikmeyi uzatıyor.
+- **İddia kapsamı için sonucu:** "En küçük algılanabilir kayma hızı", sensörün K değerine ve izin verilen gecikmeye bağlı bir sayı olarak ifade edilmeli. Bu, teşhis kestiricisinin formel tanımına girmeli ([§14.2/4](mihenk.md)). Termal uyarım yetersizliği (6F) gibi, burada da kör nokta bir hata değil, problemin yapısı.
+
+**Bulgu 9E: EMI ölçütü yanlış pencereye bakıyor; v3'ün "%0" sonucu yanıltıcı.**
+- Tuzak tablosuna göre v3, EMI bloklarında manyetometreyi hiç suçlamıyor (%0). Ama aynı senaryoda saatte 53–75 yanlış alarm var.
+- Figür 2 (emi, renkli, tohum 0) nedenini gösteriyor. EMI 5,0–5,33 saat arasında; mx, my ve mz bu aralıkta **suçlanmıyor**, ama ~5,6 saatten itibaren gün sonuna kadar suçlanıyor. Yani EMI bittikten sonra kilitleniyorlar.
+- Beyaz gürültüde v1, v3a ve v3'ün yanlış alarmı aynı (53,4). Bu, sorunun v3'e özgü olmadığını, v1'den beri var olduğunu gösteriyor. v2'de bunu göremedik, çünkü orada EMI yalnızca renkli gürültüyle koşuldu (8F).
+- **Muhtemel mekanizma** (kod okumasına dayanıyor, blok düzeyinde henüz doğrulanmadı):
+  1. EMI aşağı rampa sırasında (4–6 saat) geliyor. Sıcaklık hareket hâlinde ve üç manyetometre ekseni birlikte bozuluyor.
+  2. Bu, "≥3 kanal birlikte bozuldu ve sıcaklık hareket ediyor" koşulunu (`nCommon = 3`) karşılıyor. Olay **ortak mod** sayılıyor ve ölçüm güncellemesi kapı dışı da olsa kabul ediliyor. Model EMI ofsetini öğreniyor.
+  3. EMI bittiğinde model yanlış bir ofset taşıyor. Manyetometrenin K değeri neredeyse sıfır olduğundan tahmin varyansı büyümüyor; serbest bırakma kuralı işleyemiyor.
+- **Tasarım hatası:** Ortak mod kuralı, **tek bir fiziksel sensörün üç ekseniyle** karşılanabiliyor. Termal ortak mod tanımı gereği farklı sensörleri kapsamalı. Kural "en az iki farklı fiziksel sensörden kanal" şeklinde yeniden yazılmalı.
+- **Ölçüt hatası:** EMI ölçütü yalnızca olay penceresine (+5 dk) bakıyor. Olaydan sonraki kilitlenme ölçütün dışında kalıyor. Tuzak ölçütleri olaydan sonrasını da kapsamalı. Bu benim değerlendirme tasarımımdaki ikinci hata (ilki 8F).
+
+**Bulgu 9F: BME arızasında suçlama, beraberlik durumunda varsayılan olarak ICM'ye gidiyor.**
+- Renkli gürültüde v3, BME688 arızasında BME'yi yalnızca %1 oranında suçluyor (v1'de %31). Figür 2'de (bme-fault) "T src" alarmı ~5,2 saatten sonra doğru biçimde sürekli açık; yani kaynaklar arası tutarsızlık görülüyor, ama suç yanlış kaynağa gidiyor.
+- **Kod okumasıyla mekanizma:**
+  - Sıcaklık kaynağı tutarsızsa suç, hangi referansa karşı daha çok kanal bozuluyorsa ona veriliyor: `bB = tf && nbad(2) > nbad(1)`, aksi hâlde `bI = tf && ~bB`.
+  - Renkli gürültüde tahmin varyansı daha büyük. Bu yüzden iki referansa karşı da hiçbir kanal |z| > 3 olmuyor ve `nbad` 0 = 0 berabere kalıyor. Beraberlikte suç **ICM'ye** gidiyor.
+  - ICM referansı dışlanınca kanallar yalnızca kayan BME'ye karşı değerlendiriliyor. Bu da hareket kanallarının yanlışlıkla suçlanmasına (%23) yol açıyor.
+- Beyaz gürültüde BME %81 oranında doğru suçlanıyor, ama tohum 2'de kanal suçlama %75 ve yanlış alarm 56/saat. Aynı mekanizmanın daha zayıf bir hâli olabilir.
+- **Düzeltme yönü:** Beraberlikte kimse suçlanmamalı; "kaynaklar tutarsız, hangisi bilinmiyor" diye ayrı bir belirsiz durum olmalı. Bu da ADR-010'daki sürekli güven skoruna doğal olarak uyuyor. Mekanizmanın doğrulanması için `blameIcm` oranı da kaydedilmeli.
+
+**Bulgu 9G: Allan uydurması gürültüyü fazla tahmin ediyor, ama sistematik ve güvenli tarafta.**
+- Figür 3'te uydurma eğrisi noktaların genel biçimini izliyor. Ama ay'deki 2000–5000 s'lik tümsek gibi ayrıntıları kaçırıyor; tek bir Gauss-Markov terimi 1/f gürültüsünü temsil edemiyor.
+- Sonuç olarak terimler birbirinin yerine geçiyor:
+  - N, gyrolarda 2,1–2,4×, ivmeölçerlerde 2,2–3,2× büyük. Blok süresi 60 s olduğundan en kısa τ 60 s; bu ölçekte beyaz gürültü 1/f'den ayrılamıyor ve N terimi 1/f'nin bir kısmını yutuyor.
+  - K, 1,4–2,1× büyük.
+  - Gauss-Markov σ'sı ise B değerine yakın (gyro 0,0012–0,0016 vs B 0,0014). Bu terim beklenen işi yapıyor.
+  - Manyetometrede N doğru (%5–14), ama simülatörde K = 0 olduğu hâlde küçük bir K uyduruluyor.
+- Bütçe şişince dedektör muhafazakâr oluyor: daha az yanlış alarm, daha geç tespit. Bulgu 9D'deki gecikmenin bir kısmı buradan geliyor.
+- Beyaz gürültülü kayıtta uydurma K = 0 veriyor (doğru). Ama bunun önemli bir yan etkisi var (9H).
+
+**Bulgu 9H: Beyaz gürültüde serbest bırakma kuralı çalışamaz; model uyuşmazlığı burada kalıcı kilitlenmeye dönüşüyor.**
+- hyst-relax / beyaz ilk kez faktöriyel tasarımla görüldü. v1 saatte 69,6, v3 saatte 124,8 yanlış alarm veriyor; 5 tohumun 4'ünde 130–160/saat.
+- Bu, gevşeme histerezisinin play operatörüyle temsil edilemediğini gösteriyor (Bulgu 7D'nin öngördüğü uyuşmazlık). Model yapısı yanlış olduğunda sağlam kanallar sistematik artık üretiyor.
+- v3'te durum daha kötü, iki nedenle:
+  1. İşaretli CUSUM, sistematik ve aynı işaretli artığı v1'den daha hızlı biriktiriyor. 9C'de arızayı yakalayan özellik burada model hatasını yakalıyor.
+  2. Beyaz gürültüde K = 0 ve Gauss-Markov terimi ihmal edilebilir. Süreç gürültüsü sıfıra yakın olduğundan dondurulmuş kanalın varyansı büyümüyor; v3'ün serbest bırakma mekanizması bu durumda **devre dışı**.
+- Renkli gürültüde ise aynı senaryo base ile neredeyse aynı (tohum bazında 4,4 / 1,7 / 2,7 / 44,1 / 0,5). Geniş bütçe model hatasını yutuyor. Bu iki yönlü bir sonuç: renkli gürültüde model uyuşmazlığı **görünmez** hâle geliyor, yani ölçülemiyor da.
+- **Kavramsal sonuç:** Serbest bırakmayı gürültü bütçesine bağlamak yetmez. Model yapısının yanlış olabileceğini de kapsayan bir terim gerekiyor; örneğin sıfır modelinde model hatası için açık bir süreç gürültüsü tabanı, ya da dondurulmuş bir kanalın sistematik artığını "arıza" ve "yapı uyuşmazlığı" arasında ayıran bir test. Bulgu 7C'deki "model yapısı uyumsuzluğu" koşulu formel tanıma girmeli; bu sonuç onu destekliyor.
+
+**Bulgu 9I: Serbest bırakma, sıcaklık değiştikçe büyüyen hatayı da çözemiyor.**
+- day-cycle / renkli, tohum 0: az ~4,8 saatte suçlanıyor ve gün sonuna kadar suçlu kalıyor (32/saat; tohum 3'te 38/saat). base senaryosunda aynı tohumda aynı az olayı kısa sürede serbest bırakılıyordu (9B).
+- **Muhtemel mekanizma** (doğrulanmadı): Dondurulmuş kanalın sıcaklık katsayısı tahmini de donuyor. day-cycle'da sıcaklık ±8 °C salınıyor; katsayıdaki küçük bir hata, sıcaklıkla orantılı bir artık üretiyor. Bu hata √t ile değil sıcaklıkla büyüyor, bu yüzden varyans artışı onu yakalayamıyor.
+- Serbest bırakma kuralı yalnızca random walk türü, zamanla yavaşça kapanan sapmalar için tasarlandı. Sıcaklığa bağlı model hatasında yetersiz.
+
+**Genel değerlendirme:**
+- v3 ana hedefine ulaştı: renkli gürültüde yanlış alarm ~10× azaldı, kapsama korundu. Allan'ı G1'in sıfır hipotezi olarak kullanma fikri (8B'nin kavramsal sonucu) deneyle destekleniyor.
+- Ama dört yeni sorun çıktı ve hepsi aynı kökten geliyor: **dedektör, gürültü bütçesiyle açıklanamayan her şeyi hâlâ "arıza" sayıyor.** EMI (9E), kaynak belirsizliği (9F), model yapısı uyuşmazlığı (9H) ve sıcaklığa bağlı model hatası (9I) arıza değil, ama ayrı birer durum olarak modellenmedikleri için arızaya ya da kilitlenmeye dönüşüyorlar.
+- Bu, ADR-010'daki çıktı biçimine işaret ediyor: ikili bayrak yerine "arıza", "belirsiz kaynak", "model güvenilmez" gibi ayrı durumlar ve kalibre edilmiş bir güven.
+- **Genellenebilirlik uyarısı (7D gibi):** Bütün sonuçlar simülasyon, tek düğüm geometrisi ve 5 tohum. Gürültü parametreleri `assumed`. Allan kaydı aynı simülatörden geliyor; gerçek bir sensörde 1/f ve sıcaklığa bağlı gürültü farklı olabilir.
+
+**v4 için yön (öncelik sırasıyla):**
+1. Ortak mod kuralı: en az iki farklı fiziksel sensörden kanal (9E).
+2. Sıcaklık kaynağı suçlamasında beraberlik → belirsiz durum, kimse suçlanmaz (9F).
+3. Model hatası için süreç gürültüsü tabanı, böylece beyaz gürültüde de serbest bırakma işlesin (9H).
+4. Değerlendirme: tuzak ölçütleri olay sonrası penceresini de kapsasın; yanlış alarm medyan ve en kötü tohumla raporlansın; tohum sayısı artırılsın (9B, 9E).
+5. Isıtıcı sırasında renkli gürültüde my'nin suçlanmasını incelemek (9B).
+
+---
+
 ## Açık konular
 
 - [x] ~~Termal katsayıları ICM-42688-P veri sayfasından teyit etmek~~ → Bulgu 4
@@ -598,10 +733,15 @@ Tam karar aralığında (0,51 saatten itibaren, 450 blok): yanlış sensör alar
 - [ ] Sıcaklık sensörü kazanç hatasını modele eklemek (şu an yalnız ofset ve kuantizasyon var)
 - [x] ~~Termal modeli ivmeölçer ve manyetometre bias'larına da bağlamak~~ → `simulate_node.m` (§6)
 - [x] ~~G1 v1'i birden çok tohum ve senaryoyla değerlendirmek~~ → Bulgu 8
-- [ ] **G1 v3:** Allan parametrelerine dayanan, gürültüyü bilen bir sıfır modeli (random walk bias durumu olan Kalman filtresi) ve kilitlenmeye karşı serbest bırakma kuralı (Bulgu 8B, 7C)
-- [ ] Faktöriyel değerlendirme: her tuzak için beyaz ve renkli gürültü (Bulgu 8F)
+- [x] ~~**G1 v3:** Allan parametrelerine dayanan, gürültüyü bilen bir sıfır modeli (random walk bias durumu olan Kalman filtresi) ve kilitlenmeye karşı serbest bırakma kuralı (Bulgu 8B, 7C)~~ → Bulgu 9 (serbest bırakma yalnızca kısmen çalışıyor: 9H, 9I)
+- [x] ~~Faktöriyel değerlendirme: her tuzak için beyaz ve renkli gürültü (Bulgu 8F)~~ → Bulgu 9
 - [ ] EMI için G1 dışı kaldıraçlar: `‖m‖` sabitliği ve üç yönlü oylama (Bulgu 8D)
-- [ ] Model-uyuşmazlığı testi: simülatörde play operatöründen farklı bir histerezis biçimi (Bulgu 7D, ADR-012)
+- [x] ~~Model-uyuşmazlığı testi: simülatörde play operatöründen farklı bir histerezis biçimi (Bulgu 7D, ADR-012)~~ → Bulgu 9H: v1 ve v3 beyaz gürültüde başarısız
+- [ ] **G1 v4:** ortak mod kuralı farklı fiziksel sensörler gerektirsin (9E); sıcaklık kaynağı beraberliğinde belirsiz durum (9F); model hatası için süreç gürültüsü tabanı (9H); dondurulmuş kanalda sıcaklığa bağlı hata (9I)
+- [ ] Değerlendirme: tuzak ölçütlerine olay sonrası penceresi; yanlış alarmı medyan ve en kötü tohumla raporlamak; tohum sayısını artırmak (9B, 9E)
+- [ ] Renkli gürültüde ısıtıcı sırasında my suçlamasının nedenini bulmak (9B)
+- [ ] Blok düzeyinde doğrulama: EMI sırasında `R.common`, BME arızasında `blameIcm` oranı (9E, 9F mekanizmaları kod okumasına dayanıyor)
+- [ ] "En küçük algılanabilir kayma hızı"nı K ve izin verilen gecikme cinsinden formel tanıma yazmak (9D)
 - [ ] G1 skorunu kalibre edilmiş bir güven skoruna çevirmek (ECE, reliability diagram; ADR-010)
 - [ ] "Model yapısı uyumsuzluğu" (Bulgu 7C) ve "termal uyarım yetersizliği" (Bulgu 6F) koşullarını teşhis kestiricisinin formel tanımına yazmak ([§14.2/4](mihenk.md))
 - [ ] Çapraz doğrulama toleransını, karşılaştırmaya başlamadan **önce** yazılı olarak ilan etmek ([§14.2/7](mihenk.md))

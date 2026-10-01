@@ -12,7 +12,7 @@ Findings and the reasoning behind every script are logged in [`../bulgular.md`](
 |---|---|---|
 | [`models/`](models/) | Reusable model functions: per-sensor thermal model, synthetic node | No — called by scripts |
 | [`checks/`](checks/) | Self-checks of the reference model (Allan terms, thermal model) | Yes |
-| [`g1/`](g1/) | G1 (thermal common-mode decomposition): shared helpers at the root, one folder per version (`v0/`, `v1/`, `v2/`) | `g1_prototype_*.m` |
+| [`g1/`](g1/) | G1 (thermal common-mode decomposition): shared helpers at the root, one folder per version (`v0/` … `v3/`) | `g1_prototype_*.m` |
 | [`figures/`](figures/) | Figures referenced from `bulgular.md` | — |
 
 | File | Kind | What |
@@ -32,6 +32,10 @@ Findings and the reasoning behind every script are logged in [`../bulgular.md`](
 | `g1/v1/g1_detect_v1.m` | function | v1 detector: gated Bayesian model + CUSUM |
 | `g1/v2/g1_prototype_v2.m` | script | Evaluation of v0 and v1 over 9 scenarios x 5 seeds |
 | `g1/v2/g1_scenarios_v2.m` | function | v2 scenario set |
+| `g1/v3/g1_prototype_v3.m` | script | Factorial evaluation (8 scenarios x white/colored x 5 seeds) of v0, v1, v3a, v3 |
+| `g1/v3/g1_detect_v3.m` | function | v3 detector: Kalman null model from Allan parameters + signed CUSUM |
+| `g1/v3/g1_allan_fit.m` | function | Allan variance fit (N, K, Gauss-Markov) -> block-level Kalman parameters |
+| `g1/v3/g1_scenarios_v3.m` | function | v3 scenario set (v2 scenarios without the noise setting) |
 
 Detectors receive only firmware-visible inputs.
 
