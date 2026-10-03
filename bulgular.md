@@ -63,6 +63,7 @@ Rapor bu tuzakları "müfredat sınıf 8" olarak topluyor. G1'in değeri kolay s
 | 11 | [`g1_acceptance_test.m`](matlab/g1/test/g1_acceptance_test.m) | G1 simülasyon aşamasının kabul ölçütleri ve ayrılmış test kümesi (önceden ilan) | Ölçütler, senaryolar ve test v5 sonuçlarından önce commit'lendi |
 | 12 | [`g1_prototype_v5.m`](matlab/g1/v5/g1_prototype_v5.m) | G1 v5 geliştirme koşusu: CUSUM üst sınırı, dondurulmuş kanalda taban, serbest bırakma testi, model değişiminde sıfırlama | ✅ aday v5 · ✅ baştan kilitlenme gitti · ❌ geliştirmede K1b, K3a, K3c, K3d kalıyor · ⚠️ basamak arızası serbest bırakılıyor |
 | 13 | [`g1_acceptance_test.m`](matlab/g1/test/g1_acceptance_test.m) | Kabul testi, ayrılmış küme (10 senaryo × 2 gürültü × 20 tohum), tek atış | ❌ **FAIL** (K1b, K1c, K2c renkli, K3b, K3c) · ✅ tespit, gecikme, manyetometre arızası, BME basamağı genelleniyor |
+| 14 | [`g1_diag_tsrc_lock.m`](matlab/g1/v6/g1_diag_tsrc_lock.m) | Tanı: sıcaklık kaynağı modelinin kilitlenmesi (13D), kapılı / kapısız / ısıtıcısız | ✅ kopya 200/200 birebir · T2/T5: ısıtıcı tetikliyor, yanlış eğim ve payı olmayan sT kilitliyor · T8: model yapısı uyuşmazlığı · ❌ kapıyı kaldırmak çözüm değil |
 
 **Kritik kurallar** (MATLAB referans modelinde her zaman uygulanacak):
 
@@ -1078,6 +1079,55 @@ Not: Geliştirme CSV'sinde K1 hesabına EMI olayı sırasındaki manyetometre su
 
 ---
 
+## 14. Tanı: sıcaklık kaynağı modelinin kilitlenmesi (13D)
+
+**Script:** [`matlab/g1/v6/g1_diag_tsrc_lock.m`](matlab/g1/v6/g1_diag_tsrc_lock.m) · **Çıktı:** [`g1_diag_tsrc_lock_output.txt`](matlab/g1/v6/g1_diag_tsrc_lock_output.txt) · **Figür:** [`g1_diag_tsrc_lock.png`](matlab/figures/g1_diag_tsrc_lock.png)
+Kullanıcı koştu. Yalnızca tanı amaçlı. §13'teki ayrılmış küme zaten görüldü; buradan v5'e ayar yapılmıyor.
+
+**Ne yapıldı:**
+- v5'in sıcaklık kaynağı modeli (T_bme ≈ a + b·lag(T_icm, τ), gecikme ızgarası, |zT| < 3 kapılı RLS) yalnızca sıcaklıkları okuyor. Bu yüzden `g1_detect_v5.m`'den satır satır kopyalandı (`tsrcModel`). Allan uydurması ya da hareket kanalı gerekmiyor ve gürültü türü önemsiz (yalnızca beyaz koşuldu).
+- Kopyaya iki şey eklendi: kapıyı kaldırma anahtarı (her blokta güncelle) ve seçilen adayın iç durumunun kaydı (hata eT, öngörülen std sT, eğim b ve std'si, gecikme, güncellendi mi).
+- 10 test senaryosu × tohum 100–119 koşuldu. Ayrıca T2, T5, T7 ve T8'in seçili tohumları ısıtıcısız tekrarlandı.
+
+**Bulgu 14A: Kopya birebir.** Isıtıcı dışı alarm sayısı, kabul testi CSV'sindeki `tSrcFlagsOutside` ile **200/200 koşuda** aynı. Aşağıdaki her şey testteki davranışın kendisi.
+
+**Bulgu 14B: T2 ve T5'teki kilidi ısıtıcı başlatıyor; kilidi yanlış öğrenilmiş eğim ve aşırı güvenli bir hata bütçesi tutuyor. 13D'deki hipotez doğrulandı, ama kapı tek başına neden değil.**
+- **Tetik ısıtıcı:** Isıtıcısız tekrarda alarm **0** (T2/100: 216 → 0; T5/108: 173 → 0; T5/118: 172 → 0). Isıtıcı rampa sırasında açılınca zT ~37'ye çıkıyor, kapı kapanıyor. İlk ısıtıcı dışı alarm, son güncellemeden tam 22 blok sonra geliyor: 12 dk ısıtıcı + doğruluk penceresinin 10 dk kuyruğu (3τ_BME). Yani kilit, ısıtıcı penceresinin bittiği ilk blokta başlıyor.
+- **Kilidi tutan şey eğim hatası:**
+  - Kapı kapandığında b = 0,986 (T2/100) ve 0,984 (T5/108). Kapısız modelde b ~0,99–1,0'a oturuyor (şekilden okundu).
+  - Isıtıcı rampa başladıktan yalnızca 0,5 saat sonra açılıyor ve o anda seçili gecikme 60 s. Geliştirmede bulunan etkin gecikme ise 80 s (§7).
+  - Sıcaklık ~16 °C yükseldiğinde bu eğim hatası platoda ~0,1–0,15 °C'lik kalıcı bir hata üretiyor.
+- **Aşırı güven:**
+  - Model hatayı sT ≈ **0,020–0,031 °C** bekliyor. Bu değer ısınma süresindeki farkların std'sinden geliyor (taban 0,02 °C), yani kabaca okuma çözünürlüğü. Model hatası için bir pay yok.
+  - Eğimin kendi std'si 0,0016–0,0023. Gerçek eğim hatası bunun yaklaşık 6–9 katı.
+- **Kendiliğinden çıkış yok:** RLS yalnızca güncellemede unutuyor. Donmuşken kovaryansı büyümüyor, bu yüzden sT sabit kalıyor (kanallardaki 10C/B ve C'nin karşılığı bu kanalda yok). T2'de kilit, hata ancak iniş rampasında işaret değiştirip sıfırdan geçince çözülüyor (şekilde ~5 saat).
+- **T5'in tohuma bağlılığı:**
+  - T5 yalnızca tohum 108 ve 118'de kilitleniyor (126–127 blok); diğer 18 tohumda 0. İkisinde de ilk alarm 1,88 saatte.
+  - Birim ofsetlerinde (offIcm, offBme) iki tohumu diğerlerinden ayıran bir örüntü yok.
+  - Muhtemel açıklama: ısıtıcı geldiği anda eğim yakınsamış mı, yakınsamamış mı (sınırda bir durum). Şekilde T5/100'de b ısıtıcıdan önce 1'e yakın görünüyor, ama değer yazdırılmadı. **Doğrulanmadı.**
+- **T7 neden kilitlenmiyor:** Isıtıcıdan önce 1 saat rampa var. Arızadan önceki ısıtıcı dışı alarm 20 tohumun hepsinde **0**. Arızadan sonraki 210 alarm (her tohumda aynı, ısıtıcısız da 210) doğru tespit, K3b'den haklı olarak çıkarılıyor.
+
+**Bulgu 14C: T8'deki alarmlar ayrı bir mekanizma: model yapısı uyuşmazlığı. Isıtıcıyla ilgisi yok.**
+- Son güncellemeyle ilk alarm arasında ısıtıcı yok. Isıtıcısız tekrarda da 40 alarm var (ısıtıcıyla toplam 60).
+- Kapı 1,39 saatte, sinüsün iniş yamacında zT yavaşça −3'e kayınca kapanıyor. Hata −0,06'dan −0,13 °C'ye büyüyor, sT 0,020'de kalıyor.
+- Kapısız modelde de ısıtıcı dışı 24–28 alarm var; kapı bunu ~40'a büyütüyor.
+- **Muhtemel neden (doğrulanmadı):** Simülatörde BME, ortamı 200 s'lik tek bir gecikmeyle izliyor. Dedektörün modeli ise ICM'nin 120 s gecikmesine bir gecikme daha ekliyor (seri iki birinci derece sistem, tek bir birinci derece sistem gibi davranmaz). Hızlı sinüste (25 ± 8 °C, 3 saat periyot, ~17 °C/saate kadar) bu fark 0,02 °C'lik bütçeyi aşıyor.
+
+**Bulgu 14D: Kapıyı kaldırmak çözüm değil.**
+- Kapısız model T2'deki kilidi azaltıyor (~180 → 51–55).
+- Ama bugün 0 olan senaryolarda alarm üretiyor: T3 132–143, T5 153–155, T7 64–103, T1 46–55, T9 27–39. Isıtıcının kuyruğunu modele öğreniyor ve sonra yanılıyor (ör. T2'de kapısız b ~1,13'e sıçrıyor).
+- Yani kapı hem koruyor hem kilitliyor. Kanallarda 7C ve 10F'de gördüğümüz ikilemin sıcaklık kanalındaki hâli.
+
+**Sonuç ve v6 için anlamı (henüz uygulanmadı):** 13D'nin kaynağı üç parçalı: dondurulmuş bir RLS, model hatası payı olmayan bir hata bütçesi ve yeterli uyarım olmadan güvenilen bir eğim. Kanallar için bulunan çözümlerin karşılıkları bu kanala uygulanmalı:
+1. sT'ye bir model hatası payı eklemek.
+2. Donmuşken (a, b) kovaryansını büyütmek, böylece serbest kalmanın bir yolu olur (10C/B).
+3. Eğim ve gecikme yeterli termal uyarımla belirlenmeden modele güvenmemek (6F).
+4. T8 ayrı bir iş: model yapısı (iki gecikme) ya da hızlı değişimde sT'yi genişletmek.
+
+Bu parametrelerin hepsi v6'nın yeni ayrılmış kümesi ilan edilmeden önce sabitlenmeli (§11 protokolü).
+
+---
+
 ## Açık konular
 
 - [x] ~~Termal katsayıları ICM-42688-P veri sayfasından teyit etmek~~ → Bulgu 4
@@ -1109,7 +1159,9 @@ Not: Geliştirme CSV'sinde K1 hesabına EMI olayı sırasındaki manyetometre su
 - [x] ~~G1 simülasyon aşamasının kabul ölçütlerini sonuçları görmeden yazmak~~ → §11
 - [x] ~~v5 geliştirme koşusu → §11'deki kurala göre aday seçimi~~ → §12, aday v5
 - [x] ~~Ayrılmış test (`g1_acceptance_test.m`, tek atış)~~ → §13, FAIL
-- [ ] Tanı: sıcaklık kaynağı modelinin T2, T5 ve T8'de kilitlenmesi (13D)
+- [x] ~~Tanı: sıcaklık kaynağı modelinin T2, T5 ve T8'de kilitlenmesi (13D)~~ → Bulgu 14 (T2/T5: ısıtıcı + yanlış eğim + payı olmayan sT; T8: model yapısı)
+- [ ] **G1 v6, sıcaklık kaynağı modeli:** sT'ye model hatası payı, donmuşken (a, b) kovaryansının büyümesi, uyarım olmadan eğime güvenmemek; T8 için iki gecikmeli model ya da hıza bağlı sT (14B–14D)
+- [ ] T5'te yalnız tohum 108 ve 118'in kilitlenme nedenini doğrulamak (ısıtıcı anında b yakınsamış mı? 14B)
 - [ ] Yeni sürüm için **yeni** bir ayrılmış küme (tohum 200+, yeni senaryolar); §13'teki küme artık görülmüş sayılıyor
 - [ ] Basamak arızasında doğru davranış: kalıcı ofset "arıza" mı, "yeni normal" mi? Formel tanıma yazmak (12B)
 - [ ] Artık öz-ilişkisini "model güvenilmez" durumu için kullanmayı değerlendirmek (12E, ADR-010)

@@ -12,7 +12,7 @@ Findings and the reasoning behind every script are logged in [`../bulgular.md`](
 |---|---|---|
 | [`models/`](models/) | Reusable model functions: per-sensor thermal model, synthetic node | No — called by scripts |
 | [`checks/`](checks/) | Self-checks of the reference model (Allan terms, thermal model) | Yes |
-| [`g1/`](g1/) | G1 (thermal common-mode decomposition): shared helpers at the root, one folder per version (`v0/` … `v5/`), `test/` for the acceptance test | `g1_prototype_*.m` |
+| [`g1/`](g1/) | G1 (thermal common-mode decomposition): shared helpers at the root, one folder per version (`v0/` … `v6/`), `test/` for the acceptance test | `g1_prototype_*.m` |
 | [`figures/`](figures/) | Figures referenced from `bulgular.md` | — |
 
 | File | Kind | What |
@@ -45,6 +45,7 @@ Findings and the reasoning behind every script are logged in [`../bulgular.md`](
 | `g1/test/g1_scenarios_test.m` | function | Held-out scenario set of the acceptance test (bulgular §11) |
 | `g1/test/g1_acceptance_test.m` | script | One-shot G1 acceptance test, PASS/FAIL per declared criterion |
 | `g1/test/g1_smoke_test.m` | script | Simulates every held-out scenario without running a detector |
+| `g1/v6/g1_diag_tsrc_lock.m` | script | Diagnosis of the temperature-source lock in the acceptance test (bulgular 13D/14), replica of the v5 temperature-source model |
 
 Detectors receive only firmware-visible inputs.
 
