@@ -65,6 +65,14 @@ button, select { font: inherit; color: inherit; }
 .sw { width: 18px; height: 3px; border-radius: 2px; display: inline-block; }
 .sw.box { height: 11px; width: 14px; border-radius: 3px; }
 .sw.dash { background: repeating-linear-gradient(90deg, var(--v5) 0 5px, transparent 5px 8px); }
+.sw.hatch { background: repeating-linear-gradient(135deg, #9aa5ad 0 2px, var(--wash) 2px 5px); }
+.diamond { width: 9px; height: 9px; background: var(--ink); transform: rotate(45deg); display: inline-block; margin: 0 2px; }
+.viewpick { display: inline-flex; border: 1px solid var(--rule); border-radius: 999px; overflow: hidden; }
+.viewpick button { border: 0; background: var(--paper); padding: 3px 12px; cursor: pointer; font-size: 13px; }
+.viewpick button[aria-pressed="true"] { background: var(--wash); font-weight: 700; color: var(--accent); }
+.chhead { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
+.light.ofs { background: #fff; border-color: var(--ink); color: var(--ink); }
+.light.unrel { background: repeating-linear-gradient(135deg, #c9d0d5 0 3px, var(--wash) 3px 7px); color: var(--ink); }
 canvas { display: block; width: 100%; touch-action: none; cursor: pointer; }
 
 .transport { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding-top: 4px; }
@@ -173,9 +181,11 @@ kbd { font: inherit; font-size: 12px; border: 1px solid var(--rule); border-bott
             <span><i class="sw box" style="background:var(--good)"></i>haklı alarm</span>
             <span><i class="sw box" style="background:var(--bad)"></i>yanlış alarm</span>
             <span><i class="sw box" style="background:var(--truth)"></i>gerçek arıza</span>
+            <span><i class="diamond"></i>ofset olayı</span>
+            <span><i class="sw box hatch"></i>model güvenilmez</span>
           </span>
         </figcaption>
-        <canvas id="cLanes" height="200" aria-label="Gerçek olaylar ve dedektör kararları"></canvas>
+        <canvas id="cLanes" height="250" aria-label="Gerçek olaylar ve dedektör kararları"></canvas>
       </figure>
 
       <div class="transport">
@@ -212,15 +222,21 @@ kbd { font: inherit; font-size: 12px; border: 1px solid var(--rule); border-bott
       <div class="clock" id="clock">0,00 sa<small>blok 1 / 480</small></div>
       <ul class="facts" id="facts"></ul>
       <div>
-        <div class="facts"><span class="k">Kanallar (v5)</span></div>
+        <div class="chhead">
+          <span class="facts"><span class="k">Kanallar</span></span>
+          <span class="viewpick" role="group" aria-label="Kanal kararlarının sürümü">
+            <button data-view="v5">v5</button>
+            <button data-view="v6" aria-pressed="true">v6</button>
+          </span>
+        </div>
         <div class="lights" id="lights"></div>
-        <p class="light-key">Kırmızı: yanlış suçlanan kanal. Yeşil: haklı suçlanan kanal. Kesikli çerçeve: kanalda gerçekten arıza var. Bir kanala tıklarsan ayrıntısı açılır.</p>
+        <p class="light-key">Kırmızı: yanlış suçlanan kanal. Yeşil: haklı suçlanan kanal. Kesikli çerçeve: kanalda gerçekten arıza var. Beyaz kutu: son 10 dakikada ofset olayı, kanal yeniden kalibre edildi. Taralı: model güvenilmez, kanal suçlanmıyor. Bir kanala tıklarsan ayrıntısı açılır.</p>
       </div>
     </aside>
   </div>
 
   <footer>
-    Kanal kararları G1 v5'ten geliyor. Sıcaklık kaynağı uyumu hem v5 hem v6 adayı (lead-lag) ile hesaplandı; v6'nın kanal mantığı henüz yazılmadı.
+    Kararlar G1 v5 ve v6 dedektörlerinden geliyor. v6 = v5 + lead-lag sıcaklık kaynağı modeli, olay sonu bırakma, ofset olayı ve "model güvenilmez" durumu (bulgular §15–16).
     Grafiğe tıklayıp sürükleyerek zamanda gezinebilirsin. Kısayollar: <kbd>Boşluk</kbd> oynat ya da duraklat, <kbd>←</kbd> <kbd>→</kbd> bir dakika, <kbd>Shift</kbd> ile on dakika.
   </footer>
 </div>
@@ -265,7 +281,7 @@ kbd { font: inherit; font-size: 12px; border: 1px solid var(--rule); border-bott
     },
   };
 
-  const S = { runs: new Map(), order: [], id: null, k: 0, playing: false, speed: 12, acc: 0, last: 0, ch: 3 };
+  const S = { runs: new Map(), order: [], id: null, k: 0, playing: false, speed: 12, acc: 0, last: 0, ch: 3, view: 'v6' };
   let J = null, nB = 0;
 
   // ---------- loading ----------
@@ -334,6 +350,16 @@ kbd { font: inherit; font-size: 12px; border: 1px solid var(--rule); border-bott
         (k) => names.every((_, c) => !J.v5.flag[c][k] || chOk(c, k))),
       chOk,
     };
+    if (J.v6) {
+      const f6 = (c, k) => J.v6.state[c][k] === 1;
+      V.ch6 = lane((k) => names.some((_, c) => f6(c, k)), (k) => names.every((_, c) => !f6(c, k) || chOk(c, k)));
+      V.unrel6 = J.t.map((_, k) => k >= warm && names.some((_, c) => J.v6.state[c][k] === 3));
+      // offset events: justified only on a channel with a real step fault
+      V.ofs6 = [];
+      names.forEach((_, c) => J.t.forEach((__, k) => {
+        if (J.v6.state[c][k] === 2) V.ofs6.push({ k, c, good: (t.faultType?.[c] === 'step') && !!t.fault[c][k] });
+      }));
+    }
     // truth rows: events (heater, EMI) and faults (sensor or BME)
     V.events = J.t.map((_, k) => t.heater[k] ? 'heat' : t.emi[k] ? 'emi' : null);
     V.faults = J.t.map((_, k) => {
@@ -459,16 +485,18 @@ kbd { font: inherit; font-size: 12px; border: 1px solid var(--rule); border-bott
       return { lo, hi, dots: [[J.tsrc.v5.zT, C.v5], [J.tsrc.v6.zT, C.accent]] };
     },
     cLanes(g, w, h) {
+      // [label, version, lane, flag accessor for channel names]
       const rows = [
         ['Gerçekte', null],
         ['Sıcaklık kaynağı', 'v5', V.t5],
         ['Sıcaklık kaynağı', 'v6', V.t6],
-        ['Kanallar', 'v5', V.ch],
+        ['Kanallar', 'v5', V.ch, (c, k) => !!J.v5.flag[c][k]],
       ];
+      if (V.ch6) rows.push(['Kanallar', 'v6', V.ch6, (c, k) => J.v6.state[c][k] === 1]);
       const rh = (h - M.t - M.b) / rows.length;
       hourGrid(g, w, h);
       g.textBaseline = 'middle';
-      rows.forEach(([name, ver, lane], i) => {
+      rows.forEach(([name, ver, lane, flagAt], i) => {
         const y0 = M.t + i * rh, pad = 6;
         g.fillStyle = C.wash; g.fillRect(M.l, y0 + pad, w - M.l - M.r, rh - 2 * pad);
         g.textAlign = 'right';
@@ -493,36 +521,57 @@ kbd { font: inherit; font-size: 12px; border: 1px solid var(--rule); border-bott
           }
           return;
         }
+        if (ver === 'v6' && name === 'Kanallar') {
+          // model unreliable: hatched, under the alarms
+          for (const [a, b] of spans(V.unrel6, Boolean)) {
+            const xa = Math.max(M.l, X(a - 0.5, w)), xb = Math.min(w - M.r, X(b + 0.5, w));
+            g.save(); g.beginPath(); g.rect(xa, y0 + pad, Math.max(1, xb - xa), rh - 2 * pad); g.clip();
+            g.strokeStyle = '#9aa5ad'; g.lineWidth = 1.5;
+            for (let x = xa - rh; x < xb + rh; x += 5) { g.beginPath(); g.moveTo(x, y0 + rh - pad); g.lineTo(x + rh, y0 + pad); g.stroke(); }
+            g.restore();
+          }
+        }
         for (const [a, b, v] of spans(lane, (x) => x > 0)) {
           const [xa, xb] = fillSpan(g, w, a, b, y0 + pad, y0 + rh - pad, v === 1 ? C.good : C.bad);
-          if (i === 3) {
-            const who = J.meta.names.filter((_, c) => J.v5.flag[c][a]).join(' ');
+          if (flagAt) {
+            const who = J.meta.names.filter((_, c) => flagAt(c, a)).join(' ');
             label(g, who, xa, xb, y0 + rh / 2, '#ffffff');
+          }
+        }
+        if (ver === 'v6' && name === 'Kanallar') {
+          // offset events: diamonds on the lane, with the channel name
+          for (const e of V.ofs6) {
+            const x = X(e.k, w), y = y0 + rh / 2, r = 7;
+            g.fillStyle = e.good ? C.good : C.bad; g.strokeStyle = C.paper; g.lineWidth = 2;
+            g.beginPath(); g.moveTo(x, y - r); g.lineTo(x + r, y); g.lineTo(x, y + r); g.lineTo(x - r, y); g.closePath();
+            g.fill(); g.stroke();
+            g.font = `600 12px ${C.font}`; g.fillStyle = C.ink; g.textAlign = 'left';
+            g.fillText(J.meta.names[e.c], x + r + 3, y);
           }
         }
       });
       return null;
     },
     cChZ(g, w, h) {
-      const c = S.ch, lo = -12, hi = 12;
-      for (const [a, b] of spans(J.v5.flag[c], Boolean)) fillSpan(g, w, a, b, M.t, h - M.b, rgba(C.bad, 0.1));
+      const c = S.ch, lo = -12, hi = 12, src = chSrc();
+      for (const [a, b] of spans(J.t.map((_, k) => chFlag(c, k)), Boolean)) fillSpan(g, w, a, b, M.t, h - M.b, rgba(C.bad, 0.1));
       for (const [a, b] of spans(J.truth.fault[c], Boolean)) fillSpan(g, w, a, b, h - M.b - 4, h - M.b, C.truth);
       hourGrid(g, w, h);
       yTicks(g, w, h, lo, hi, [-10, -5, 0, 5, 10]);
       warmVeil(g, w, h);
-      path(g, w, h, J.v5.zI[c], lo, hi, C.icm, 1.5);
-      path(g, w, h, J.v5.zB[c], lo, hi, C.bme, 1.5);
-      return { lo, hi, dots: [[J.v5.zI[c], C.icm], [J.v5.zB[c], C.bme]] };
+      path(g, w, h, src.zI[c], lo, hi, C.icm, 1.5);
+      path(g, w, h, src.zB[c], lo, hi, C.bme, 1.5);
+      return { lo, hi, dots: [[src.zI[c], C.icm], [src.zB[c], C.bme]] };
     },
     cChS(g, w, h) {
-      const c = S.ch, lo = 0, hi = 22, thr = J.meta.h;
+      const c = S.ch, lo = 0, hi = 22, thr = J.meta.h, src = chSrc();
       for (const [a, b] of spans(J.truth.fault[c], Boolean)) fillSpan(g, w, a, b, h - M.b - 4, h - M.b, C.truth);
       hourGrid(g, w, h);
       yTicks(g, w, h, lo, hi, [0, 10, 20]);
       g.strokeStyle = C.bad; g.setLineDash([6, 4]); g.lineWidth = 1.5;
       const y = Y(thr, h, lo, hi); g.beginPath(); g.moveTo(M.l, y); g.lineTo(w - M.r, y); g.stroke(); g.setLineDash([]);
-      path(g, w, h, J.v5.score[c], lo, hi, C.ink, 2);
-      return { lo, hi, dots: [[J.v5.score[c], C.ink]] };
+      path(g, w, h, src.score[c], lo, hi, C.ink, 2);
+      return { lo, hi, dots: [[src.score[c], C.ink]] };
     },
   };
   function label(g, txt, xa, xb, y, color) {
@@ -538,7 +587,7 @@ kbd { font: inherit; font-size: 12px; border: 1px solid var(--rule); border-bott
     if (!J) return;
     readColors();
     const dpr = window.devicePixelRatio || 1;
-    $('chTitle').textContent = `${J.meta.names[S.ch]} kanalının sapması`;
+    $('chTitle').textContent = `${J.meta.names[S.ch]} kanalının sapması (${J.v6 && S.view === 'v6' ? 'v6' : 'v5'})`;
     for (const id of CHARTS) {
       const o = cv[id], w = o.el.clientWidth;
       if (!w) { o.w = 0; continue; }
@@ -599,12 +648,28 @@ kbd { font: inherit; font-size: 12px; border: 1px solid var(--rule); border-bott
       <li><span class="k">Gerçekte</span><span class="v">${happening.length ? happening.join(', ') : 'her şey normal'}</span></li>
       <li><span class="k">Sıcaklık kaynağı, v5</span><span class="v">${verdictPill(V.t5[k], calm)} ${num(J.tsrc.v5.zT[k])} σ</span></li>
       <li><span class="k">Sıcaklık kaynağı, v6</span><span class="v">${verdictPill(V.t6[k], calm)} ${num(J.tsrc.v6.zT[k])} σ</span></li>`;
+    const v6 = S.view === 'v6' && J.v6;
     J.meta.names.forEach((n, c) => {
       const b = LIGHTS[c];
-      const flag = !!J.v5.flag[c][k];
-      b.className = 'light' + (flag ? ' flag' : '') + (flag && V.chOk(c, k) ? ' ok' : '') +
+      const flag = chFlag(c, k);
+      let extra = '', word = flag ? 'suçlu' : 'sağlam';
+      if (v6 && !flag) {
+        if (J.v6.state[c][k] === 3) { extra = ' unrel'; word = 'model güvenilmez'; }
+        else if (V.ofs6.some((e) => e.c === c && e.k <= k && k - e.k < 10)) { extra = ' ofs'; word = 'ofset olayı, yeniden kalibre edildi'; }
+      }
+      b.className = 'light' + (flag ? ' flag' : '') + (flag && V.chOk(c, k) ? ' ok' : '') + extra +
         (t.fault[c][k] ? ' fault' : '') + (c === S.ch ? ' sel' : '');
-      b.setAttribute('aria-label', `${n}: ${flag ? 'suçlu' : 'sağlam'}${t.fault[c][k] ? ', gerçekte arızalı' : ''}`);
+      b.setAttribute('aria-label', `${n}: ${word}${t.fault[c][k] ? ', gerçekte arızalı' : ''}`);
+    });
+  }
+  // channel decisions of the version picked in the right panel
+  const chSrc = () => (S.view === 'v6' && J.v6) ? J.v6 : J.v5;
+  const chFlag = (c, k) => (S.view === 'v6' && J.v6) ? J.v6.state[c][k] === 1 : !!J.v5.flag[c][k];
+  for (const b of document.querySelectorAll('.viewpick button')) {
+    b.addEventListener('click', () => {
+      S.view = b.dataset.view;
+      for (const o of document.querySelectorAll('.viewpick button')) o.setAttribute('aria-pressed', o === b);
+      renderAll();
     });
   }
   const LIGHTS = [];

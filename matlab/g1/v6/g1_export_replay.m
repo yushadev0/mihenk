@@ -8,10 +8,11 @@
 % full v5 detector (channel z against both references, CUSUM score,
 % flags, releases, temperature-source blame) and the temperature-source
 % model in two versions: v5 and the v6 candidate L (bulgular section 15).
-% The v6 channel logic does not exist yet, so channels are v5 only.
+% The full v6 detector (g1_detect_v6, section 16) is exported as well: its
+% channel states (0 healthy, 1 fault, 2 offset event, 3 unreliable).
 %
-% Check: the v5 temperature-source z from g1_tsrc_v6 (v5 options) must
-% equal R.zT of g1_detect_v5 (printed as max abs difference).
+% Check: the temperature-source z of each detector must equal the
+% standalone model (printed as max abs difference, v5 and v6).
 %
 % Output: viewer/data/<id>.json and viewer/data/index.json.
 % Runtime ~3-5 min (two 12 h characterization runs + 6 scenarios).
@@ -62,8 +63,11 @@ for i = 1:numel(runs)
     R = g1_detect_v5(D, NM.(char(runs(i).noise)));
     A5 = g1_tsrc_v6(D, optV5);
     A6 = g1_tsrc_v6(D, optL);
-    fprintf('%-16s %-7s seed %d: |zT(detect_v5) - zT(tsrc v5)| max = %.3g\n', ...
-        runs(i).scenario, runs(i).noise, runs(i).seed, max(abs(R.zT - A5.zT)));
+    R6 = g1_detect_v6(D, NM.(char(runs(i).noise)));
+    fprintf('%-16s %-7s seed %d: max |zT| difference v5 %.3g, v6 %.3g\n', ...
+        runs(i).scenario, runs(i).noise, runs(i).seed, max(abs(R.zT - A5.zT)), max(abs(R6.zT - A6.zT)));
+    ft = repmat("", 1, 9);
+    for f = D.S.faults(:)', ft(f.ch) = f.type; end
 
     nT = D.S.B / D.S.dtT;
     amb = mean(reshape(D.truth.Tamb, nT, []), 1)';
@@ -77,11 +81,15 @@ for i = 1:numel(runs)
     J.t = r4(D.tB / h);
     J.T = struct('amb', r4(amb), 'icm', r4(D.TicmB), 'bme', r4(D.TbmeB));
     J.truth = struct('heater', b01(D.truth.heater), 'tempFault', b01(D.truth.tempFault), ...
-        'emi', b01(D.truth.emi), 'fault', b01(D.truth.fault'));
+        'emi', b01(D.truth.emi), 'fault', b01(D.truth.fault'), 'faultType', ft);
     J.v5 = struct('zI', r4(R.zI'), 'zB', r4(R.zB'), 'score', r4(R.score'), ...
         'flag', b01(R.sensorFlag'), 'released', b01(R.released'), ...
         'zT', r4(R.zT), 'tf', b01(R.tempFlag), 'blameBme', b01(R.blameBme), ...
         'blameIcm', b01(R.blameIcm), 'ambig', b01(R.tempAmbig), 'common', b01(R.common));
+    J.v6 = struct('zI', r4(R6.zI'), 'zB', r4(R6.zB'), 'score', r4(R6.score'), ...
+        'state', double(R6.state'), 'releaseType', double(R6.releaseType'), ...
+        'r1', r4(R6.r1'), 'blameBme', b01(R6.blameBme), 'blameIcm', b01(R6.blameIcm), ...
+        'ambig', b01(R6.tempAmbig), 'unrel', b01(R6.unrel));
     J.tsrc = struct( ...
         'v5', struct('zT', r4(A5.zT), 'eT', r4(A5.eT), 'sT', r4(A5.sT), 'b', r4(A5.b), ...
                      'tau', A5.tau, 'upd', b01(A5.upd), 'tf', b01(A5.tf)), ...
