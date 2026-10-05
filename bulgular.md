@@ -67,6 +67,7 @@ Rapor bu tuzakları "müfredat sınıf 8" olarak topluyor. G1'in değeri kolay s
 | 15 | [`g1_dev_tsrc_v6.m`](matlab/g1/v6/g1_dev_tsrc_v6.m) | v6 sıcaklık kaynağı modeli: lead-lag, ızgara payı, donmuşken büyüme ve ablasyonları; geliştirme + kullanılmış küme | ✅ v5 kopyası 280/280 birebir · ✅ lead-lag (L) bütün kilitleri kaldırıyor (T2 179 → 0, T8 40 → 0, T5 12,7 → 0) · aday L · ⚠ yapı simülatörle aynı (ADR-012) · ❌ donmuşken büyüme ısıtıcıyı ve kaymayı yutuyor |
 | 16 | [`g1_prototype_v6.m`](matlab/g1/v6/g1_prototype_v6.m) | v6 (A: lead-lag T kaynağı, B: olay sonu bırakma, C1: ofset olayı, C2: model güvenilmez) ve ablasyonları; geliştirme + kullanılmış küme | ✅ eşdeğerlik 0 · ✅ T src dışı alarm 13 → 0, EMI sonrası %25 → %0, basamak kapsaması %11–76 → %99 · aday v6 · ❌ K1b: histerezis uyuşmazlığı (T9 beyaz 52/saat) · ⚠ C1 uyuşmazlıkta kaymayı ofset sanıyor · ⚠ C2 etkisiz |
 | 17 | [`g1_diag_v6_side.m`](matlab/g1/v6/g1_diag_v6_side.m) | Tanı: v6 yan etkileri (16E), referans maskesi ve model izi | ❌ H1/H3 reddedildi · mz: eşiğe yakın yanlılık, 10 tohumun 2sinde · ✅ erken bırakma sistematik (10/10): donmuş kanalda model hatası (T − T0)² ile ölçekleniyor, 15C ile aynı hata |
+| 18 | [`g1_prototype_v7.m`](matlab/g1/v7/g1_prototype_v7.m) | v7 (D1: donma anına göre model hatası, D2: büyük ve büyümeyen sapma = ofset) ve ablasyonları | ✅ eşdeğerlik 0, v6 regresyonu 4·10⁻¹⁵ · ✅ D1 basamağın erken bırakılmasını çözüyor · ❌ D1 histerezis uyuşmazlığını açığa çıkarıyor (T9 beyaz 52 → 127/saat) · ❌ D2 yavaş kaymaları ofset sanıyor · kurala göre aday v7, ama v6 genel olarak daha iyi; kuralda önceki sürüm karşılaştırması yoktu |
 
 **Kritik kurallar** (MATLAB referans modelinde her zaman uygulanacak):
 
@@ -1354,6 +1355,62 @@ Kullanıcı koştu. Yalnızca tanı amaçlı; v6'da bir şey değiştirilmedi.
 1. **Donma anına göre ölçeklenen model hatası:** Kanal donunca model hatası (T − T_donma)² ile büyümeli. Platoda donan bir kanal gerçek sapmasını korur, rampada ise belirsizlik sıcaklık değiştikçe büyür.
 2. **Ofset olayını açıkça tanımak:** 1. madde uygulanınca bir basamak artık kendiliğinden "küçülmeyecek". Büyümeyen ama büyük kalan bir sapma (|z| ≫ 3, eğim yok) doğrudan ofset olayı olarak tanınmalı. Bu kullanıcının kararıyla uyumlu (§15).
 3. **mz yanlılığının nedeni:** Eşiğe yakın, termal dönüşlerden sonra görülen bir yanlılık. 1. maddeden sonra yeniden bakılmalı.
+
+---
+
+## 18. G1 v7: geliştirme koşusu
+
+**Script:** [`matlab/g1/v7/g1_prototype_v7.m`](matlab/g1/v7/g1_prototype_v7.m) · **Dedektör:** [`g1_detect_v7.m`](matlab/g1/v7/g1_detect_v7.m) · **Duman testi:** [`g1_smoke_v7.m`](matlab/g1/v7/g1_smoke_v7.m) · **Çıktı:** [`g1_v7_output.txt`](matlab/g1/v7/g1_v7_output.txt) · **Ham sonuçlar:** [`g1_v7_results.csv`](matlab/g1/v7/g1_v7_results.csv)
+
+Kullanıcı koştu. Dedektör, ablasyonlar ve seçim kuralı sonuçlardan önce commit edildi (12dc15f).
+
+**Ne yapıldı:** v7 = v6 + iki değişiklik (§17'deki 1. ve 2. madde):
+- **D1:** Donmuş kanalın model hatası `nF · qm · ((T − T_donma)² + (dr − dr_donma)²)`. Yani hata, koşu başındaki sıcaklığa göre değil, kanalın donduğu andaki sıcaklığa göre ölçekleniyor.
+- **D2:** Son 30 blokta anlamlı biçimde büyümeyen, tek işaretli ve her blokta |z| ≥ 3 olan bir sapma ofset olayı sayılıyor.
+
+Veri v6 ile aynı. Kontroller:
+- **Eşdeğerlik:** D1 ve D2 kapalıyken v7 = v6, fark 0.
+- **Regresyon:** Bu koşudaki v6 satırları §16'daki CSV ile aynı (3879 değer, en büyük göreli fark 4·10⁻¹⁵). Yani v6'ya §17'de eklenen tanı anahtarları hiçbir şeyi değiştirmemiş.
+
+| Ölçüt (bütün koşular) | v6 | noD2 (= v6 + D1) | noD1 (= v6 + D2) | v7 |
+|---|---|---|---|---|
+| Kapsama, beyaz | %89 | %91 | %86 | %86 |
+| Kapsama, renkli | %80 | %79 | %72 | %70 |
+| En kötü koşu, beyaz (yanlış alarm/saat) | 51,6 | 127,1 | 51,6 | 106,1 |
+| En kötü koşu, renkli | 13,6 | 14,4 | 13,6 | 14,4 |
+| Yanlış alarm olayı/saat, renkli | 0,11 | 0,08 | 0,11 | 0,08 |
+| Arızalı kanalda ofset olayı / koşu, beyaz | 0,1 | 0,1 | 0,6 | 1,4 |
+
+**Seçim kuralının sonucu: v7.** Her iki ablasyon da bazı hücrelerde v7'den kötü (noD1: 43 kötü / 60 iyi; noD2: 11 kötü / 33 iyi).
+
+**Ama v7, v6'dan genel olarak kötü.** Kural yalnızca ablasyonları v7 ile karşılaştırıyor; bir önceki sürümü (v6) karşılaştırmaya almıyor. Bu, kuralı ilan ederken yaptığım bir tasarım boşluğu. Kurala göre aday v7, ama v7'yi v6'nın yerine **önermiyorum**. Gerekçe aşağıda. Bundan sonraki kurallarda bir önceki sürüm de karşılaştırmaya girecek.
+
+**Bulgu 18A: D1 doğru çalışıyor; düzelttiği hata, histerezis uyuşmazlığının alarmlarını kısa tutuyormuş.**
+- **Hedeflenen sorun çözüldü:** T2 / beyazda basamak artık erken bırakılmıyor. noD2'de basamak boyunca alarm veriliyor, yalnız alarmlarla hesaplanan kapsama %46'dan %98'e çıkıyor.
+- **Başka iyileşmeler:**
+  - T2 / beyazdaki mz alarmı da kayboluyor; en kötü koşu 6,6'dan 1,1/saate iniyor. 17A'daki mz alarmının süresi muhtemelen eski hata yüzünden uzuyordu. **Doğrulanmadı.**
+  - Renkli gürültüde en kötü koşu birçok senaryoda düşüyor (base 6,5 → 3,9; bme-fault 10,7 → 4,6).
+- **Bedeli histerezis uyuşmazlığında:**
+  - En kötü koşu hyst-relax / beyazda 38,8'den 99,9'a, T9 / beyazda 51,6'dan 127'ye çıkıyor.
+  - v6'da donmuş kanalın belirsizliği hızla büyüyordu; uyuşmazlık yüzünden donan sağlam kanallar bu sayede çabuk "sönüp" bırakılıyordu. D1 ile sapmalarını koruyorlar ve uzun süre suçlu kalıyorlar.
+  - Duman testindeki tahmin (T9'da arıza bloğu 332 → 791) böylece doğrulanmış oluyor.
+- **Sonuç:** D1 doğru, ama histerezis biçim sorunu çözülmeden tek başına net bir kazanç değil. v6'nın histerezis uyuşmazlığındaki görece iyi sonucu, bir hatanın yan etkisiymiş.
+
+**Bulgu 18B: D2 yavaş kaymaları ofset sanıyor. "Büyüme bulunamadı", "büyüme yok" demek değil.**
+- D2'nin olduğu iki varyantta (noD1 ve v7), arızalı kanallarda ofset olayı sayısı belirgin artıyor; kapsama da düşüyor:
+  - T3 / beyaz: koşu başına 6,2 ofset olayı, kapsama %98 → %83.
+  - day-cycle / beyaz: 4,8 ofset olayı, kapsama %97 → %82.
+  - T10 / renkli: sabit sıcaklıkta yavaş kayma, kapsama %91 → %67.
+- Bu düşüş noD1'de (v6 + D2) de var. Yani nedeni D1 değil, D2.
+- **Mekanizma:** Büyüme testi, 30 blokluk pencerede z'nin eğimi istatistiksel olarak anlamlı değilse "büyümüyor" diyor. Yavaş bir kaymada 30 dakikalık eğim gürültünün içinde kalıyor; test büyümeyi bulamıyor ve sapma "büyük ama büyümeyen" sayılıyor.
+- Bu, istatistiksel güç (power) sorunu: anlamlı büyüme bulamamak, büyümenin yokluğuna kanıt değil.
+- Aynı sorun v6'nın C1'inde de vardı (16B'deki T9 kayması), ama |z| < 3 şartı onu sınırlıyordu. D2 bu sınırı kaldırınca sorun büyüdü.
+
+**Sonuç ve sonraki adım için anlamı:**
+- **Mevcut en iyi sürüm v6 olarak kalıyor.** v7'den D1 doğru bir düzeltme olarak tutulmalı; D2 bu hâliyle bırakılmalı.
+- **Histerezis biçimi artık her şeyin önünde.** Hem K1b'nin hem D1'in görünür kıldığı alarmların kaynağı bu.
+- **D2 yeniden tasarlanmalı.** "Büyüme yok" bir eşdeğerlik testiyle (equivalence test) gösterilmeli: eğimin güven aralığının üst sınırı, tespit edilmesi gereken en küçük kayma hızının altında kalmalı. Bu, açık konulardaki "en küçük algılanabilir kayma hızı" (9D) tanımına doğrudan bağlanıyor.
+- **Seçim kuralı:** Bundan sonra bir önceki sürüm de karşılaştırmaya girecek.
 
 ---
 

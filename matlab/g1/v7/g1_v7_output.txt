@@ -1,0 +1,594 @@
+Equivalence v7(D1, D2 off) vs v6: max difference 0 (OK)
+
+dev    base             done (136 s)
+dev    hold-fault       done (272 s)
+dev    accel-step       done (409 s)
+dev    two-faults       done (544 s)
+dev    emi              done (681 s)
+dev    bme-fault        done (817 s)
+dev    hyst-relax       done (953 s)
+dev    day-cycle        done (1090 s)
+spent  t1-fast-ramp     done (1227 s)
+spent  t2-plateau-step  done (1365 s)
+spent  t3-slow-sine     done (1502 s)
+spent  t4-mag-drift     done (1638 s)
+spent  t5-two-heaters   done (1774 s)
+spent  t6-emi-plateau   done (1911 s)
+spent  t7-bme-step      done (2044 s)
+spent  t8-cycle-clean   done (2181 s)
+spent  t9-relax-az      done (2316 s)
+spent  t10-slow-drift   done (2452 s)
+
+Regression v6 vs g1_v6_results.csv: 360 rows, 3879 values, max relative difference 4e-15 (OK)
+
+Per scenario: rows = detectors v6, v7noD1, v7noD2, v7
+
+[dev] base / white
+                                       v6   v7noD1   v7noD2       v7
+detected (mean)                      100%     100%     100%     100%
+delay [min] (median)                  4.5      4.5      4.5      4.5
+coverage (mean)                       98%      98%      98%      89%
+coverage, flags only (mean)           98%      98%      98%      89%
+false flags/h (median)                0.0      0.0      0.0      0.0
+false flags/h (worst)                 1.9      1.9      2.7      2.7
+false episodes/h (mean)              0.05     0.05     0.05     0.05
+offset events, healthy (mean)         0.1      0.1      0.1      0.1
+offset events, faulty (mean)          0.0      0.0      0.0      3.0
+unreliable share (mean)                0%       0%       0%       0%
+unreliable on fault (mean)             0%       0%       0%       0%
+heater sensor flags (mean)            0.0      0.0      0.0      0.0
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+
+[dev] base / colored
+                                       v6   v7noD1   v7noD2       v7
+detected (mean)                      100%     100%     100%     100%
+delay [min] (median)                 15.0     15.0     15.0     15.0
+coverage (mean)                       89%      89%      91%      79%
+coverage, flags only (mean)           89%      89%      91%      79%
+false flags/h (median)                0.0      0.0      0.0      0.0
+false flags/h (worst)                 6.5      6.5      3.9      3.9
+false episodes/h (mean)              0.14     0.14     0.08     0.08
+offset events, healthy (mean)         0.1      0.1      0.0      0.0
+offset events, faulty (mean)          0.1      0.1      0.0      1.1
+unreliable share (mean)                0%       0%       1%       1%
+unreliable on fault (mean)             0%       0%       1%       1%
+heater sensor flags (mean)            0.0      0.0      0.0      0.0
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+
+[dev] hold-fault / white
+                                       v6   v7noD1   v7noD2       v7
+detected (mean)                      100%     100%     100%     100%
+delay [min] (median)                  8.0      8.0      8.0      8.0
+coverage (mean)                       92%      92%      92%      92%
+coverage, flags only (mean)           92%      92%      92%      92%
+false flags/h (median)                0.0      0.0      0.0      0.0
+false flags/h (worst)                 1.9      1.9      2.7      2.7
+false episodes/h (mean)              0.05     0.05     0.05     0.05
+offset events, healthy (mean)         0.1      0.1      0.1      0.1
+offset events, faulty (mean)          0.0      0.0      0.0      0.0
+unreliable share (mean)                0%       0%       0%       0%
+unreliable on fault (mean)             0%       0%       0%       0%
+heater sensor flags (mean)            0.0      0.0      0.0      0.0
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+
+[dev] hold-fault / colored
+                                       v6   v7noD1   v7noD2       v7
+detected (mean)                       90%      90%      90%      90%
+delay [min] (median)                 56.5     56.5     56.5     56.5
+coverage (mean)                       38%      38%      38%      38%
+coverage, flags only (mean)           38%      38%      38%      38%
+false flags/h (median)                0.0      0.0      0.0      0.0
+false flags/h (worst)                 6.5      6.5      4.6      4.6
+false episodes/h (mean)              0.14     0.14     0.08     0.08
+offset events, healthy (mean)         0.1      0.1      0.0      0.0
+offset events, faulty (mean)          0.3      0.3      0.3      0.3
+unreliable share (mean)                0%       0%       0%       0%
+unreliable on fault (mean)             0%       0%       0%       0%
+heater sensor flags (mean)            0.0      0.0      0.0      0.0
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+
+[dev] accel-step / white
+                                       v6   v7noD1   v7noD2       v7
+detected (mean)                      100%     100%     100%     100%
+delay [min] (median)                  0.5      0.5      0.5      0.5
+coverage (mean)                      100%     100%      99%     100%
+coverage, flags only (mean)          100%      40%      99%      16%
+false flags/h (median)                0.0      0.0      0.0      0.0
+false flags/h (worst)                 1.9      1.9      2.7      2.7
+false episodes/h (mean)              0.05     0.05     0.05     0.05
+offset events, healthy (mean)         0.1      0.1      0.1      0.1
+offset events, faulty (mean)          0.0      1.0      0.0      1.0
+unreliable share (mean)                0%       0%       0%       0%
+unreliable on fault (mean)             0%       0%       0%       0%
+heater sensor flags (mean)            0.0      0.0      0.0      0.0
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+
+[dev] accel-step / colored
+                                       v6   v7noD1   v7noD2       v7
+detected (mean)                      100%     100%     100%     100%
+delay [min] (median)                  1.5      1.5      1.5      1.5
+coverage (mean)                       99%      99%      99%      99%
+coverage, flags only (mean)           75%      59%      32%      28%
+false flags/h (median)                0.0      0.0      0.0      0.0
+false flags/h (worst)                 6.5      6.5      4.6      4.6
+false episodes/h (mean)              0.14     0.14     0.08     0.08
+offset events, healthy (mean)         0.1      0.1      0.0      0.0
+offset events, faulty (mean)          0.4      0.7      1.0      1.0
+unreliable share (mean)                0%       0%       0%       0%
+unreliable on fault (mean)             0%       0%       0%       0%
+heater sensor flags (mean)            0.0      0.0      0.0      0.0
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+
+[dev] two-faults / white
+                                       v6   v7noD1   v7noD2       v7
+detected (mean)                      100%     100%     100%     100%
+delay [min] (median)                  5.5      5.5      5.5      5.5
+coverage (mean)                       55%      53%      41%      41%
+coverage, flags only (mean)           55%      53%      41%      41%
+false flags/h (median)                0.0      0.0      0.0      0.0
+false flags/h (worst)                 1.9      1.9      2.7      2.7
+false episodes/h (mean)              0.03     0.03     0.03     0.03
+offset events, healthy (mean)         0.1      0.1      0.1      0.1
+offset events, faulty (mean)          0.1      1.9      0.0      0.0
+unreliable share (mean)               22%      22%      31%      31%
+unreliable on fault (mean)            40%      40%      57%      57%
+heater sensor flags (mean)            0.0      0.0      0.0      0.0
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+
+[dev] two-faults / colored
+                                       v6   v7noD1   v7noD2       v7
+detected (mean)                      100%     100%     100%     100%
+delay [min] (median)                 32.0     32.0     32.0     32.0
+coverage (mean)                       62%      61%      57%      55%
+coverage, flags only (mean)           62%      61%      57%      55%
+false flags/h (median)                0.0      0.0      0.0      0.0
+false flags/h (worst)                 6.5      6.5      3.9      3.9
+false episodes/h (mean)              0.14     0.14     0.08     0.08
+offset events, healthy (mean)         0.1      0.1      0.0      0.0
+offset events, faulty (mean)          0.1      0.4      0.0      0.8
+unreliable share (mean)               11%      11%      14%      13%
+unreliable on fault (mean)            19%      19%      25%      23%
+heater sensor flags (mean)            0.0      0.0      0.0      0.0
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+
+[dev] emi / white
+                                       v6   v7noD1   v7noD2       v7
+false flags/h (median)                0.0      0.0      0.0      0.0
+false flags/h (worst)                 1.9      1.9      2.7      2.7
+false episodes/h (mean)              0.05     0.05     0.05     0.05
+offset events, healthy (mean)         0.1      0.1      0.1      0.1
+offset events, faulty (mean)          0.0      0.0      0.0      0.0
+unreliable share (mean)                0%       0%       0%       0%
+heater sensor flags (mean)            0.0      0.0      0.0      0.0
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+EMI after, mag (mean)                  0%       0%       0%       0%
+
+[dev] emi / colored
+                                       v6   v7noD1   v7noD2       v7
+false flags/h (median)                0.0      0.0      0.0      0.0
+false flags/h (worst)                 6.5      6.5      3.9      3.9
+false episodes/h (mean)              0.14     0.14     0.08     0.08
+offset events, healthy (mean)         0.1      0.1      0.0      0.0
+offset events, faulty (mean)          0.0      0.0      0.0      0.0
+unreliable share (mean)                0%       0%       0%       0%
+heater sensor flags (mean)            0.0      0.0      0.0      0.0
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+EMI after, mag (mean)                  0%       0%       0%       0%
+
+[dev] bme-fault / white
+                                       v6   v7noD1   v7noD2       v7
+false flags/h (median)                0.0      0.0      0.0      0.0
+false flags/h (worst)                 1.9      1.9      2.7      2.7
+false episodes/h (mean)              0.05     0.05     0.05     0.05
+offset events, healthy (mean)         0.1      0.1      0.1      0.1
+offset events, faulty (mean)          0.0      0.0      0.0      0.0
+unreliable share (mean)                0%       0%       0%       0%
+heater sensor flags (mean)            0.0      0.0      0.0      0.0
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+BME fault, sensor (mean)               0%       0%       0%       0%
+BME fault, BME or ambig (mean)        93%      93%      93%      93%
+
+[dev] bme-fault / colored
+                                       v6   v7noD1   v7noD2       v7
+false flags/h (median)                0.0      0.0      0.0      0.0
+false flags/h (worst)                10.7     10.7      4.6      4.6
+false episodes/h (mean)              0.19     0.19     0.06     0.06
+offset events, healthy (mean)         0.1      0.1      0.0      0.0
+offset events, faulty (mean)          0.0      0.0      0.0      0.0
+unreliable share (mean)                0%       0%       0%       0%
+heater sensor flags (mean)            0.0      0.0      0.0      0.0
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+BME fault, sensor (mean)               5%       5%       1%       1%
+BME fault, BME or ambig (mean)        93%      93%      93%      93%
+
+[dev] hyst-relax / white
+                                       v6   v7noD1   v7noD2       v7
+detected (mean)                      100%     100%     100%     100%
+delay [min] (median)                  4.5      4.5      4.5      4.5
+coverage (mean)                       92%      92%      95%      87%
+coverage, flags only (mean)           92%      92%      95%      87%
+false flags/h (median)               20.0     20.0     68.8     68.8
+false flags/h (worst)                38.8     38.8     99.9     99.9
+false episodes/h (mean)              2.49     2.49     2.76     2.76
+offset events, healthy (mean)         3.0      3.0      2.9      2.9
+offset events, faulty (mean)          0.0      0.0      0.0      2.5
+unreliable share (mean)                3%       3%       2%       2%
+unreliable on fault (mean)             6%       6%       3%       3%
+heater sensor flags (mean)           12.3     12.3     22.1     22.1
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+
+[dev] hyst-relax / colored
+                                       v6   v7noD1   v7noD2       v7
+detected (mean)                      100%     100%     100%     100%
+delay [min] (median)                 18.0     18.0     18.0     18.0
+coverage (mean)                       90%      90%      90%      78%
+coverage, flags only (mean)           90%      90%      90%      78%
+false flags/h (median)                0.1      0.1      0.1      0.1
+false flags/h (worst)                 6.6      6.6      4.6      4.6
+false episodes/h (mean)              0.21     0.21     0.11     0.11
+offset events, healthy (mean)         0.2      0.2      0.1      0.1
+offset events, faulty (mean)          0.0      0.0      0.0      1.1
+unreliable share (mean)                1%       1%       1%       1%
+unreliable on fault (mean)             1%       1%       1%       1%
+heater sensor flags (mean)            0.0      0.0      0.0      0.0
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+
+[dev] day-cycle / white
+                                       v6   v7noD1   v7noD2       v7
+detected (mean)                      100%     100%     100%     100%
+delay [min] (median)                  4.5      4.5      4.5      4.5
+coverage (mean)                       97%      82%      97%      82%
+coverage, flags only (mean)           97%      82%      97%      82%
+false flags/h (median)                0.0      0.0      0.0      0.0
+false flags/h (worst)                 0.2      0.2      0.2      0.2
+false episodes/h (mean)              0.02     0.02     0.02     0.02
+offset events, healthy (mean)         0.0      0.0      0.0      0.0
+offset events, faulty (mean)          0.0      1.1      0.0      4.8
+unreliable share (mean)                0%       0%       0%       0%
+unreliable on fault (mean)             0%       0%       0%       0%
+heater sensor flags (mean)            0.0      0.0      0.0      0.0
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+
+[dev] day-cycle / colored
+                                       v6   v7noD1   v7noD2       v7
+detected (mean)                      100%     100%     100%     100%
+delay [min] (median)                 18.0     18.0     18.0     18.0
+coverage (mean)                       85%      65%      77%      68%
+coverage, flags only (mean)           85%      65%      77%      68%
+false flags/h (median)                0.0      0.0      0.0      0.0
+false flags/h (worst)                 3.2      3.2      4.6      4.6
+false episodes/h (mean)              0.11     0.11     0.11     0.11
+offset events, healthy (mean)         0.0      0.0      0.1      0.1
+offset events, faulty (mean)          0.0      1.0      0.7      1.9
+unreliable share (mean)                0%       0%       0%       0%
+unreliable on fault (mean)             1%       1%       0%       1%
+heater sensor flags (mean)            0.0      0.0      0.0      0.0
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+
+[spent] t1-fast-ramp / white
+                                       v6   v7noD1   v7noD2       v7
+detected (mean)                      100%     100%     100%     100%
+delay [min] (median)                  5.5      5.5      5.5      5.5
+coverage (mean)                       98%      98%      98%      91%
+coverage, flags only (mean)           98%      98%      98%      91%
+false flags/h (median)                0.0      0.0      0.0      0.0
+false flags/h (worst)                 0.6      0.6      0.6      0.6
+false episodes/h (mean)              0.02     0.02     0.02     0.02
+offset events, healthy (mean)         0.0      0.0      0.0      0.0
+offset events, faulty (mean)          0.0      0.0      0.1      2.0
+unreliable share (mean)                0%       0%       0%       0%
+unreliable on fault (mean)             0%       0%       0%       0%
+heater sensor flags (mean)            0.0      0.0      0.0      0.0
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+
+[spent] t1-fast-ramp / colored
+                                       v6   v7noD1   v7noD2       v7
+detected (mean)                      100%     100%     100%     100%
+delay [min] (median)                 31.5     31.5     33.5     33.5
+coverage (mean)                       84%      74%      84%      75%
+coverage, flags only (mean)           84%      74%      84%      75%
+false flags/h (median)                0.0      0.0      0.0      0.0
+false flags/h (worst)                 5.5      5.5      6.2      6.2
+false episodes/h (mean)              0.06     0.06     0.08     0.08
+offset events, healthy (mean)         0.1      0.1      0.2      0.2
+offset events, faulty (mean)          0.0      0.8      0.0      0.7
+unreliable share (mean)                0%       0%       0%       0%
+unreliable on fault (mean)             0%       0%       1%       1%
+heater sensor flags (mean)            0.0      0.0      0.0      0.0
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+
+[spent] t2-plateau-step / white
+                                       v6   v7noD1   v7noD2       v7
+detected (mean)                      100%     100%     100%     100%
+delay [min] (median)                  0.5      0.5      0.5      0.5
+coverage (mean)                       65%      65%      98%     100%
+coverage, flags only (mean)           46%      31%      98%      12%
+false flags/h (median)                0.0      0.0      0.0      0.0
+false flags/h (worst)                 6.6      6.6      1.1      0.9
+false episodes/h (mean)              0.16     0.16     0.06     0.05
+offset events, healthy (mean)         0.0      0.0      0.0      0.0
+offset events, faulty (mean)          0.4      1.0      0.0      1.0
+unreliable share (mean)                0%       0%       0%       0%
+unreliable on fault (mean)             0%       0%       0%       0%
+heater sensor flags (mean)            0.0      0.0      0.0      0.0
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+
+[spent] t2-plateau-step / colored
+                                       v6   v7noD1   v7noD2       v7
+detected (mean)                      100%     100%     100%     100%
+delay [min] (median)                  2.5      2.5      2.5      2.5
+coverage (mean)                       99%      99%      99%      99%
+coverage, flags only (mean)           13%      13%      34%      32%
+false flags/h (median)                0.0      0.0      0.0      0.0
+false flags/h (worst)                 1.9      1.9      4.6      4.6
+false episodes/h (mean)              0.05     0.05     0.06     0.06
+offset events, healthy (mean)         0.0      0.0      0.1      0.1
+offset events, faulty (mean)          1.0      1.0      1.0      1.0
+unreliable share (mean)                0%       0%       0%       0%
+unreliable on fault (mean)             0%       0%       0%       0%
+heater sensor flags (mean)            0.0      0.0      0.0      0.0
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+
+[spent] t3-slow-sine / white
+                                       v6   v7noD1   v7noD2       v7
+detected (mean)                      100%     100%     100%     100%
+delay [min] (median)                  5.5      5.5      5.5      5.5
+coverage (mean)                       98%      82%      98%      83%
+coverage, flags only (mean)           98%      82%      98%      83%
+false flags/h (median)                0.0      0.0      0.0      0.0
+false flags/h (worst)                 1.3      1.3      1.3      1.3
+false episodes/h (mean)              0.03     0.03     0.03     0.03
+offset events, healthy (mean)         0.0      0.0      0.0      0.0
+offset events, faulty (mean)          0.0      3.0      0.0      6.2
+unreliable share (mean)                0%       0%       0%       0%
+unreliable on fault (mean)             0%       0%       0%       0%
+heater sensor flags (mean)            0.0      0.0      0.0      0.0
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+
+[spent] t3-slow-sine / colored
+                                       v6   v7noD1   v7noD2       v7
+detected (mean)                      100%     100%     100%     100%
+delay [min] (median)                 64.0     64.0     64.0     64.0
+coverage (mean)                       65%      43%      76%      53%
+coverage, flags only (mean)           65%      43%      76%      53%
+false flags/h (median)                0.0      0.0      0.0      0.0
+false flags/h (worst)                 4.9      4.9      0.0      0.0
+false episodes/h (mean)              0.03     0.03     0.00     0.00
+offset events, healthy (mean)         0.1      0.1      0.0      0.0
+offset events, faulty (mean)          0.3      1.2      0.1      2.1
+unreliable share (mean)                0%       0%       0%       1%
+unreliable on fault (mean)             0%       0%       1%       1%
+heater sensor flags (mean)            0.0      0.0      0.0      0.0
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+
+[spent] t4-mag-drift / white
+                                       v6   v7noD1   v7noD2       v7
+detected (mean)                      100%     100%     100%     100%
+delay [min] (median)                  8.0      8.0      8.0      8.0
+coverage (mean)                       96%      96%      96%      91%
+coverage, flags only (mean)           96%      96%      96%      91%
+false flags/h (median)                0.0      0.0      0.0      0.0
+false flags/h (worst)                 0.0      0.0      0.0      0.0
+false episodes/h (mean)              0.00     0.00     0.00     0.00
+offset events, healthy (mean)         0.0      0.0      0.0      0.0
+offset events, faulty (mean)          0.0      0.0      0.0      1.0
+unreliable share (mean)                0%       0%       0%       0%
+unreliable on fault (mean)             0%       0%       0%       0%
+heater sensor flags (mean)            0.0      0.0      0.0      0.0
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+
+[spent] t4-mag-drift / colored
+                                       v6   v7noD1   v7noD2       v7
+detected (mean)                      100%     100%     100%     100%
+delay [min] (median)                 16.5     16.5     16.5     16.5
+coverage (mean)                       92%      84%      92%      77%
+coverage, flags only (mean)           92%      84%      92%      77%
+false flags/h (median)                0.0      0.0      0.0      0.0
+false flags/h (worst)                 5.7      5.7      5.5      5.5
+false episodes/h (mean)              0.09     0.09     0.09     0.09
+offset events, healthy (mean)         0.2      0.2      0.2      0.2
+offset events, faulty (mean)          0.0      0.6      0.0      1.5
+unreliable share (mean)                0%       0%       0%       0%
+unreliable on fault (mean)             1%       1%       1%       1%
+heater sensor flags (mean)            0.0      0.0      0.0      0.0
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+
+[spent] t5-two-heaters / white
+                                       v6   v7noD1   v7noD2       v7
+false flags/h (median)                0.0      0.0      0.0      0.0
+false flags/h (worst)                 8.1      8.1      3.3      3.3
+false episodes/h (mean)              0.08     0.08     0.05     0.05
+offset events, healthy (mean)         0.0      0.0      0.0      0.0
+offset events, faulty (mean)          0.0      0.0      0.0      0.0
+unreliable share (mean)                0%       0%       0%       0%
+heater sensor flags (mean)            2.3      2.3      0.0      0.0
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+
+[spent] t5-two-heaters / colored
+                                       v6   v7noD1   v7noD2       v7
+false flags/h (median)                0.0      0.0      0.0      0.0
+false flags/h (worst)                 4.6      4.6      4.9      4.9
+false episodes/h (mean)              0.05     0.05     0.05     0.05
+offset events, healthy (mean)         0.1      0.1      0.1      0.1
+offset events, faulty (mean)          0.0      0.0      0.0      0.0
+unreliable share (mean)                0%       0%       0%       0%
+heater sensor flags (mean)            0.0      0.0      0.0      0.0
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+
+[spent] t6-emi-plateau / white
+                                       v6   v7noD1   v7noD2       v7
+false flags/h (median)                0.0      0.0      0.0      0.0
+false flags/h (worst)                 4.3      4.3      3.8      3.8
+false episodes/h (mean)              0.14     0.14     0.08     0.08
+offset events, healthy (mean)         0.1      0.1      0.1      0.1
+offset events, faulty (mean)          0.0      0.0      0.0      0.0
+unreliable share (mean)                0%       0%       0%       0%
+heater sensor flags (mean)            0.0      0.0      0.0      0.0
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+EMI after, mag (mean)                  0%       0%       0%       0%
+
+[spent] t6-emi-plateau / colored
+                                       v6   v7noD1   v7noD2       v7
+false flags/h (median)                0.0      0.0      0.0      0.0
+false flags/h (worst)                 4.6      4.6      5.1      5.1
+false episodes/h (mean)              0.06     0.06     0.06     0.06
+offset events, healthy (mean)         0.1      0.1      0.1      0.1
+offset events, faulty (mean)          0.0      0.0      0.0      0.0
+unreliable share (mean)                0%       0%       0%       0%
+heater sensor flags (mean)            1.3      1.3      1.6      1.6
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+EMI after, mag (mean)                  0%       0%       0%       0%
+
+[spent] t7-bme-step / white
+                                       v6   v7noD1   v7noD2       v7
+false flags/h (median)                0.0      0.0      0.0      0.0
+false flags/h (worst)                 2.7      2.7      3.0      3.0
+false episodes/h (mean)              0.06     0.06     0.05     0.05
+offset events, healthy (mean)         0.0      0.0      0.0      0.0
+offset events, faulty (mean)          0.0      0.0      0.0      0.0
+unreliable share (mean)                0%       0%       0%       0%
+heater sensor flags (mean)            0.0      0.0      0.0      0.0
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+BME fault, sensor (mean)               1%       1%       1%       1%
+BME fault, BME or ambig (mean)       100%     100%     100%     100%
+
+[spent] t7-bme-step / colored
+                                       v6   v7noD1   v7noD2       v7
+false flags/h (median)                0.0      0.0      0.0      0.0
+false flags/h (worst)                 4.6      4.6      5.1      5.1
+false episodes/h (mean)              0.08     0.08     0.08     0.08
+offset events, healthy (mean)         0.2      0.2      0.2      0.2
+offset events, faulty (mean)          0.0      0.0      0.0      0.0
+unreliable share (mean)                0%       0%       0%       0%
+heater sensor flags (mean)            0.0      0.0      0.0      0.0
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+BME fault, sensor (mean)               3%       3%       3%       3%
+BME fault, BME or ambig (mean)       100%     100%     100%     100%
+
+[spent] t8-cycle-clean / white
+                                       v6   v7noD1   v7noD2       v7
+false flags/h (median)                0.0      0.0      0.0      0.0
+false flags/h (worst)                 1.9      1.9      1.7      1.7
+false episodes/h (mean)              0.11     0.11     0.11     0.11
+offset events, healthy (mean)         0.0      0.0      0.0      0.0
+offset events, faulty (mean)          0.0      0.0      0.0      0.0
+unreliable share (mean)                0%       0%       0%       0%
+heater sensor flags (mean)            0.0      0.0      0.0      0.0
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+
+[spent] t8-cycle-clean / colored
+                                       v6   v7noD1   v7noD2       v7
+false flags/h (median)                0.0      0.0      0.0      0.0
+false flags/h (worst)                 9.3      9.3      9.3      9.3
+false episodes/h (mean)              0.06     0.06     0.06     0.06
+offset events, healthy (mean)         0.2      0.2      0.2      0.2
+offset events, faulty (mean)          0.0      0.0      0.0      0.0
+unreliable share (mean)                0%       0%       0%       0%
+heater sensor flags (mean)            0.0      0.0      0.0      0.0
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+
+[spent] t9-relax-az / white
+                                       v6   v7noD1   v7noD2       v7
+detected (mean)                      100%     100%     100%     100%
+delay [min] (median)                  7.5      7.5      8.5     12.5
+coverage (mean)                       80%      77%      86%      78%
+coverage, flags only (mean)           80%      77%      86%      78%
+false flags/h (median)               37.6     37.6     99.1     93.6
+false flags/h (worst)                51.6     51.6    127.1    106.1
+false episodes/h (mean)              3.95     3.95     3.55     4.42
+offset events, healthy (mean)         3.4      3.4      3.1      7.4
+offset events, faulty (mean)          0.4      1.0      0.8      1.9
+unreliable share (mean)                3%       3%      14%      16%
+unreliable on fault (mean)             4%       4%       8%      10%
+heater sensor flags (mean)            0.0      0.0      0.0      0.0
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+
+[spent] t9-relax-az / colored
+                                       v6   v7noD1   v7noD2       v7
+detected (mean)                      100%     100%     100%     100%
+delay [min] (median)                 44.0     44.0     44.0     44.0
+coverage (mean)                       62%      53%      54%      52%
+coverage, flags only (mean)           62%      53%      54%      52%
+false flags/h (median)                0.0      0.0      0.0      0.0
+false flags/h (worst)                13.6     13.6     14.4     14.4
+false episodes/h (mean)              0.16     0.16     0.14     0.14
+offset events, healthy (mean)         0.2      0.2      0.3      0.3
+offset events, faulty (mean)          0.3      1.0      0.8      1.2
+unreliable share (mean)                0%       0%       0%       0%
+unreliable on fault (mean)             0%       0%       0%       0%
+heater sensor flags (mean)            0.0      0.0      0.0      0.0
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+
+[spent] t10-slow-drift / white
+                                       v6   v7noD1   v7noD2       v7
+detected (mean)                      100%     100%     100%     100%
+delay [min] (median)                  5.5      5.5      5.5      5.5
+coverage (mean)                       99%      92%      99%      92%
+coverage, flags only (mean)           99%      92%      99%      92%
+false flags/h (median)                0.0      0.0      0.0      0.0
+false flags/h (worst)                 0.0      0.0      0.0      0.0
+false episodes/h (mean)              0.00     0.00     0.00     0.00
+offset events, healthy (mean)         0.0      0.0      0.0      0.0
+offset events, faulty (mean)          0.0      1.1      0.0      1.0
+unreliable share (mean)                0%       0%       0%       0%
+unreliable on fault (mean)             0%       0%       0%       0%
+heater sensor flags (mean)            0.0      0.0      0.0      0.0
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+
+[spent] t10-slow-drift / colored
+                                       v6   v7noD1   v7noD2       v7
+detected (mean)                      100%     100%     100%     100%
+delay [min] (median)                 34.0     34.0     34.0     34.0
+coverage (mean)                       91%      67%      91%      67%
+coverage, flags only (mean)           91%      67%      91%      67%
+false flags/h (median)                0.0      0.0      0.0      0.0
+false flags/h (worst)                11.8     11.8     11.8     11.8
+false episodes/h (mean)              0.06     0.06     0.06     0.06
+offset events, healthy (mean)         0.2      0.2      0.2      0.2
+offset events, faulty (mean)          0.0      1.7      0.0      1.8
+unreliable share (mean)                0%       0%       0%       0%
+unreliable on fault (mean)             0%       0%       0%       0%
+heater sensor flags (mean)            0.0      0.0      0.0      0.0
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+
+Overall (all runs of both sets)
+                                       v6   v7noD1   v7noD2       v7
+[white]
+detected (mean)                      100%     100%     100%     100%
+delay [min] (median)                  5.5      5.5      5.5      5.5
+coverage (mean)                       89%      86%      91%      86%
+coverage, flags only (mean)           88%      78%      91%      71%
+false flags/h (median)                0.0      0.0      0.0      0.0
+false flags/h (worst)                51.6     51.6    127.1    106.1
+false episodes/h (mean)              0.41     0.41     0.39     0.44
+offset events, healthy (mean)         0.4      0.4      0.4      0.6
+offset events, faulty (mean)          0.1      0.6      0.1      1.4
+unreliable share (mean)                2%       2%       3%       3%
+unreliable on fault (mean)             4%       4%       6%       6%
+heater sensor flags (mean)            0.8      0.8      1.2      1.2
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+EMI after, mag (mean)                  0%       0%       0%       0%
+BME fault, sensor (mean)               0%       0%       0%       0%
+BME fault, BME or ambig (mean)        96%      96%      96%      96%
+[colored]
+detected (mean)                       99%      99%      99%      99%
+delay [min] (median)                 25.5     25.5     25.5     25.5
+coverage (mean)                       80%      72%      79%      70%
+coverage, flags only (mean)           70%      61%      68%      59%
+false flags/h (median)                0.0      0.0      0.0      0.0
+false flags/h (worst)                13.6     13.6     14.4     14.4
+false episodes/h (mean)              0.11     0.11     0.08     0.08
+offset events, healthy (mean)         0.1      0.1      0.1      0.1
+offset events, faulty (mean)          0.1      0.5      0.2      0.8
+unreliable share (mean)                1%       1%       1%       1%
+unreliable on fault (mean)             2%       2%       2%       2%
+heater sensor flags (mean)            0.1      0.1      0.1      0.1
+T-src outside (mean)                  0.0      0.0      0.0      0.0
+EMI after, mag (mean)                  0%       0%       0%       0%
+BME fault, sensor (mean)               4%       4%       2%       2%
+BME fault, BME or ambig (mean)        96%      96%      96%      96%
+
+Selection: each ablation vs v7 over 36 scenario/noise cells x 13 metrics
+  v7noD1  worse in  43, better in  60
+  v7noD2  worse in  11, better in  33
+  -> candidate: v7
