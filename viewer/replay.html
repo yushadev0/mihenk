@@ -3,181 +3,225 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;600;700&display=swap">
 <style>
-/* Layout: instrument bench. Transport bar on top; node diagram and live readouts
-   on the left; scopes that share one time axis on the right. */
+/* Layout: one story per screen. Left: what to look for, two charts and the
+   verdict lanes (truth vs v5 vs v6) under one playhead. Right: a plain
+   "right now" panel. Light theme only, by choice. */
 :root {
-  --bg: #e9eef0;
-  --panel: #f9fbfb;
-  --ink: #17232b;
-  --muted: #5b6a73;
-  --grid: #d3dce0;
-  --line: #bfcbd1;
-  --accent: #0d6c8a;
-  --veil: rgba(249, 251, 251, 0.66);
-  --icm: #2d6cb3;
-  --bme: #a8397f;
-  --amb: #7d8b93;
-  --v5: #9a6a12;
-  --v6: #0d8a78;
-  --heat: #e07b24;
-  --fault: #c9343c;
-  --warn: #d19a07;
-  --ok: #3c8f5a;
-  --idle: #b4c0c6;
-  --f-display: "Barlow Semi Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
-  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
-  --f-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #11181c; --panel: #182127; --ink: #e2e9ec; --muted: #93a3ac; --grid: #26323a;
-    --line: #34434c; --accent: #3fb3d6; --veil: rgba(24, 33, 39, 0.68);
-    --icm: #6aa6ec; --bme: #e07cbe; --amb: #8796a0; --v5: #e0aa45; --v6: #3fd1b8;
-    --heat: #f29a4a; --fault: #f0646b; --warn: #f2c443; --ok: #5cc184; --idle: #46555e;
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #11181c; --panel: #182127; --ink: #e2e9ec; --muted: #93a3ac; --grid: #26323a;
-  --line: #34434c; --accent: #3fb3d6; --veil: rgba(24, 33, 39, 0.68);
-  --icm: #6aa6ec; --bme: #e07cbe; --amb: #8796a0; --v5: #e0aa45; --v6: #3fd1b8;
-  --heat: #f29a4a; --fault: #f0646b; --warn: #f2c443; --ok: #5cc184; --idle: #46555e;
-  color-scheme: dark;
+  color-scheme: light;
+  --paper: #ffffff;
+  --wash: #f4f6f8;
+  --ink: #1c2830;
+  --muted: #5d6c76;
+  --rule: #dfe5e9;
+  --accent: #2155c4;      /* v6, playhead, buttons */
+  --v5: #8f989f;
+  --icm: #0f766e;
+  --bme: #b2367f;
+  --heat: #f0a03a;
+  --emi: #e2b80c;
+  --truth: #2d3b45;
+  --good: #2e9a58;
+  --bad: #d3343b;
+  --font: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body {
-  background: var(--bg); color: var(--ink); font: 14px/1.5 var(--f-body);
-  margin: 0; padding-inline: 16px; padding-block: 16px 32px;
+  background: var(--paper); color: var(--ink); font: 15px/1.55 var(--font);
+  margin: 0; padding-inline: 16px; padding-block: 20px 40px;
+  font-variant-numeric: tabular-nums;
 }
-.wrap { max-width: 1440px; margin: 0 auto; display: grid; gap: 14px; }
-header { display: flex; flex-wrap: wrap; align-items: end; gap: 12px 24px; justify-content: space-between; }
-.eyebrow { font: 600 12px/1 var(--f-display); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
-h1 { font: 700 30px/1.05 var(--f-display); margin: 4px 0 0; letter-spacing: .01em; text-wrap: balance; }
-.runpick { display: grid; gap: 4px; min-width: 0; flex: 1 1 320px; max-width: 560px; }
-label, .lbl { font: 600 12px/1.2 var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-select, button {
-  font: 500 14px/1.2 var(--f-body); color: var(--ink); background: var(--panel);
-  border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px;
+.page { max-width: 1280px; margin: 0 auto; display: grid; gap: 18px; }
+h1 { font-size: 28px; line-height: 1.15; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
+h2 { font-size: 21px; line-height: 1.25; font-weight: 700; margin: 0; text-wrap: balance; }
+.lede { margin: 4px 0 0; color: var(--muted); max-width: 70ch; }
+button, select { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+
+/* story picker */
+.stories { display: flex; flex-wrap: wrap; gap: 8px; }
+.story {
+  border: 1px solid var(--rule); background: var(--paper); border-radius: 999px;
+  padding: 7px 14px; cursor: pointer; font-weight: 600; font-size: 14px;
 }
-select { width: 100%; }
-button { cursor: pointer; }
-button:hover { border-color: var(--accent); }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.note { margin: 0; color: var(--muted); max-width: 75ch; }
-.note b { color: var(--ink); font-weight: 600; }
+.story:hover { border-color: var(--accent); }
+.story[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
 
-.transport {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px;
-  background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px;
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 28px; align-items: start; }
+@media (max-width: 900px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+.main { display: grid; gap: 14px; min-width: 0; }
+
+.look { background: var(--wash); border-radius: 10px; padding: 14px 16px; max-width: 80ch; }
+.look p { margin: 4px 0 0; }
+.look .what { font-weight: 700; }
+
+.chart { margin: 0; min-width: 0; }
+.chart figcaption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; align-items: baseline; margin-bottom: 4px; }
+.chart .q { font-weight: 700; font-size: 16px; }
+.keys { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13px; color: var(--muted); }
+.keys span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 18px; height: 3px; border-radius: 2px; display: inline-block; }
+.sw.box { height: 11px; width: 14px; border-radius: 3px; }
+.sw.dash { background: repeating-linear-gradient(90deg, var(--v5) 0 5px, transparent 5px 8px); }
+canvas { display: block; width: 100%; touch-action: none; cursor: pointer; }
+
+.transport { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding-top: 4px; }
+#play {
+  background: var(--accent); color: #fff; border: 0; border-radius: 999px;
+  padding: 10px 22px; font-weight: 700; cursor: pointer; min-width: 120px;
 }
-.transport .btns { display: flex; gap: 6px; }
-#play { min-width: 92px; background: var(--accent); color: var(--panel); border-color: var(--accent); font-weight: 600; }
-.clock { font: 500 15px/1 var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.clock small { color: var(--muted); font-size: 12px; }
-#slider { flex: 1 1 260px; min-width: 0; accent-color: var(--accent); }
-.speed { display: flex; align-items: center; gap: 6px; }
-.speed select { width: auto; }
+#play:hover { filter: brightness(1.08); }
+#slider { flex: 1 1 240px; min-width: 0; accent-color: var(--accent); }
+.speed { display: inline-flex; border: 1px solid var(--rule); border-radius: 999px; overflow: hidden; }
+.speed button { border: 0; background: var(--paper); padding: 6px 12px; cursor: pointer; font-size: 14px; }
+.speed button[aria-pressed="true"] { background: var(--wash); font-weight: 700; color: var(--accent); }
 
-.bench { display: grid; grid-template-columns: minmax(280px, 380px) minmax(0, 1fr); gap: 14px; align-items: start; }
-@media (max-width: 860px) { .bench { grid-template-columns: minmax(0, 1fr); } }
-.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px; min-width: 0; }
-.side { display: grid; gap: 14px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); }
-@media (max-width: 860px) { .side { position: static; } }
-.card h2 { font: 600 13px/1.2 var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
-#node { width: 100%; height: auto; display: block; }
-#node text { font-family: var(--f-display); fill: var(--ink); }
-#node .light { cursor: pointer; }
+/* right panel */
+.now { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); display: grid; gap: 16px; border-left: 1px solid var(--rule); padding-left: 24px; }
+@media (max-width: 900px) { .now { position: static; border-left: 0; padding-left: 0; border-top: 1px solid var(--rule); padding-top: 16px; } }
+.clock { font-size: 36px; font-weight: 700; line-height: 1; }
+.clock small { display: block; font-size: 13px; font-weight: 400; color: var(--muted); margin-top: 6px; }
+.facts { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.facts li { display: grid; gap: 2px; }
+.facts .k { font-size: 13px; color: var(--muted); }
+.facts .v { font-weight: 600; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.pill { font-size: 13px; font-weight: 700; padding: 2px 9px; border-radius: 999px; color: #fff; }
+.pill.good { background: var(--good); } .pill.bad { background: var(--bad); } .pill.calm { background: var(--wash); color: var(--muted); }
 
-.readout { display: grid; grid-template-columns: auto 1fr; gap: 5px 12px; margin: 0; font-size: 13px; }
-.readout dt { color: var(--muted); }
-.readout dd { margin: 0; font-family: var(--f-mono); font-variant-numeric: tabular-nums; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.chip { font: 600 11px/1 var(--f-display); letter-spacing: .06em; text-transform: uppercase; padding: 3px 7px; border-radius: 99px; border: 1px solid currentColor; }
-.chip.ok { color: var(--ok); } .chip.warn { color: var(--warn); } .chip.alarm { color: var(--fault); } .chip.idle { color: var(--muted); }
-.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; }
+.lights { display: grid; grid-template-columns: auto repeat(3, 44px); gap: 8px 6px; align-items: center; }
+.lights .row { font-size: 13px; color: var(--muted); padding-right: 6px; }
+.light {
+  width: 44px; height: 30px; border-radius: 8px; border: 2px solid transparent;
+  background: var(--wash); font-size: 13px; font-weight: 700; cursor: pointer; color: var(--muted);
+}
+.light.flag { background: var(--bad); color: #fff; }
+.light.flag.ok { background: var(--good); }
+.light.fault { border-color: var(--truth); border-style: dashed; }
+.light.sel { outline: 3px solid var(--accent); outline-offset: 1px; }
+.light-key { font-size: 12px; color: var(--muted); line-height: 1.5; }
 
-.legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--muted); margin-top: 8px; }
-.legend span { display: inline-flex; align-items: center; gap: 5px; }
-.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+details { border-top: 1px solid var(--rule); padding-top: 12px; }
+summary { cursor: pointer; font-weight: 700; }
+details[open] summary { margin-bottom: 10px; }
+.hint { color: var(--muted); font-size: 13px; margin: 0 0 10px; max-width: 75ch; }
 
-.scopes { display: grid; gap: 10px; min-width: 0; }
-.scope { margin: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 8px 4px; min-width: 0; }
-.scope figcaption { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; padding: 0 4px 4px; }
-.scope figcaption .t { font: 600 13px/1.2 var(--f-display); letter-spacing: .06em; text-transform: uppercase; }
-.scope figcaption .k { font-size: 12px; color: var(--muted); display: inline-flex; gap: 10px; flex-wrap: wrap; }
-.scope canvas { display: block; width: 100%; touch-action: none; cursor: crosshair; }
-
-.loader { display: grid; gap: 10px; place-items: start; }
-.drop { border: 2px dashed var(--line); border-radius: 8px; padding: 22px; width: 100%; color: var(--muted); }
+.loader { background: var(--wash); border-radius: 10px; padding: 18px; display: grid; gap: 10px; }
+.drop { border: 2px dashed var(--rule); border-radius: 10px; padding: 24px; color: var(--muted); background: var(--paper); }
 .drop.over { border-color: var(--accent); color: var(--ink); }
-footer { color: var(--muted); font-size: 12px; max-width: 90ch; }
-kbd { font: 500 11px/1 var(--f-mono); border: 1px solid var(--line); border-radius: 4px; padding: 2px 4px; }
+footer { color: var(--muted); font-size: 13px; max-width: 85ch; }
+kbd { font: inherit; font-size: 12px; border: 1px solid var(--rule); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
 </style>
 
-<div class="wrap">
+<div class="page">
   <header>
-    <div>
-      <div class="eyebrow">MIHENK · G1 termal ortak mod</div>
-      <h1>G1 Oynatıcı</h1>
-    </div>
-    <div class="runpick">
-      <label for="run">Koşu</label>
-      <select id="run" disabled><option>Yükleniyor…</option></select>
-    </div>
+    <h1>G1 Oynatıcı</h1>
+    <p class="lede">Bir simülasyon koşusunu dakika dakika oynatır: gerçekte ne oldu, dedektör ne dedi, haklı mıydı?</p>
   </header>
-  <p class="note" id="runNote">Koşu verisi yükleniyor.</p>
 
-  <section class="card loader" id="loader" hidden>
-    <h2>Koşu dosyası seç</h2>
-    <p class="note">Sayfa <code>data/index.json</code> dosyasını okuyamadı. Dosyadan açıldığında tarayıcılar bunu engelliyor. MATLAB'daki <code>g1_export_replay.m</code> scriptinin yazdığı <code>viewer/data/*.json</code> dosyalarını buraya sürükle ya da seç.</p>
-    <div class="drop" id="drop">JSON dosyalarını buraya bırak</div>
+  <nav class="stories" id="stories" aria-label="Koşular"></nav>
+
+  <section class="loader" id="loader" hidden>
+    <h2>Koşu dosyalarını seç</h2>
+    <p class="hint">Sayfa dosyadan açıldığında tarayıcı veri klasörünü okuyamıyor. <code>viewer/data</code> içindeki JSON dosyalarını buraya bırak ya da seç.</p>
+    <div class="drop" id="drop">Dosyaları buraya bırak</div>
     <input type="file" id="files" accept=".json,application/json" multiple>
   </section>
 
-  <div class="transport" id="transport">
-    <div class="btns">
-      <button id="back" title="Bir blok geri (←)" aria-label="Bir blok geri">◀︎</button>
-      <button id="play" aria-label="Oynat">▶︎ Oynat</button>
-      <button id="fwd" title="Bir blok ileri (→)" aria-label="Bir blok ileri">▶︎</button>
-    </div>
-    <div class="clock" id="clock">0,00 sa <small>blok 0 / 0</small></div>
-    <input type="range" id="slider" min="0" max="0" value="0" aria-label="Zaman">
-    <div class="speed">
-      <label for="speed">Hız</label>
-      <select id="speed">
-        <option value="2">2 dk/s</option>
-        <option value="8" selected>8 dk/s</option>
-        <option value="30">30 dk/s</option>
-        <option value="120">2 sa/s</option>
-      </select>
-    </div>
-  </div>
+  <div class="layout" id="layout" hidden>
+    <div class="main">
+      <div>
+        <h2 id="storyTitle"></h2>
+      </div>
+      <div class="look">
+        <span class="what">Neye bakmalı</span>
+        <p id="storyLook"></p>
+      </div>
 
-  <div class="bench">
-    <div class="side">
-      <section class="card">
-        <h2>Düğüm, şu an</h2>
-        <svg id="node" viewBox="0 0 360 292" role="img" aria-label="Düğüm şeması: sensörler, kanal durumları ve sıcaklık kaynağı bağlantısı"></svg>
-        <div class="legend">
-          <span><i class="dot" style="background:var(--ok)"></i>sağlam</span>
-          <span><i class="dot" style="background:var(--warn)"></i>|z| &gt; 3</span>
-          <span><i class="dot" style="background:var(--fault)"></i>suçlu (CUSUM &gt; h)</span>
-          <span><i class="dot" style="background:var(--idle)"></i>ısınma</span>
-          <span><i class="dot" style="border:2px dashed var(--fault)"></i>gerçek arıza</span>
+      <figure class="chart">
+        <figcaption>
+          <span class="q">Sıcaklıklar</span>
+          <span class="keys">
+            <span><i class="sw" style="background:var(--icm)"></i>ICM</span>
+            <span><i class="sw" style="background:var(--bme)"></i>BME688</span>
+            <span><i class="sw" style="background:#b8c1c7"></i>ortam (gerçek)</span>
+            <span><i class="sw box" style="background:var(--heat);opacity:.35"></i>ısıtıcı</span>
+          </span>
+        </figcaption>
+        <canvas id="cTemp" height="170" aria-label="Sıcaklık grafiği"></canvas>
+      </figure>
+
+      <figure class="chart">
+        <figcaption>
+          <span class="q">BME, ICM ile uyuşuyor mu?</span>
+          <span class="keys">
+            <span><i class="sw dash"></i>v5</span>
+            <span><i class="sw" style="background:var(--accent)"></i>v6</span>
+            <span><i class="sw box" style="background:var(--good);opacity:.18"></i>uyumlu bölge</span>
+            <span><i class="sw box" style="background:var(--bad);opacity:.14"></i>alarm bölgesi</span>
+          </span>
+        </figcaption>
+        <canvas id="cZ" height="170" aria-label="Sıcaklık kaynağı uyum grafiği"></canvas>
+      </figure>
+
+      <figure class="chart">
+        <figcaption>
+          <span class="q">Gerçek ve kararlar</span>
+          <span class="keys">
+            <span><i class="sw box" style="background:var(--good)"></i>haklı alarm</span>
+            <span><i class="sw box" style="background:var(--bad)"></i>yanlış alarm</span>
+            <span><i class="sw box" style="background:var(--truth)"></i>gerçek arıza</span>
+          </span>
+        </figcaption>
+        <canvas id="cLanes" height="200" aria-label="Gerçek olaylar ve dedektör kararları"></canvas>
+      </figure>
+
+      <div class="transport">
+        <button id="play">Oynat</button>
+        <input type="range" id="slider" min="0" max="0" value="0" aria-label="Zaman">
+        <div class="speed" role="group" aria-label="Hız">
+          <button data-speed="4">Yavaş</button>
+          <button data-speed="12" aria-pressed="true">Normal</button>
+          <button data-speed="40">Hızlı</button>
         </div>
-      </section>
-      <section class="card">
-        <h2>Okumalar</h2>
-        <dl class="readout" id="readout"></dl>
-      </section>
+      </div>
+
+      <details id="details">
+        <summary>Kanal ayrıntıları</summary>
+        <p class="hint">Sağdaki kanal kutularından birine tıkla. Üstteki grafik kanalın beklenenden ne kadar saptığını (z), alttaki biriken kanıtı (CUSUM) gösteriyor. Kanıt kesikli çizgiyi aşınca kanal suçlanıyor.</p>
+        <figure class="chart">
+          <figcaption>
+            <span class="q" id="chTitle">Kanal sapması</span>
+            <span class="keys">
+              <span><i class="sw" style="background:var(--icm)"></i>ICM sıcaklığına göre</span>
+              <span><i class="sw" style="background:var(--bme)"></i>BME sıcaklığına göre</span>
+            </span>
+          </figcaption>
+          <canvas id="cChZ" height="140" aria-label="Seçili kanalın sapması"></canvas>
+        </figure>
+        <figure class="chart">
+          <figcaption><span class="q">Biriken kanıt</span></figcaption>
+          <canvas id="cChS" height="110" aria-label="Seçili kanalın CUSUM değeri"></canvas>
+        </figure>
+      </details>
     </div>
-    <div class="scopes" id="scopes"></div>
+
+    <aside class="now" aria-live="polite">
+      <div class="clock" id="clock">0,00 sa<small>blok 1 / 480</small></div>
+      <ul class="facts" id="facts"></ul>
+      <div>
+        <div class="facts"><span class="k">Kanallar (v5)</span></div>
+        <div class="lights" id="lights"></div>
+        <p class="light-key">Kırmızı: yanlış suçlanan kanal. Yeşil: haklı suçlanan kanal. Kesikli çerçeve: kanalda gerçekten arıza var. Bir kanala tıklarsan ayrıntısı açılır.</p>
+      </div>
+    </aside>
   </div>
 
   <footer>
-    Kanallar G1 v5 ile, sıcaklık kaynağı tutarlılığı v5 ve v6 aday modeli (L, lead-lag) ile hesaplandı. v6'nın kanal mantığı henüz yazılmadı. Grafiğe tıklayıp sürükleyerek zamanda gezinebilirsin; bir kanal lambasına ya da kanal satırına tıklamak alttaki iki grafiği o kanala çevirir.
-    Kısayollar: <kbd>Boşluk</kbd> oynat/duraklat, <kbd>←</kbd> <kbd>→</kbd> bir blok, <kbd>Shift</kbd> ile on blok.
+    Kanal kararları G1 v5'ten geliyor. Sıcaklık kaynağı uyumu hem v5 hem v6 adayı (lead-lag) ile hesaplandı; v6'nın kanal mantığı henüz yazılmadı.
+    Grafiğe tıklayıp sürükleyerek zamanda gezinebilirsin. Kısayollar: <kbd>Boşluk</kbd> oynat ya da duraklat, <kbd>←</kbd> <kbd>→</kbd> bir dakika, <kbd>Shift</kbd> ile on dakika.
   </footer>
 </div>
 
@@ -185,69 +229,89 @@ kbd { font: 500 11px/1 var(--f-mono); border: 1px solid var(--line); border-radi
 (() => {
   'use strict';
   const $ = (id) => document.getElementById(id);
-  const fmt = (v, d = 2) => (v == null || Number.isNaN(v)) ? '–' : v.toFixed(d).replace('.', ',').replace('-', '−');
-  const NS = 'http://www.w3.org/2000/svg';
+  const num = (v, d = 1) => (v == null || Number.isNaN(v)) ? '–' : v.toFixed(d).replace('.', ',').replace('-', '−');
 
-  const S = { runs: new Map(), run: null, k: 0, playing: false, speed: 8, ch: 2, acc: 0, last: 0, colors: {} };
+  // Plain-language guide per exported run (written from the data, bulgular 13-15)
+  const STORIES = {
+    't2-plateau-step_white_100': {
+      short: 'Isıtıcıdan sonra takılma',
+      title: 'Isıtıcıdan sonra takılıp kalan model',
+      look: "2,0–2,4 saat arasında BME'nin ısıtıcısı çalışıyor; iki model de bunu doğru yakalıyor. Isıtıcı bitince v5'in çizgisi +7 civarında kalıyor ve 3,1 ile 6,1 saat arasında boşuna alarm veriyor. v6 ısıtıcıdan hemen sonra sıfıra dönüyor. 4,0 saatte ax kanalında gerçek bir basamak arızası başlıyor.",
+    },
+    't2-plateau-step_colored_100': {
+      short: 'Kalıcı ofset',
+      title: 'Kalıcı ofset: arıza mı, yeni normal mi?',
+      look: "4,0 saatte ax kanalına kalıcı bir ofset ekleniyor. v5 bunu hemen yakalıyor ama yaklaşık yarım saat sonra bırakıyor, çünkü sapma artık büyümüyor. Kararlaştırdığımız üçüncü durum (ofset olayı: tespit edildi, yeniden kalibre edildi) tam bu durum için. 0,8 saatteki kısa ay alarmı ise yanlış.",
+    },
+    't8-cycle-clean_white_100': {
+      short: 'Hızlı sıcaklık döngüsü',
+      title: 'Hızlı sıcaklık döngüsü, arıza yok',
+      look: "Ortam 3 saatlik periyotla ±8 °C salınıyor ve hiçbir sensör arızalı değil. v5 tek gecikme varsaydığı için 1,8–2,5 saat arasında BME'yi boşuna şüpheli buluyor. v6 yalnızca 4,0 saatteki ısıtıcıda alarm veriyor; bu doğru.",
+    },
+    't9-relax-az_white_100': {
+      short: 'Farklı histerezis',
+      title: 'Histerezis beklenenden farklı',
+      look: "Bu koşuda ICM'nin histerezisi dedektörün varsaydığı biçimde değil. Sıcaklık yön değiştirdiğinde (yaklaşık 2,9, 4,4 ve 6,0 saat) v5 sağlam kanalları suçluyor. 4,5 saatte az kanalında gerçek bir kayma başlıyor ve 4,6'da yakalanıyor. Bu sorun v6'nın sıradaki işi.",
+    },
+    't6-emi-plateau_colored_100': {
+      short: 'Manyetik parazit',
+      title: 'Dışarıdan manyetik parazit',
+      look: "3,6–3,85 saat arasında dışarıdan bir manyetik parazit var; üç manyetometre kanalının alarm vermesi beklenen davranış. Sorun parazit bittikten sonra: kanallar hemen bırakılmıyor, my kanalı 4,6 saate kadar suçlu kalıyor.",
+    },
+    't7-bme-step_white_100': {
+      short: 'BME arızası',
+      title: 'BME sıcaklık okumasında arıza',
+      look: "4,5 saatte BME'nin sıcaklık okuması 1 °C kayıyor. İki model de bunu hemen yakalıyor ve suçu hareket kanallarına değil sıcaklık kaynağına yüklüyor. İstenen davranış bu.",
+    },
+  };
 
-  // ---------- theme colors for canvas ----------
-  function readColors() {
-    const cs = getComputedStyle(document.documentElement);
-    for (const n of ['bg', 'panel', 'ink', 'muted', 'grid', 'line', 'accent', 'veil', 'icm', 'bme', 'amb', 'v5', 'v6', 'heat', 'fault', 'warn', 'ok', 'idle']) {
-      S.colors[n] = cs.getPropertyValue('--' + n).trim();
-    }
-  }
-  function alpha(color, a) {
-    // hex (#rrggbb) -> rgba; other formats pass through
-    if (/^#[0-9a-f]{6}$/i.test(color)) {
-      const n = parseInt(color.slice(1), 16);
-      return `rgba(${n >> 16 & 255}, ${n >> 8 & 255}, ${n & 255}, ${a})`;
-    }
-    return color;
-  }
+  const S = { runs: new Map(), order: [], id: null, k: 0, playing: false, speed: 12, acc: 0, last: 0, ch: 3 };
+  let J = null, nB = 0;
 
-  // ---------- data loading ----------
+  // ---------- loading ----------
   async function boot() {
-    readColors();
     try {
       const idx = await (await fetch('data/index.json')).json();
       const list = Array.isArray(idx.runs) ? idx.runs : [idx.runs];
-      fillPicker(list.map((r) => ({ id: r.id, label: r.label, file: r.file })));
-      await selectRun(list[0].id);
+      for (const r of list) addRun(r.id, r.file, null);
+      renderStories();
+      await select(S.order[0]);
     } catch (e) {
       $('loader').hidden = false;
-      $('runNote').textContent = 'Koşu verisi henüz yüklenmedi.';
     }
   }
-  function fillPicker(items) {
-    const sel = $('run');
-    sel.innerHTML = '';
-    for (const it of items) {
-      const o = document.createElement('option');
-      o.value = it.id; o.textContent = it.label;
-      sel.appendChild(o);
-      if (!S.runs.has(it.id)) S.runs.set(it.id, { file: it.file, data: it.data || null });
+  function addRun(id, file, data) {
+    if (!S.runs.has(id)) S.order.push(id);
+    S.runs.set(id, { file, data });
+  }
+  function renderStories() {
+    const nav = $('stories');
+    nav.innerHTML = '';
+    for (const id of S.order) {
+      const b = document.createElement('button');
+      b.className = 'story';
+      b.textContent = STORIES[id]?.short ?? id;
+      b.setAttribute('aria-pressed', id === S.id);
+      b.addEventListener('click', () => select(id));
+      nav.appendChild(b);
     }
-    sel.disabled = false;
   }
-  async function selectRun(id) {
-    const entry = S.runs.get(id);
-    if (!entry.data) entry.data = await (await fetch('data/' + entry.file)).json();
-    $('run').value = id;
-    load(entry.data);
+  async function select(id) {
+    const e = S.runs.get(id);
+    if (!e.data) e.data = await (await fetch('data/' + e.file)).json();
+    S.id = id;
+    setPlaying(false);
+    load(e.data);
+    renderStories();
   }
-  $('run').addEventListener('change', (e) => selectRun(e.target.value));
-
-  function addFiles(fileList) {
-    const reads = [...fileList].filter((f) => f.name.endsWith('.json') && f.name !== 'index.json').map((f) =>
-      f.text().then((txt) => JSON.parse(txt)).catch(() => null));
-    Promise.all(reads).then((arr) => {
-      const runs = arr.filter((j) => j && j.meta && j.t);
-      if (!runs.length) { $('runNote').textContent = 'Seçilen dosyalarda koşu verisi bulunamadı. g1_export_replay.m çıktısındaki koşu dosyalarını seç (index.json dışındakiler).'; return; }
-      fillPicker(runs.map((j) => ({ id: j.meta.id, label: `${j.meta.scenario} · ${j.meta.noise} · tohum ${j.meta.seed}`, file: null, data: j })));
-      for (const j of runs) S.runs.get(j.meta.id).data = j;
+  function addFiles(files) {
+    Promise.all([...files].filter((f) => f.name.endsWith('.json') && f.name !== 'index.json')
+      .map((f) => f.text().then(JSON.parse).catch(() => null))).then((arr) => {
+      const ok = arr.filter((j) => j && j.meta && j.t);
+      if (!ok.length) { $('drop').textContent = 'Bu dosyalarda koşu verisi yok. index.json dışındaki koşu dosyalarını seç.'; return; }
+      for (const j of ok) addRun(j.meta.id, null, j);
       $('loader').hidden = true;
-      selectRun(runs[0].meta.id);
+      select(ok[0].meta.id);
     });
   }
   $('files').addEventListener('change', (e) => addFiles(e.target.files));
@@ -256,442 +320,351 @@ kbd { font: 500 11px/1 var(--f-mono); border: 1px solid var(--line); border-radi
   drop.addEventListener('dragleave', () => drop.classList.remove('over'));
   drop.addEventListener('drop', (e) => { e.preventDefault(); drop.classList.remove('over'); addFiles(e.dataTransfer.files); });
 
-  // ---------- run setup ----------
-  let R = null, nB = 0;
-  function load(J) {
-    R = J; nB = J.t.length;
-    S.k = Math.min(S.k, nB - 1);
-    const m = J.meta;
-    $('runNote').innerHTML = `<b>${esc(m.note)}</b> · ${esc(m.tests)} · gürültü ${esc(m.noise)}, tohum ${m.seed}, blok ${m.B} s.`;
+  // ---------- derived per-block verdicts ----------
+  let V = null;
+  function derive() {
+    const t = J.truth, names = J.meta.names, warm = J.meta.warm;
+    const tsrcOk = (k) => !!(t.heater[k] || t.tempFault[k]);
+    const chOk = (c, k) => !!(t.fault[c][k] || (c >= 6 && t.emi[k]));
+    const lane = (alarm, ok) => J.t.map((_, k) => k < warm || !alarm(k) ? 0 : ok(k) ? 1 : 2);
+    V = {
+      t5: lane((k) => J.tsrc.v5.tf[k], tsrcOk),
+      t6: lane((k) => J.tsrc.v6.tf[k], tsrcOk),
+      ch: lane((k) => names.some((_, c) => J.v5.flag[c][k]),
+        (k) => names.every((_, c) => !J.v5.flag[c][k] || chOk(c, k))),
+      chOk,
+    };
+    // truth rows: events (heater, EMI) and faults (sensor or BME)
+    V.events = J.t.map((_, k) => t.heater[k] ? 'heat' : t.emi[k] ? 'emi' : null);
+    V.faults = J.t.map((_, k) => {
+      const f = names.filter((_, c) => t.fault[c][k]);
+      if (t.tempFault[k]) f.unshift('BME');
+      return f.length ? f.join(', ') + ' arızası' : null;
+    });
+  }
+
+  // ---------- setup ----------
+  function load(data) {
+    J = data; nB = J.t.length;
+    S.k = 0;
+    const st = STORIES[J.meta.id];
+    $('storyTitle').textContent = st?.title ?? J.meta.scenario;
+    $('storyLook').textContent = st?.look ?? J.meta.note;
     $('slider').max = nB - 1;
-    // temperature range for box tint
-    const all = [...J.T.icm, ...J.T.bme, ...J.T.amb].filter((v) => v != null);
-    S.tMin = Math.min(...all); S.tMax = Math.max(...all);
-    buildNode();
-    buildScopes();
-    renderStatic();
-    frame();
-  }
-  const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-
-  // ---------- node diagram ----------
-  const LIGHTS = [];
-  let svgRefs = {};
-  function el(tag, attrs, parent) {
-    const e = document.createElementNS(NS, tag);
-    for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
-    if (parent) parent.appendChild(e);
-    return e;
-  }
-  function buildNode() {
-    const svg = $('node');
-    svg.innerHTML = '';
-    LIGHTS.length = 0;
-    el('rect', { x: 4, y: 4, width: 352, height: 284, rx: 10, fill: 'none', stroke: 'var(--line)', 'stroke-dasharray': '4 4' }, svg);
-    const t0 = el('text', { x: 14, y: 22, 'font-size': 11, fill: 'var(--muted)', 'letter-spacing': '1.5' }, svg); t0.textContent = 'DÜĞÜM KARTI';
-
-    const box = (x, y, w, h, title) => {
-      const g = el('g', {}, svg);
-      const r = el('rect', { x, y, width: w, height: h, rx: 7, fill: 'var(--panel)', stroke: 'var(--line)', 'stroke-width': 1.5 }, g);
-      const tint = el('rect', { x, y, width: w, height: h, rx: 7, fill: 'transparent', 'pointer-events': 'none' }, g);
-      const tt = el('text', { x: x + 10, y: y + 18, 'font-size': 13, 'font-weight': 600 }, g); tt.textContent = title;
-      const tv = el('text', { x: x + w - 10, y: y + 18, 'font-size': 13, 'text-anchor': 'end', 'font-family': 'var(--f-mono)' }, g);
-      return { r, tint, tv };
-    };
-    svgRefs.icm = box(14, 32, 208, 128, 'ICM-42688-P');
-    svgRefs.mag = box(232, 32, 114, 128, 'Manyetometre');
-    svgRefs.bme = box(116, 206, 230, 74, 'BME688');
-
-    const light = (cx, cy, c) => {
-      const g = el('g', { class: 'light', tabindex: 0, role: 'button', 'aria-label': `${R.meta.names[c]} kanalını seç` }, svg);
-      const sel = el('circle', { cx, cy, r: 15, fill: 'none', stroke: 'var(--accent)', 'stroke-width': 2.5, opacity: 0 }, g);
-      const ring = el('circle', { cx, cy, r: 13, fill: 'none', stroke: 'var(--fault)', 'stroke-width': 2, 'stroke-dasharray': '3 2.5', opacity: 0 }, g);
-      const dot = el('circle', { cx, cy, r: 9, fill: 'var(--idle)' }, g);
-      const lb = el('text', { x: cx, y: cy + 28, 'font-size': 12, 'text-anchor': 'middle', fill: 'var(--muted)' }, g);
-      lb.textContent = R.meta.names[c];
-      const pick = () => { S.ch = c; renderStatic(); frame(); };
-      g.addEventListener('click', pick);
-      g.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
-      LIGHTS[c] = { dot, ring, sel };
-    };
-    const gl = el('text', { x: 24, y: 52, 'font-size': 11, fill: 'var(--muted)' }, svg); gl.textContent = 'gyro';
-    const al = el('text', { x: 24, y: 106, 'font-size': 11, fill: 'var(--muted)' }, svg); al.textContent = 'ivme';
-    [0, 1, 2].forEach((c, i) => light(92 + i * 50, 62, c));
-    [3, 4, 5].forEach((c, i) => light(92 + i * 50, 116, c));
-    [6, 7, 8].forEach((c, i) => light(258 + (i % 2) * 44 + (i === 2 ? 22 : 0), i < 2 ? 62 : 116, c));
-
-    // heater glyph inside the BME box
-    svgRefs.heater = el('path', { d: 'M 130 262 l 6 -8 l 6 8 l 6 -8 l 6 8 l 6 -8 l 6 8', fill: 'none', stroke: 'var(--idle)', 'stroke-width': 2.5, 'stroke-linejoin': 'round' }, svg);
-    svgRefs.heaterTxt = el('text', { x: 180, y: 264, 'font-size': 12, fill: 'var(--muted)' }, svg);
-    svgRefs.bmeFault = el('text', { x: 336, y: 264, 'font-size': 12, 'text-anchor': 'end', fill: 'var(--fault)' }, svg);
-
-    // temperature-source link ICM <-> BME, one wire per model
-    const wire = (x, name) => {
-      const ln = el('line', { x1: x, y1: 160, x2: x, y2: 206, stroke: 'var(--idle)', 'stroke-width': 4, 'stroke-linecap': 'round' }, svg);
-      const tx = el('text', { x: x + 8, y: 180, 'font-size': 11, fill: 'var(--muted)' }, svg); tx.textContent = name;
-      const tz = el('text', { x: x + 8, y: 194, 'font-size': 12, 'font-family': 'var(--f-mono)' }, svg);
-      return { ln, tz };
-    };
-    svgRefs.w5 = wire(150, 'zT v5');
-    svgRefs.w6 = wire(236, 'zT v6');
-    const lk = el('text', { x: 14, y: 186, 'font-size': 11, fill: 'var(--muted)' }, svg); lk.textContent = 'T kaynağı';
-    const lk2 = el('text', { x: 14, y: 199, 'font-size': 11, fill: 'var(--muted)' }, svg); lk2.textContent = 'tutarlılığı';
-  }
-  function tint(T) {
-    if (T == null) return 'transparent';
-    const u = Math.max(0, Math.min(1, (T - S.tMin) / Math.max(1e-6, S.tMax - S.tMin)));
-    return `hsla(${210 - 185 * u}, 75%, 52%, ${0.08 + 0.22 * u})`;
-  }
-  const zState = (z, tf) => z == null ? 'idle' : (tf ? 'alarm' : Math.abs(z) > 3 ? 'warn' : 'ok');
-  const stateColor = { ok: 'var(--ok)', warn: 'var(--warn)', alarm: 'var(--fault)', idle: 'var(--idle)' };
-  const stateText = { ok: 'uyumlu', warn: 'şüpheli', alarm: 'alarm', idle: 'ısınma' };
-
-  function updateNode(k) {
-    const J = R, warm = k < J.meta.warm;
-    svgRefs.icm.tint.setAttribute('fill', tint(J.T.icm[k]));
-    svgRefs.bme.tint.setAttribute('fill', tint(J.T.bme[k]));
-    svgRefs.icm.tv.textContent = fmt(J.T.icm[k]) + ' °C';
-    svgRefs.mag.tv.textContent = '';
-    svgRefs.bme.tv.textContent = fmt(J.T.bme[k]) + ' °C';
-    for (let c = 0; c < 9; c++) {
-      const L = LIGHTS[c];
-      const zi = J.v5.zI[c][k], zb = J.v5.zB[c][k];
-      const zmin = Math.min(Math.abs(zi ?? 0), Math.abs(zb ?? 0));
-      let st = 'ok';
-      if (warm) st = 'idle'; else if (J.v5.flag[c][k]) st = 'alarm'; else if (zmin > J.meta.zU) st = 'warn';
-      L.dot.setAttribute('fill', stateColor[st]);
-      L.ring.setAttribute('opacity', J.truth.fault[c][k] ? 1 : 0);
-      L.sel.setAttribute('opacity', c === S.ch ? 1 : 0);
-    }
-    const heat = !!J.truth.heater[k];
-    svgRefs.heater.setAttribute('stroke', heat ? 'var(--heat)' : 'var(--idle)');
-    svgRefs.heaterTxt.textContent = heat ? 'ısıtıcı penceresi' : 'ısıtıcı kapalı';
-    svgRefs.heaterTxt.setAttribute('fill', heat ? 'var(--heat)' : 'var(--muted)');
-    svgRefs.bmeFault.textContent = J.truth.tempFault[k] ? 'gerçek arıza' : '';
-    for (const [w, src] of [[svgRefs.w5, J.tsrc.v5], [svgRefs.w6, J.tsrc.v6]]) {
-      const st = warm ? 'idle' : zState(src.zT[k], src.tf[k]);
-      w.ln.setAttribute('stroke', stateColor[st]);
-      w.tz.textContent = fmt(src.zT[k], 1);
-    }
+    const temps = [...J.T.icm, ...J.T.bme, ...J.T.amb].filter((v) => v != null);
+    S.tLo = Math.floor(Math.min(...temps) - 1); S.tHi = Math.ceil(Math.max(...temps) + 1);
+    const firstFault = J.meta.names.findIndex((_, c) => J.truth.fault[c].some(Boolean));
+    if (firstFault >= 0) S.ch = firstFault;
+    derive();
+    buildLights();
+    $('layout').hidden = false;
+    renderAll();
   }
 
-  function updateReadout(k) {
-    const J = R, warm = k < J.meta.warm;
-    const chip = (st) => `<span class="chip ${st}">${stateText[st]}</span>`;
-    const st5 = warm ? 'idle' : zState(J.tsrc.v5.zT[k], J.tsrc.v5.tf[k]);
-    const st6 = warm ? 'idle' : zState(J.tsrc.v6.zT[k], J.tsrc.v6.tf[k]);
-    let blame = '–';
-    if (J.v5.blameBme[k]) blame = 'BME suçlu';
-    else if (J.v5.blameIcm[k]) blame = 'ICM suçlu';
-    else if (J.v5.ambig[k]) blame = 'belirsiz';
-    const flagged = J.meta.names.filter((_, c) => J.v5.flag[c][k]);
-    const truthF = J.meta.names.filter((_, c) => J.truth.fault[c][k]);
-    const ev = [];
-    if (J.truth.heater[k]) ev.push('ısıtıcı');
-    if (J.truth.tempFault[k]) ev.push('BME arızası');
-    if (J.truth.emi[k]) ev.push('EMI');
-    if (J.v5.common[k]) ev.push('ortak mod (v5)');
-    $('readout').innerHTML = `
-      <dt>Ortam (gerçek)</dt><dd>${fmt(J.T.amb[k])} °C</dd>
-      <dt>ICM / BME</dt><dd>${fmt(J.T.icm[k])} / ${fmt(J.T.bme[k])} °C</dd>
-      <dt><i class="swatch" style="background:var(--v5)"></i> zT v5</dt><dd>${fmt(J.tsrc.v5.zT[k], 1)} ${chip(st5)} <span>b ${fmt(J.tsrc.v5.b[k], 3)}</span></dd>
-      <dt><i class="swatch" style="background:var(--v6)"></i> zT v6 (L)</dt><dd>${fmt(J.tsrc.v6.zT[k], 1)} ${chip(st6)} <span>b ${fmt(J.tsrc.v6.b[k], 3)}</span></dd>
-      <dt>v5 kaynak kararı</dt><dd>${blame}</dd>
-      <dt>Suçlu kanallar</dt><dd>${flagged.length ? flagged.join(' ') : '–'}</dd>
-      <dt>Gerçek arıza</dt><dd>${truthF.length ? truthF.join(' ') : '–'}</dd>
-      <dt>Olaylar</dt><dd>${ev.length ? ev.join(', ') : '–'}</dd>`;
+  // ---------- canvas helpers ----------
+  const M = { l: 112, r: 12, t: 10, b: 24 };
+  const C = {};
+  function readColors() {
+    const cs = getComputedStyle(document.documentElement);
+    for (const n of ['paper', 'wash', 'ink', 'muted', 'rule', 'accent', 'v5', 'icm', 'bme', 'heat', 'emi', 'truth', 'good', 'bad', 'font']) C[n] = cs.getPropertyValue('--' + n).trim();
   }
-
-  // ---------- scopes ----------
-  const M = { l: 46, r: 10, t: 8, b: 20 };
-  const SCOPES = [
-    { id: 'temp', title: 'Sıcaklık', unit: '°C', h: 150,
-      keys: [['amb', 'ortam (gerçek)'], ['icm', 'ICM'], ['bme', 'BME688'], ['heat', 'ısıtıcı penceresi', true]] },
-    { id: 'tsrc', title: 'Sıcaklık kaynağı tutarlılığı zT', unit: '', h: 150,
-      keys: [['v5', 'v5'], ['v6', 'v6 aday (L)'], ['heat', 'ısıtıcı', true], ['fault', 'BME arızası', true]] },
-    { id: 'raster', title: 'Kanal durumu (G1 v5)', unit: '', h: 9 * 17 + M.t + M.b,
-      keys: [['fault', 'suçlu'], ['warn', '|z| > 3'], ['accent', 'serbest bırakıldı'], ['fault', 'gerçek arıza (alt çizgi)', true]] },
-    { id: 'events', title: 'Olay şeridi', unit: '', h: 7 * 17 + M.t + M.b, keys: [] },
-    { id: 'chz', title: 'Seçili kanal: z', unit: '', h: 130,
-      keys: [['icm', 'ICM referansına göre'], ['bme', 'BME referansına göre'], ['fault', 'suçlu', true]] },
-    { id: 'chs', title: 'Seçili kanal: CUSUM', unit: '', h: 110,
-      keys: [['accent', 'S'], ['muted', 'alarm eşiği h']] },
-  ];
-  const sc = {};
-  function buildScopes() {
-    const host = $('scopes');
-    host.innerHTML = '';
-    for (const d of SCOPES) {
-      const fig = document.createElement('figure');
-      fig.className = 'scope';
-      const cap = document.createElement('figcaption');
-      const keys = d.keys.map(([c, txt, band]) =>
-        `<span><i class="swatch" style="background:var(--${c});${band ? 'opacity:.45' : ''}"></i> ${txt}</span>`).join('');
-      cap.innerHTML = `<span class="t" id="cap-${d.id}">${d.title}</span><span class="k">${keys}</span>`;
-      const cv = document.createElement('canvas');
-      cv.height = d.h; cv.style.height = d.h + 'px';
-      cv.setAttribute('aria-label', d.title);
-      fig.append(cap, cv);
-      host.appendChild(fig);
-      sc[d.id] = { d, cv, ctx: cv.getContext('2d'), stat: document.createElement('canvas') };
-      attachSeek(cv);
-    }
-  }
-  function attachSeek(cv) {
-    let down = false;
-    const seek = (e) => {
-      const r = cv.getBoundingClientRect();
-      const u = (e.clientX - r.left - M.l) / (r.width - M.l - M.r);
-      S.k = Math.max(0, Math.min(nB - 1, Math.round(u * (nB - 1))));
-      // a click on a raster row selects that channel
-      if (cv === sc.raster.cv && e.type === 'pointerdown') {
-        const row = Math.floor((e.clientY - r.top - M.t) / 17);
-        if (row >= 0 && row < 9 && row !== S.ch) { S.ch = row; renderStatic(); }
-      }
-      frame();
-    };
-    cv.addEventListener('pointerdown', (e) => { down = true; cv.setPointerCapture(e.pointerId); seek(e); });
-    cv.addEventListener('pointermove', (e) => { if (down) seek(e); });
-    cv.addEventListener('pointerup', () => { down = false; });
-  }
+  const rgba = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; };
+  const CHARTS = ['cTemp', 'cZ', 'cLanes', 'cChZ', 'cChS'];
+  const cv = {};
+  for (const id of CHARTS) cv[id] = { el: $(id), stat: document.createElement('canvas'), h: +$(id).getAttribute('height') };
 
   const X = (k, w) => M.l + (k / Math.max(1, nB - 1)) * (w - M.l - M.r);
-
-  function niceStep(span, n) {
-    const raw = span / n, p = Math.pow(10, Math.floor(Math.log10(raw)));
-    const m = raw / p;
-    return (m < 1.5 ? 1 : m < 3.5 ? 2 : m < 7.5 ? 5 : 10) * p;
-  }
-  function axes(ctx, w, h, lo, hi, opts = {}) {
-    const C = S.colors;
-    ctx.font = '11px ' + getComputedStyle(document.body).getPropertyValue('--f-mono');
-    ctx.fillStyle = C.muted; ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
-    // hour grid
-    const tEnd = R.t[nB - 1] + R.t[0];
-    for (let hr = 0; hr <= Math.floor(tEnd + 1e-9); hr++) {
-      const k = (hr - R.t[0]) / (R.t[1] - R.t[0]);
-      const x = Math.round(X(Math.max(0, Math.min(nB - 1, k)), w)) + 0.5;
-      ctx.beginPath(); ctx.moveTo(x, M.t); ctx.lineTo(x, h - M.b); ctx.stroke();
-      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-      ctx.fillText(hr + ' sa', x, h - M.b + 4);
-    }
-    if (opts.noY) return;
-    const step = niceStep(hi - lo, opts.ticks || 4);
-    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-    for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) {
-      const y = Math.round(Y(v, h, lo, hi)) + 0.5;
-      ctx.beginPath(); ctx.moveTo(M.l, y); ctx.lineTo(w - M.r, y); ctx.stroke();
-      ctx.fillText(fmt(v, step < 1 ? 1 : 0), M.l - 6, y);
-    }
-  }
   const Y = (v, h, lo, hi) => M.t + (1 - (v - lo) / (hi - lo)) * (h - M.t - M.b);
-  function band(ctx, w, h, mask, color, a, y0, y1) {
-    ctx.fillStyle = alpha(color, a);
-    const top = y0 ?? M.t, bot = y1 ?? h - M.b;
-    let s = -1;
-    for (let k = 0; k <= nB; k++) {
-      const on = k < nB && mask[k];
-      if (on && s < 0) s = k;
-      if (!on && s >= 0) {
-        const xa = X(s - 0.5, w), xb = X(k - 0.5, w);
-        ctx.fillRect(Math.max(M.l, xa), top, Math.min(w - M.r, xb) - Math.max(M.l, xa), bot - top);
-        s = -1;
-      }
+
+  function hourGrid(g, w, h) {
+    g.font = `13px ${C.font}`; g.fillStyle = C.muted; g.strokeStyle = C.rule; g.lineWidth = 1;
+    const dt = J.t[1] - J.t[0], end = J.t[nB - 1] + dt / 2;
+    for (let hr = 0; hr <= Math.floor(end + 1e-9); hr++) {
+      const x = Math.round(X(Math.min(nB - 1, Math.max(0, (hr - J.t[0]) / dt)), w)) + 0.5;
+      g.beginPath(); g.moveTo(x, M.t); g.lineTo(x, h - M.b); g.stroke();
+      g.textAlign = 'center'; g.textBaseline = 'top'; g.fillText(hr + ' sa', x, h - M.b + 6);
     }
   }
-  function line(ctx, w, h, data, lo, hi, color, width = 1.6, dash = []) {
-    ctx.strokeStyle = color; ctx.lineWidth = width; ctx.setLineDash(dash);
-    ctx.beginPath();
-    let pen = false;
+  function yTicks(g, w, h, lo, hi, ticks, suffix = '') {
+    g.textAlign = 'right'; g.textBaseline = 'middle'; g.fillStyle = C.muted; g.strokeStyle = C.rule;
+    for (const v of ticks) {
+      const y = Math.round(Y(v, h, lo, hi)) + 0.5;
+      g.beginPath(); g.moveTo(M.l, y); g.lineTo(w - M.r, y); g.stroke();
+      g.fillText(num(v, 0) + suffix, M.l - 10, y);
+    }
+  }
+  function spans(arr, fn) {
+    // [start, end, value] runs where fn(value) is truthy
+    const out = []; let s = -1, cur = null;
+    for (let k = 0; k <= nB; k++) {
+      const v = k < nB ? arr[k] : null, on = k < nB && fn(v);
+      if (s >= 0 && (!on || v !== cur)) { out.push([s, k - 1, cur]); s = -1; }
+      if (on && s < 0) { s = k; cur = v; }
+    }
+    return out;
+  }
+  function fillSpan(g, w, a, b, y0, y1, color) {
+    const xa = Math.max(M.l, X(a - 0.5, w)), xb = Math.min(w - M.r, X(b + 0.5, w));
+    g.fillStyle = color; g.fillRect(xa, y0, Math.max(1, xb - xa), y1 - y0);
+    return [xa, xb];
+  }
+  function path(g, w, h, data, lo, hi, color, width, dash = []) {
+    g.strokeStyle = color; g.lineWidth = width; g.setLineDash(dash); g.lineJoin = 'round';
+    g.beginPath(); let pen = false;
     for (let k = 0; k < nB; k++) {
       const v = data[k];
       if (v == null) { pen = false; continue; }
       const y = Y(Math.max(lo, Math.min(hi, v)), h, lo, hi);
-      if (pen) ctx.lineTo(X(k, w), y); else { ctx.moveTo(X(k, w), y); pen = true; }
+      pen ? g.lineTo(X(k, w), y) : g.moveTo(X(k, w), y); pen = true;
     }
-    ctx.stroke(); ctx.setLineDash([]);
+    g.stroke(); g.setLineDash([]);
   }
-  function hline(ctx, w, h, v, lo, hi, color, dash) {
-    const y = Math.round(Y(v, h, lo, hi)) + 0.5;
-    ctx.strokeStyle = color; ctx.lineWidth = 1; ctx.setLineDash(dash);
-    ctx.beginPath(); ctx.moveTo(M.l, y); ctx.lineTo(w - M.r, y); ctx.stroke(); ctx.setLineDash([]);
+  function warmVeil(g, w, h) {
+    const x = X(J.meta.warm - 0.5, w);
+    g.fillStyle = rgba(C.wash, 1); g.fillRect(M.l, M.t, x - M.l, h - M.t - M.b);
+    g.fillStyle = C.muted; g.font = `12px ${C.font}`; g.textAlign = 'left'; g.textBaseline = 'top';
+    if (x - M.l > 60) g.fillText('ısınma', M.l + 6, M.t + 4);
   }
 
+  // ---------- static layers ----------
   const DRAW = {
-    temp(ctx, w, h) {
-      const J = R, C = S.colors;
-      const lo = Math.floor(S.tMin - 1), hi = Math.ceil(S.tMax + 1);
-      band(ctx, w, h, J.truth.heater, C.heat, 0.16);
-      band(ctx, w, h, J.truth.tempFault, C.fault, 0.08);
-      axes(ctx, w, h, lo, hi);
-      line(ctx, w, h, J.T.amb, lo, hi, C.amb, 1.3, [5, 4]);
-      line(ctx, w, h, J.T.icm, lo, hi, C.icm);
-      line(ctx, w, h, J.T.bme, lo, hi, C.bme);
-      return { lo, hi, cursor: [[J.T.icm, C.icm], [J.T.bme, C.bme]] };
+    cTemp(g, w, h) {
+      const lo = S.tLo, hi = S.tHi;
+      for (const [a, b] of spans(J.truth.heater, Boolean)) fillSpan(g, w, a, b, M.t, h - M.b, rgba(C.heat, 0.22));
+      hourGrid(g, w, h);
+      const step = (hi - lo) > 16 ? 5 : 2, ticks = [];
+      for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) ticks.push(v);
+      yTicks(g, w, h, lo, hi, ticks, ' °C');
+      path(g, w, h, J.T.amb, lo, hi, '#b8c1c7', 1.5, [5, 4]);
+      path(g, w, h, J.T.icm, lo, hi, C.icm, 2);
+      path(g, w, h, J.T.bme, lo, hi, C.bme, 2);
+      return { lo, hi, dots: [[J.T.icm, C.icm], [J.T.bme, C.bme]] };
     },
-    tsrc(ctx, w, h) {
-      const J = R, C = S.colors, lo = -20, hi = 20;
-      band(ctx, w, h, J.truth.heater, C.heat, 0.16);
-      band(ctx, w, h, J.truth.tempFault, C.fault, 0.08);
-      band(ctx, w, h, J.t.map((_, k) => k < J.meta.warm), C.idle, 0.25);
-      axes(ctx, w, h, lo, hi);
-      for (const v of [3, -3]) hline(ctx, w, h, v, lo, hi, C.muted, [2, 3]);
-      for (const v of [J.meta.thrT, -J.meta.thrT]) hline(ctx, w, h, v, lo, hi, C.fault, [6, 4]);
-      line(ctx, w, h, J.tsrc.v5.zT, lo, hi, C.v5, 1.8);
-      line(ctx, w, h, J.tsrc.v6.zT, lo, hi, C.v6, 1.8);
-      return { lo, hi, cursor: [[J.tsrc.v5.zT, C.v5], [J.tsrc.v6.zT, C.v6]] };
+    cZ(g, w, h) {
+      const lo = -15, hi = 15, thr = J.meta.thrT;
+      g.fillStyle = rgba(C.bad, 0.07);
+      g.fillRect(M.l, Y(hi, h, lo, hi), w - M.l - M.r, Y(thr, h, lo, hi) - Y(hi, h, lo, hi));
+      g.fillRect(M.l, Y(-thr, h, lo, hi), w - M.l - M.r, Y(lo, h, lo, hi) - Y(-thr, h, lo, hi));
+      g.fillStyle = rgba(C.good, 0.1);
+      g.fillRect(M.l, Y(3, h, lo, hi), w - M.l - M.r, Y(-3, h, lo, hi) - Y(3, h, lo, hi));
+      for (const [a, b] of spans(J.truth.heater, Boolean)) fillSpan(g, w, a, b, M.t, h - M.b, rgba(C.heat, 0.18));
+      hourGrid(g, w, h);
+      yTicks(g, w, h, lo, hi, [-10, -5, 0, 5, 10]);
+      warmVeil(g, w, h);
+      g.save(); g.font = `12px ${C.font}`; g.fillStyle = C.muted; g.textAlign = 'right'; g.textBaseline = 'middle';
+      g.translate(16, (M.t + h - M.b) / 2); g.rotate(-Math.PI / 2); g.textAlign = 'center';
+      g.fillText('uyumsuzluk (σ)', 0, 0); g.restore();
+      path(g, w, h, J.tsrc.v5.zT, lo, hi, C.v5, 2, [6, 4]);
+      path(g, w, h, J.tsrc.v6.zT, lo, hi, C.accent, 2.4);
+      return { lo, hi, dots: [[J.tsrc.v5.zT, C.v5], [J.tsrc.v6.zT, C.accent]] };
     },
-    raster(ctx, w, h) {
-      const J = R, C = S.colors, rh = 17;
-      axes(ctx, w, h, 0, 1, { noY: true });
-      ctx.font = '600 12px ' + getComputedStyle(document.body).getPropertyValue('--f-display');
-      for (let c = 0; c < 9; c++) {
-        const y0 = M.t + c * rh;
-        if (c === S.ch) { ctx.fillStyle = alpha(C.accent, 0.1); ctx.fillRect(0, y0, w - M.r, rh); }
-        ctx.fillStyle = c === S.ch ? C.accent : C.muted; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-        ctx.fillText(J.meta.names[c], 8, y0 + rh / 2);
-        const warnMask = J.t.map((_, k) => k >= J.meta.warm && !J.v5.flag[c][k] &&
-          Math.min(Math.abs(J.v5.zI[c][k] ?? 0), Math.abs(J.v5.zB[c][k] ?? 0)) > J.meta.zU);
-        band(ctx, w, h, warnMask, C.warn, 0.55, y0 + 2, y0 + rh - 4);
-        band(ctx, w, h, J.v5.flag[c], C.fault, 0.9, y0 + 2, y0 + rh - 4);
-        band(ctx, w, h, J.truth.fault[c], C.fault, 0.9, y0 + rh - 3, y0 + rh - 1);
-        ctx.fillStyle = C.accent;
-        for (let k = 0; k < nB; k++) if (J.v5.released[c][k]) ctx.fillRect(X(k, w) - 1, y0 + 1, 2, rh - 4);
-      }
-      return null;
-    },
-    events(ctx, w, h) {
-      const J = R, C = S.colors, rh = 17;
-      axes(ctx, w, h, 0, 1, { noY: true });
+    cLanes(g, w, h) {
       const rows = [
-        ['Isıtıcı', J.truth.heater, C.heat],
-        ['BME arızası', J.truth.tempFault, C.fault],
-        ['EMI', J.truth.emi, C.warn],
-        ['Ortak mod v5', J.v5.common, C.muted],
-        ['T alarmı v5', J.tsrc.v5.tf, C.v5],
-        ['T alarmı v6', J.tsrc.v6.tf, C.v6],
-        ['BME suçlu v5', J.v5.blameBme, C.bme],
+        ['Gerçekte', null],
+        ['Sıcaklık kaynağı', 'v5', V.t5],
+        ['Sıcaklık kaynağı', 'v6', V.t6],
+        ['Kanallar', 'v5', V.ch],
       ];
-      ctx.font = '600 11px ' + getComputedStyle(document.body).getPropertyValue('--f-display');
-      rows.forEach(([name, mask, col], i) => {
-        const y0 = M.t + i * rh;
-        ctx.fillStyle = C.muted; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-        ctx.fillText(name, 4, y0 + rh / 2);
-        ctx.fillStyle = alpha(C.grid, 0.6); ctx.fillRect(M.l + 34, y0 + rh / 2, w - M.r - M.l - 34, 1);
-        band(ctx, w, h, mask, col, 0.85, y0 + 3, y0 + rh - 3);
+      const rh = (h - M.t - M.b) / rows.length;
+      hourGrid(g, w, h);
+      g.textBaseline = 'middle';
+      rows.forEach(([name, ver, lane], i) => {
+        const y0 = M.t + i * rh, pad = 6;
+        g.fillStyle = C.wash; g.fillRect(M.l, y0 + pad, w - M.l - M.r, rh - 2 * pad);
+        g.textAlign = 'right';
+        g.font = `600 13px ${C.font}`; g.fillStyle = C.ink;
+        if (ver) {
+          g.fillText(name, M.l - 10, y0 + rh / 2 - 8);
+          g.font = `13px ${C.font}`; g.fillStyle = ver === 'v6' ? C.accent : C.muted;
+          g.fillText(ver + ' kararı', M.l - 10, y0 + rh / 2 + 9);
+        } else {
+          g.fillText(name, M.l - 10, y0 + rh / 2);
+        }
+        if (!lane) {
+          // truth: events on the top half, faults on the bottom half
+          const mid = y0 + rh / 2;
+          for (const [a, b, v] of spans(V.events, Boolean)) {
+            const [xa, xb] = fillSpan(g, w, a, b, y0 + pad, mid - 1, v === 'heat' ? C.heat : C.emi);
+            label(g, v === 'heat' ? 'ısıtıcı' : 'EMI', xa, xb, (y0 + pad + mid) / 2, C.ink);
+          }
+          for (const [a, b, v] of spans(V.faults, Boolean)) {
+            const [xa, xb] = fillSpan(g, w, a, b, mid + 1, y0 + rh - pad, C.truth);
+            label(g, v, xa, xb, (mid + y0 + rh - pad) / 2, '#ffffff');
+          }
+          return;
+        }
+        for (const [a, b, v] of spans(lane, (x) => x > 0)) {
+          const [xa, xb] = fillSpan(g, w, a, b, y0 + pad, y0 + rh - pad, v === 1 ? C.good : C.bad);
+          if (i === 3) {
+            const who = J.meta.names.filter((_, c) => J.v5.flag[c][a]).join(' ');
+            label(g, who, xa, xb, y0 + rh / 2, '#ffffff');
+          }
+        }
       });
       return null;
     },
-    chz(ctx, w, h) {
-      const J = R, C = S.colors, c = S.ch, lo = -12, hi = 12;
-      band(ctx, w, h, J.v5.flag[c], C.fault, 0.1);
-      band(ctx, w, h, J.truth.fault[c], C.fault, 0.9, h - M.b - 3, h - M.b);
-      axes(ctx, w, h, lo, hi);
-      for (const v of [J.meta.zU, -J.meta.zU]) hline(ctx, w, h, v, lo, hi, C.muted, [2, 3]);
-      line(ctx, w, h, J.v5.zI[c], lo, hi, C.icm, 1.3);
-      line(ctx, w, h, J.v5.zB[c], lo, hi, C.bme, 1.3);
-      return { lo, hi, cursor: [[J.v5.zI[c], C.icm], [J.v5.zB[c], C.bme]] };
+    cChZ(g, w, h) {
+      const c = S.ch, lo = -12, hi = 12;
+      for (const [a, b] of spans(J.v5.flag[c], Boolean)) fillSpan(g, w, a, b, M.t, h - M.b, rgba(C.bad, 0.1));
+      for (const [a, b] of spans(J.truth.fault[c], Boolean)) fillSpan(g, w, a, b, h - M.b - 4, h - M.b, C.truth);
+      hourGrid(g, w, h);
+      yTicks(g, w, h, lo, hi, [-10, -5, 0, 5, 10]);
+      warmVeil(g, w, h);
+      path(g, w, h, J.v5.zI[c], lo, hi, C.icm, 1.5);
+      path(g, w, h, J.v5.zB[c], lo, hi, C.bme, 1.5);
+      return { lo, hi, dots: [[J.v5.zI[c], C.icm], [J.v5.zB[c], C.bme]] };
     },
-    chs(ctx, w, h) {
-      const J = R, C = S.colors, c = S.ch;
-      const hi = Math.max(J.meta.h * 2, ...J.v5.score[c].filter((v) => v != null)) * 1.05, lo = 0;
-      band(ctx, w, h, J.truth.fault[c], C.fault, 0.9, h - M.b - 3, h - M.b);
-      axes(ctx, w, h, lo, hi);
-      hline(ctx, w, h, J.meta.h, lo, hi, C.fault, [6, 4]);
-      line(ctx, w, h, J.v5.score[c], lo, hi, C.accent, 1.8);
-      ctx.fillStyle = C.accent;
-      for (let k = 0; k < nB; k++) if (J.v5.released[c][k]) ctx.fillRect(X(k, w) - 1, M.t, 2, 6);
-      return { lo, hi, cursor: [[J.v5.score[c], C.accent]] };
+    cChS(g, w, h) {
+      const c = S.ch, lo = 0, hi = 22, thr = J.meta.h;
+      for (const [a, b] of spans(J.truth.fault[c], Boolean)) fillSpan(g, w, a, b, h - M.b - 4, h - M.b, C.truth);
+      hourGrid(g, w, h);
+      yTicks(g, w, h, lo, hi, [0, 10, 20]);
+      g.strokeStyle = C.bad; g.setLineDash([6, 4]); g.lineWidth = 1.5;
+      const y = Y(thr, h, lo, hi); g.beginPath(); g.moveTo(M.l, y); g.lineTo(w - M.r, y); g.stroke(); g.setLineDash([]);
+      path(g, w, h, J.v5.score[c], lo, hi, C.ink, 2);
+      return { lo, hi, dots: [[J.v5.score[c], C.ink]] };
     },
   };
-
-  function renderStatic() {
-    if (!R) return;
-    readColors();
-    const dpr = window.devicePixelRatio || 1;
-    $('cap-chz').textContent = `Seçili kanal: ${R.meta.names[S.ch]} · z`;
-    $('cap-chs').textContent = `Seçili kanal: ${R.meta.names[S.ch]} · CUSUM`;
-    for (const id in sc) {
-      const s = sc[id], w = s.cv.clientWidth, h = s.d.h;
-      for (const c of [s.cv, s.stat]) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); }
-      s.w = w;
-      const g = s.stat.getContext('2d');
-      g.setTransform(dpr, 0, 0, dpr, 0, 0);
-      g.clearRect(0, 0, w, h);
-      s.meta = DRAW[id](g, w, h);
-      s.dpr = dpr;
-    }
+  function label(g, txt, xa, xb, y, color) {
+    if (!txt) return;
+    g.font = `600 12px ${C.font}`;
+    const tw = g.measureText(txt).width;
+    if (tw + 10 > xb - xa) return;
+    g.fillStyle = color; g.textAlign = 'left'; g.textBaseline = 'middle';
+    g.fillText(txt, xa + 5, y);
   }
 
+  function renderAll() {
+    if (!J) return;
+    readColors();
+    const dpr = window.devicePixelRatio || 1;
+    $('chTitle').textContent = `${J.meta.names[S.ch]} kanalının sapması`;
+    for (const id of CHARTS) {
+      const o = cv[id], w = o.el.clientWidth;
+      if (!w) { o.w = 0; continue; }
+      o.el.style.height = o.h + 'px';
+      for (const c of [o.el, o.stat]) { c.width = Math.round(w * dpr); c.height = Math.round(o.h * dpr); }
+      const g = o.stat.getContext('2d');
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      o.w = w; o.dpr = dpr;
+      o.meta = DRAW[id](g, w, o.h);
+    }
+    frame();
+  }
+
+  // ---------- per-frame layer ----------
   function frame() {
-    if (!R) return;
-    const k = S.k, C = S.colors;
-    for (const id in sc) {
-      const s = sc[id], ctx = s.ctx, w = s.w, h = s.d.h;
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.clearRect(0, 0, s.cv.width, s.cv.height);
-      ctx.drawImage(s.stat, 0, 0);
-      ctx.setTransform(s.dpr, 0, 0, s.dpr, 0, 0);
+    if (!J) return;
+    const k = S.k;
+    for (const id of CHARTS) {
+      const o = cv[id];
+      if (!o.w) continue;
+      const g = o.el.getContext('2d'), w = o.w, h = o.h;
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.clearRect(0, 0, o.el.width, o.el.height);
+      g.drawImage(o.stat, 0, 0);
+      g.setTransform(o.dpr, 0, 0, o.dpr, 0, 0);
       const x = X(k, w);
-      // the future is veiled: the run unfolds as it plays
-      ctx.fillStyle = C.veil;
-      ctx.fillRect(x, 0, w - x, h - M.b);
-      ctx.strokeStyle = C.ink; ctx.lineWidth = 1.2;
-      ctx.beginPath(); ctx.moveTo(Math.round(x) + 0.5, M.t - 4); ctx.lineTo(Math.round(x) + 0.5, h - M.b); ctx.stroke();
-      if (s.meta && s.meta.cursor) {
-        for (const [data, col] of s.meta.cursor) {
-          const v = data[k];
-          if (v == null) continue;
-          const y = Y(Math.max(s.meta.lo, Math.min(s.meta.hi, v)), h, s.meta.lo, s.meta.hi);
-          ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, 3.6, 0, 2 * Math.PI); ctx.fill();
-          ctx.strokeStyle = C.panel; ctx.lineWidth = 1.5; ctx.stroke();
-        }
+      g.fillStyle = 'rgba(255,255,255,0.72)';   // the part of the run that has not happened yet
+      g.fillRect(x, M.t - 2, w - M.r - x + 2, h - M.t - M.b + 2);
+      g.strokeStyle = C.accent; g.lineWidth = 2;
+      g.beginPath(); g.moveTo(x, M.t - 4); g.lineTo(x, h - M.b + 2); g.stroke();
+      if (o.meta?.dots) for (const [data, col] of o.meta.dots) {
+        const v = data[k]; if (v == null) continue;
+        const y = Y(Math.max(o.meta.lo, Math.min(o.meta.hi, v)), h, o.meta.lo, o.meta.hi);
+        g.fillStyle = col; g.beginPath(); g.arc(x, y, 4.5, 0, 2 * Math.PI); g.fill();
+        g.strokeStyle = C.paper; g.lineWidth = 2; g.stroke();
       }
     }
-    updateNode(k);
-    updateReadout(k);
+    updateNow(k);
     $('slider').value = k;
-    $('clock').innerHTML = `${fmt(R.t[k])} sa <small>blok ${k + 1} / ${nB}</small>`;
+  }
+
+  // ---------- right panel ----------
+  function verdictPill(state, calmText) {
+    if (state === 1) return '<span class="pill good">haklı alarm</span>';
+    if (state === 2) return '<span class="pill bad">yanlış alarm</span>';
+    return `<span class="pill calm">${calmText}</span>`;
+  }
+  function updateNow(k) {
+    const t = J.truth, warm = k < J.meta.warm;
+    $('clock').innerHTML = `${num(J.t[k], 2)} sa<small>blok ${k + 1} / ${nB} (1 blok = 1 dakika)</small>`;
+    const happening = [];
+    if (t.heater[k]) happening.push('ısıtıcı çalışıyor');
+    if (t.emi[k]) happening.push('manyetik parazit var');
+    if (V.faults[k]) happening.push(V.faults[k]);
+    const calm = warm ? 'öğreniyor' : 'sessiz';
+    $('facts').innerHTML = `
+      <li><span class="k">Sıcaklık</span><span class="v">ICM ${num(J.T.icm[k], 2)} °C, BME ${num(J.T.bme[k], 2)} °C</span></li>
+      <li><span class="k">Gerçekte</span><span class="v">${happening.length ? happening.join(', ') : 'her şey normal'}</span></li>
+      <li><span class="k">Sıcaklık kaynağı, v5</span><span class="v">${verdictPill(V.t5[k], calm)} ${num(J.tsrc.v5.zT[k])} σ</span></li>
+      <li><span class="k">Sıcaklık kaynağı, v6</span><span class="v">${verdictPill(V.t6[k], calm)} ${num(J.tsrc.v6.zT[k])} σ</span></li>`;
+    J.meta.names.forEach((n, c) => {
+      const b = LIGHTS[c];
+      const flag = !!J.v5.flag[c][k];
+      b.className = 'light' + (flag ? ' flag' : '') + (flag && V.chOk(c, k) ? ' ok' : '') +
+        (t.fault[c][k] ? ' fault' : '') + (c === S.ch ? ' sel' : '');
+      b.setAttribute('aria-label', `${n}: ${flag ? 'suçlu' : 'sağlam'}${t.fault[c][k] ? ', gerçekte arızalı' : ''}`);
+    });
+  }
+  const LIGHTS = [];
+  function buildLights() {
+    const box = $('lights');
+    box.innerHTML = '';
+    const rows = [['gyro', [0, 1, 2]], ['ivme', [3, 4, 5]], ['manyetometre', [6, 7, 8]]];
+    for (const [name, chs] of rows) {
+      const lb = document.createElement('span'); lb.className = 'row'; lb.textContent = name; box.appendChild(lb);
+      for (const c of chs) {
+        const b = document.createElement('button');
+        b.className = 'light'; b.textContent = J.meta.names[c];
+        b.addEventListener('click', () => { S.ch = c; $('details').open = true; renderAll(); });
+        box.appendChild(b); LIGHTS[c] = b;
+      }
+    }
   }
 
   // ---------- transport ----------
   function setPlaying(p) {
     S.playing = p;
-    $('play').textContent = p ? '❚❚ Duraklat' : '▶︎ Oynat';
-    $('play').setAttribute('aria-label', p ? 'Duraklat' : 'Oynat');
+    $('play').textContent = p ? 'Duraklat' : (J && S.k >= nB - 1 ? 'Baştan oynat' : 'Oynat');
     if (p) { if (S.k >= nB - 1) S.k = 0; S.last = performance.now(); S.acc = 0; requestAnimationFrame(tick); }
   }
   function tick(now) {
     if (!S.playing) return;
-    S.acc += (now - S.last) / 1000 * S.speed;
-    S.last = now;
+    S.acc += (now - S.last) / 1000 * S.speed; S.last = now;
     if (S.acc >= 1) {
-      S.k = Math.min(nB - 1, S.k + Math.floor(S.acc));
-      S.acc -= Math.floor(S.acc);
+      S.k = Math.min(nB - 1, S.k + Math.floor(S.acc)); S.acc %= 1;
       frame();
       if (S.k >= nB - 1) { setPlaying(false); return; }
     }
     requestAnimationFrame(tick);
   }
-  const step = (d) => { if (!R) return; S.k = Math.max(0, Math.min(nB - 1, S.k + d)); frame(); };
-  $('play').addEventListener('click', () => R && setPlaying(!S.playing));
-  $('back').addEventListener('click', () => step(-1));
-  $('fwd').addEventListener('click', () => step(1));
-  $('slider').addEventListener('input', (e) => { S.k = +e.target.value; frame(); });
-  $('speed').addEventListener('change', (e) => { S.speed = +e.target.value; });
+  const go = (k) => { S.k = Math.max(0, Math.min(nB - 1, k)); frame(); if (!S.playing) setPlaying(false); };
+  $('play').addEventListener('click', () => J && setPlaying(!S.playing));
+  $('slider').addEventListener('input', (e) => go(+e.target.value));
+  for (const b of document.querySelectorAll('.speed button')) {
+    b.addEventListener('click', () => {
+      S.speed = +b.dataset.speed;
+      for (const o of document.querySelectorAll('.speed button')) o.setAttribute('aria-pressed', o === b);
+    });
+  }
+  for (const id of CHARTS) {
+    const el = cv[id].el; let down = false;
+    const seek = (e) => { const r = el.getBoundingClientRect(); go(Math.round((e.clientX - r.left - M.l) / (r.width - M.l - M.r) * (nB - 1))); };
+    el.addEventListener('pointerdown', (e) => { if (!J) return; down = true; el.setPointerCapture(e.pointerId); seek(e); });
+    el.addEventListener('pointermove', (e) => { if (down) seek(e); });
+    el.addEventListener('pointerup', () => { down = false; });
+  }
   document.addEventListener('keydown', (e) => {
-    if (!R || e.target.closest('select, input[type=file]')) return;
-    if (e.key === ' ' && !e.target.closest('button, .light')) { e.preventDefault(); setPlaying(!S.playing); }
-    if (e.key === 'ArrowRight' && e.target.id !== 'slider') { e.preventDefault(); step(e.shiftKey ? 10 : 1); }
-    if (e.key === 'ArrowLeft' && e.target.id !== 'slider') { e.preventDefault(); step(e.shiftKey ? -10 : -1); }
+    if (!J || e.target.closest('input, select')) return;
+    if (e.key === ' ' && !e.target.closest('button')) { e.preventDefault(); setPlaying(!S.playing); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); go(S.k + (e.shiftKey ? 10 : 1)); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); go(S.k - (e.shiftKey ? 10 : 1)); }
   });
-
-  // ---------- resize and theme ----------
+  $('details').addEventListener('toggle', renderAll);
   let rz = 0;
-  new ResizeObserver(() => { cancelAnimationFrame(rz); rz = requestAnimationFrame(() => { renderStatic(); frame(); }); }).observe($('scopes'));
-  const restyle = () => { renderStatic(); frame(); };
-  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', restyle);
-  new MutationObserver(restyle).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  new ResizeObserver(() => { cancelAnimationFrame(rz); rz = requestAnimationFrame(renderAll); }).observe($('layout'));
+  document.fonts?.ready.then(renderAll);
 
   boot();
 })();
