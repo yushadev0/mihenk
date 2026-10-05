@@ -48,6 +48,9 @@ Findings and the reasoning behind every script are logged in [`../bulgular.md`](
 | `g1/v6/g1_diag_tsrc_lock.m` | script | Diagnosis of the temperature-source lock in the acceptance test (bulgular 13D/14), replica of the v5 temperature-source model |
 | `g1/v6/g1_tsrc_v6.m` | function | v6 temperature-source model: lead-lag structure, lag-grid error term and frozen covariance growth, each a switch |
 | `g1/v6/g1_dev_tsrc_v6.m` | script | Dev run of the v6 temperature-source model vs v5 and ablations (dev set + spent test set), selection by the declared rule |
+| `g1/v6/g1_detect_v6.m` | function | v6 detector: v5 + lead-lag temperature source (A), event-end release (B), multi-state output with offset event (C1) and model unreliable (C2) |
+| `g1/v6/g1_prototype_v6.m` | script | v6 dev run: v5, v6 and ablations noA/noB/noC1/noC2 on the dev set and the spent test set, selection by the declared rule |
+| `g1/v6/g1_smoke_v6.m` | script | Quick equivalence and run check before the v6 dev run |
 
 Detectors receive only firmware-visible inputs.
 

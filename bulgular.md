@@ -1212,6 +1212,10 @@ Yani "v5" sütunu gerçekten v5.
   - **Histerezis:** play, relax ve yeni bir biçim.
   - **Birim tohumları:** 200 ve üstü.
 
+- **Değerlendirme tanımı (2026-10-05, v6 kanal tasarımı öncesi):**
+  - Sağlam bir kanalda "ofset olayı" çıkması bir **yanlış alarm olayı** sayılır (K1c). Kısa sürdüğü için saatlik oranı (K1a/K1b) şişirmez. Gerekçe: sağlam bir sensörü boşuna yeniden kalibre etmek hafif ama gerçek bir hata.
+  - **"Model güvenilmez"** blokları yanlış alarm sayılmaz. Ama ayrı bir ölçütle sınırlanır: bu durumdaki süre, koşunun en fazla %X'i olabilir. X yeni ölçütlerle birlikte ilan edilecek. Böylece dedektör "emin değilim" diyerek sorunlardan kaçamaz.
+
 **Sonuç:** v6'nın sıcaklık kaynağı modeli **L**: lead-lag yapısı, ızgara payı yok, donmuşken büyüme yok. 13D'deki kilit, simülasyonda yapı düzeltilerek tamamen kalkıyor. Ama bu sonuç simülatörle aynı yapıya dayanıyor (15A). Gerçek değeri, yeni ayrılmış kümedeki farklı termal yapı senaryosunda ölçülecek.
 
 ---
