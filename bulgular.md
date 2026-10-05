@@ -65,6 +65,7 @@ Rapor bu tuzakları "müfredat sınıf 8" olarak topluyor. G1'in değeri kolay s
 | 13 | [`g1_acceptance_test.m`](matlab/g1/test/g1_acceptance_test.m) | Kabul testi, ayrılmış küme (10 senaryo × 2 gürültü × 20 tohum), tek atış | ❌ **FAIL** (K1b, K1c, K2c renkli, K3b, K3c) · ✅ tespit, gecikme, manyetometre arızası, BME basamağı genelleniyor |
 | 14 | [`g1_diag_tsrc_lock.m`](matlab/g1/v6/g1_diag_tsrc_lock.m) | Tanı: sıcaklık kaynağı modelinin kilitlenmesi (13D), kapılı / kapısız / ısıtıcısız | ✅ kopya 200/200 birebir · T2/T5: ısıtıcı tetikliyor, yanlış eğim ve payı olmayan sT kilitliyor · T8: model yapısı uyuşmazlığı · ❌ kapıyı kaldırmak çözüm değil |
 | 15 | [`g1_dev_tsrc_v6.m`](matlab/g1/v6/g1_dev_tsrc_v6.m) | v6 sıcaklık kaynağı modeli: lead-lag, ızgara payı, donmuşken büyüme ve ablasyonları; geliştirme + kullanılmış küme | ✅ v5 kopyası 280/280 birebir · ✅ lead-lag (L) bütün kilitleri kaldırıyor (T2 179 → 0, T8 40 → 0, T5 12,7 → 0) · aday L · ⚠ yapı simülatörle aynı (ADR-012) · ❌ donmuşken büyüme ısıtıcıyı ve kaymayı yutuyor |
+| 16 | [`g1_prototype_v6.m`](matlab/g1/v6/g1_prototype_v6.m) | v6 (A: lead-lag T kaynağı, B: olay sonu bırakma, C1: ofset olayı, C2: model güvenilmez) ve ablasyonları; geliştirme + kullanılmış küme | ✅ eşdeğerlik 0 · ✅ T src dışı alarm 13 → 0, EMI sonrası %25 → %0, basamak kapsaması %11–76 → %99 · aday v6 · ❌ K1b: histerezis uyuşmazlığı (T9 beyaz 52/saat) · ⚠ C1 uyuşmazlıkta kaymayı ofset sanıyor · ⚠ C2 etkisiz |
 
 **Kritik kurallar** (MATLAB referans modelinde her zaman uygulanacak):
 
@@ -1217,6 +1218,79 @@ Yani "v5" sütunu gerçekten v5.
   - **"Model güvenilmez"** blokları yanlış alarm sayılmaz. Ama ayrı bir ölçütle sınırlanır: bu durumdaki süre, koşunun en fazla %X'i olabilir. X yeni ölçütlerle birlikte ilan edilecek. Böylece dedektör "emin değilim" diyerek sorunlardan kaçamaz.
 
 **Sonuç:** v6'nın sıcaklık kaynağı modeli **L**: lead-lag yapısı, ızgara payı yok, donmuşken büyüme yok. 13D'deki kilit, simülasyonda yapı düzeltilerek tamamen kalkıyor. Ama bu sonuç simülatörle aynı yapıya dayanıyor (15A). Gerçek değeri, yeni ayrılmış kümedeki farklı termal yapı senaryosunda ölçülecek.
+
+---
+
+## 16. G1 v6: geliştirme koşusu
+
+**Script:** [`matlab/g1/v6/g1_prototype_v6.m`](matlab/g1/v6/g1_prototype_v6.m) · **Dedektör:** [`g1_detect_v6.m`](matlab/g1/v6/g1_detect_v6.m) · **Duman testi:** [`g1_smoke_v6.m`](matlab/g1/v6/g1_smoke_v6.m) · **Çıktı:** [`g1_v6_output.txt`](matlab/g1/v6/g1_v6_output.txt) · **Ham sonuçlar:** [`g1_v6_results.csv`](matlab/g1/v6/g1_v6_results.csv)
+
+Kullanıcı koştu. Dedektör, ablasyonlar, yeni ölçütler ve seçim kuralı sonuçlardan önce commit edildi (45f6e2c).
+
+**Ne yapıldı:** v6 = v5 + üç değişiklik:
+- **A:** Sıcaklık kaynağı modeli L (§15).
+- **B:** Olay sonu bırakma. Alarm sırasında |z| ≥ 10'a çıkan ve sonra 5 blok üst üste |z| < 3 kalan kanal hemen bırakılıyor.
+- **C1:** Ofset olayı. Büyüme testi bir kanalı bıraktığında bu "ofset olayı" olarak raporlanıyor ve ofset durumunun varyansı başlangıç değerine sıfırlanıyor, yani kanal yeniden kalibre ediliyor.
+- **C2:** Model güvenilmez. Ardışık iki artık arasındaki ilişki (öz-ilişki, 30 blokluk pencerede) en az iki sensör elemanında aynı anda 3/√30'u aşarsa ve sıcaklık son 30 blokta hareket ettiyse, o kanallar suçlanmıyor.
+
+Her değişiklik ayrı bir ablasyonla ölçüldü. Veri: geliştirme kümesi (8 senaryo, tohum 0–9) ve kullanılmış test kümesi (10 senaryo, tohum 100–109), her biri beyaz ve renkli gürültüde.
+- **Eşdeğerlik:** Dört değişiklik kapalıyken v6 = v5, fark 0.
+- **Duman testi:** Üç koşuda fark 0.
+
+| Ölçüt (bütün koşular) | v5 beyaz | v6 beyaz | v5 renkli | v6 renkli |
+|---|---|---|---|---|
+| Tespit | %100 | %100 | %98 | %99 |
+| Gecikme medyanı | 5,5 dk | 5,5 dk | 25,5 dk | 25,5 dk |
+| Kapsama (yeni tanım) | %96 | %89 | %75 | %80 |
+| Yanlış alarm/saat, en kötü koşu | 62,1 | 51,6 | 38,2 | 13,6 |
+| Yanlış alarm olayı/saat | 0,47 | 0,41 | 0,20 | 0,11 |
+| Isıtıcı dışı "T src" alarmı / koşu | 13,1 | **0** | 13,1 | **0** |
+| EMI sonrası manyetometre suçlama | %25 | **%0** | %22 | **%0** |
+| "Güvenilmez" süre payı | – | %2 | – | %1 |
+
+Seçim kuralına göre aday **v6**. Hiçbir ablasyon "hiçbir yerde daha kötü değil" koşulunu sağlamıyor:
+
+| Ablasyon | v6'dan kötü olduğu hücre | v6'dan iyi olduğu hücre |
+|---|---|---|
+| noA | 42 | 6 |
+| noB | 17 | 3 |
+| noC1 | 15 | 34 |
+| noC2 | 11 | 50 |
+
+**Bulgu 16A: A ve B, hedefledikleri sorunu yan etkisiz çözüyor.**
+- **A:** Isıtıcı dışı "T src" alarmı her senaryoda 0. T2'de koşu başına 180'den 0'a iniyor (§15'in kanal tarafında da geçerli olduğu görüldü).
+- **B:** EMI sonrası suçlama %16–29'dan %0'a iniyor. EMI senaryosunda yanlış alarm medyanı 12,5/saatten 0'a, en kötü koşu 23'ten 1,9'a düşüyor.
+- Bu iki ablasyon az sayıda hücrede v6'dan iyi; hepsi küçük farklar.
+
+**Bulgu 16B: C1 basamak sorununu çözüyor, ama kayan bir kanalı yanlışlıkla "ofset" sayıp gizleyebiliyor.**
+- **Basamak kapsaması** (yeni tanım: basamak alarm verdiğinde ya da ofset olayı olarak raporlandığında kapsanmış sayılıyor):
+  - accel-step / renkli: %76 → **%99**.
+  - T2 / renkli: %11 → **%99** (13C'nin çözümü).
+  - Basamaklar artık ofset olayı olarak raporlanıp yeniden kalibre ediliyor.
+- **Ama T9 / beyazda bir kayma (az) ofset sanılıyor.**
+  - Kapsama tohumlar 100, 102, 105 ve 106'da %58–66'ya düşüyor. Bu dört koşunun dördünde de az kanalında bir ofset olayı var; diğer koşularda yok ve kapsama %86–97.
+  - Muhtemel mekanizma: büyüme testi, model uyuşmazlığının gürültüsü içinde kaymanın büyümesini anlamlı bulamıyor. Kanal ofset olayı olarak bırakılıyor, yeniden kalibrasyon da kaymayı hızla modele katıyor. Yeniden kalibrasyon olmadan (noC1) kapsama %86–97.
+- **Sağlam kanallarda ofset olayı:** Histerezis uyuşmazlığı olan senaryolarda koşu başına ~3 (hyst-relax, T9 beyaz). Bunlar yanlış alarm olayı sayılıyor.
+- Bu yüzden noC1, 34 hücrede v6'dan iyi; 15 hücrede, basamak senaryolarında, kötü.
+
+**Bulgu 16C: C2 amacına ulaşmıyor. Model uyuşmazlığındaki yanlış alarmlar sürüyor.**
+- T9 / beyaz: yanlış alarm medyanı 43,5/saatten 37,6'ya, en kötü koşu 62'den 52'ye iniyor. Ama kapsama %88'den %80'e düşüyor. hyst-relax / beyaz: medyan 25 → 20, ama en kötü koşu 34'ten 39'a çıkıyor.
+- "Güvenilmez" durum koşunun yalnızca %2–3'ünde devreye giriyor. Duman testinde koyduğum tahmin (öz-ilişkinin 30 blokta yavaş birikmesi, alarmların ise dönüş noktasında birkaç blokta çıkması) bununla tutarlı. **Doğrulanmadı.**
+- Gerçek arızanın üstünü örttüğü süre %4–6. Kapsamadaki düşüş bundan biraz büyük; CUSUM sıfırlandıktan sonra kanıtın yeniden birikmesi gerekiyor.
+- noC2, 50 hücrede v6'dan iyi; çoğu küçük kapsama farkları.
+
+**Bulgu 16D: K1b hâlâ uzakta. Kaynağı tek: histerezis biçim uyuşmazlığı.**
+- v6'da en kötü koşu 6/saat sınırını aşan hücreler:
+  - **Büyük aşımlar:** T9 / beyaz 51,6; hyst-relax / beyaz 38,8. İkisi de gevşeme histerezisi, yani dedektörün play modeline uymayan biçim.
+  - **Küçük aşımlar:** Renkli gürültüde 6,5–13,6 arası bir dizi hücre. Altı senaryoda birebir aynı 6,5 değeri muhtemelen aynı tohumun kendi gürültüsü.
+- v6'nın bu hâliyle yeni bir ayrılmış kümede K1b'yi geçmesi beklenmiyor.
+
+**Genel değerlendirme:**
+- v6, v5'in §13'teki beş başarısızlığından üçünü geliştirme verisinde çözüyor: sıcaklık kaynağı kilidi (K3b), EMI sonrası (K3c) ve basamak kapsaması (K2c, renkli).
+- Kalanlar:
+  - **K1b:** histerezis biçim uyuşmazlığı. C2 bunu çözmedi.
+  - C1'in uyuşmazlık altında kaymayı ofset sanması.
+- İkisinin kökü aynı: kanal modeli, ICM'nin histerezis biçimini temsil edemiyor.
 
 ---
 
