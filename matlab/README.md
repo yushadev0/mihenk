@@ -12,7 +12,7 @@ Findings and the reasoning behind every script are logged in [`../bulgular.md`](
 |---|---|---|
 | [`models/`](models/) | Reusable model functions: per-sensor thermal model, synthetic node | No — called by scripts |
 | [`checks/`](checks/) | Self-checks of the reference model (Allan terms, thermal model) | Yes |
-| [`g1/`](g1/) | G1 (thermal common-mode decomposition): shared helpers at the root, one folder per version (`v0/` … `v6/`), `test/` for the acceptance test | `g1_prototype_*.m` |
+| [`g1/`](g1/) | G1 (thermal common-mode decomposition): shared helpers at the root, one folder per version (`v0/` … `v7/`), `test/` for the acceptance test | `g1_prototype_*.m` |
 | [`figures/`](figures/) | Figures referenced from `bulgular.md` | — |
 
 | File | Kind | What |
@@ -52,6 +52,9 @@ Findings and the reasoning behind every script are logged in [`../bulgular.md`](
 | `g1/v6/g1_prototype_v6.m` | script | v6 dev run: v5, v6 and ablations noA/noB/noC1/noC2 on the dev set and the spent test set, selection by the declared rule |
 | `g1/v6/g1_smoke_v6.m` | script | Quick equivalence and run check before the v6 dev run |
 | `g1/v6/g1_diag_v6_side.m` | script | Diagnosis of the v6 side effects seen in the replay viewer (bulgular 16E): mz false alarm with the BME reference, early event-end release of a step |
+| `g1/v7/g1_detect_v7.m` | function | v7 detector: v6 + model error anchored at the freeze (D1) and large non-growing deviation as an offset event (D2) |
+| `g1/v7/g1_prototype_v7.m` | script | v7 dev run: v6, v7 and ablations noD1/noD2 on the dev set and the spent test set, regression vs v6, selection by the declared rule |
+| `g1/v7/g1_smoke_v7.m` | script | Quick equivalence and run check before the v7 dev run |
 
 Detectors receive only firmware-visible inputs.
 
