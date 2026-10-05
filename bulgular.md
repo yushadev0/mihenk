@@ -1202,6 +1202,16 @@ Yani "v5" sütunu gerçekten v5.
 
 **Bellek notu:** L'de aday başına 3 parametre var. Saklananlar: θ (3) + P (6, simetrik) + skor (1) + gecikme filtresi durumu (1) + önceki blok sonu (1) = 12 sayı. 16 adayla bu 192 sayı, float olarak ~770 B. v5'te ~450 B'ydı. Net gecikme iyi belirlendiği için ızgara seyreltilebilir (bellek bütçesi açık konusu).
 
+**Kullanıcıyla alınan kararlar (2026-10-05, §15'ten sonra):**
+- **Terim:** 15A'daki döngüsellik etkisine **"yapı uyuşmazlığı payı"** deniyor. Bu ad, G'deki "ızgara hata payı" ile karışmasın diye seçildi. Bu pay varsayılmayacak, ölçülecek: L'nin yeni kümedeki farklı termal yapılı senaryolardaki performansı ile kusursuz yapıdaki performansı arasındaki fark.
+- **Kalıcı ofset (basamak) arıza değil (12B, 13C):** Sensörler ayarlanabilir ve ortama göre yeniden ayar gerekebilir. Bu yüzden G1'in çıktısına üçüncü bir durum ekleniyor: **"ofset olayı: tespit edildi, raporlandı, yeniden kalibre edildi"**. Değerlendirmede böyle bir olay ne kaçırılmış tespit ne de yanlış alarm sayılacak; ölçütler buna göre yeni küme ile birlikte yeniden ilan edilecek.
+- **Çeşitlendirme (15E):** Yeni ayrılmış küme elle seçilmeyecek. Önceden ilan edilen parametre aralıklarından otomatik çekilecek (mihenk.md S5'teki DoE fikrinin küçük ölçeklisi). Çeşitlendirilecek eksenler:
+  - **Sıcaklık profili:** rampa hızı 2–30 °C/saat, plato süresi, sinüs periyodu 2–12 saat, rastgele yürüyen ortam, ani sıçrama.
+  - **Isıtıcı:** rampada, platoda ya da dönüş noktasında; 1–3 patlama; farklı süre ve güç.
+  - **Termal yapı:** ikinci derece BME yolu, farklı τ'lar, sensör başına farklı ortam.
+  - **Histerezis:** play, relax ve yeni bir biçim.
+  - **Birim tohumları:** 200 ve üstü.
+
 **Sonuç:** v6'nın sıcaklık kaynağı modeli **L**: lead-lag yapısı, ızgara payı yok, donmuşken büyüme yok. 13D'deki kilit, simülasyonda yapı düzeltilerek tamamen kalkıyor. Ama bu sonuç simülatörle aynı yapıya dayanıyor (15A). Gerçek değeri, yeni ayrılmış kümedeki farklı termal yapı senaryosunda ölçülecek.
 
 ---
@@ -1240,11 +1250,11 @@ Yani "v5" sütunu gerçekten v5.
 - [x] ~~Tanı: sıcaklık kaynağı modelinin T2, T5 ve T8'de kilitlenmesi (13D)~~ → Bulgu 14 (T2/T5: ısıtıcı + yanlış eğim + payı olmayan sT; T8: model yapısı)
 - [x] ~~**G1 v6, sıcaklık kaynağı modeli:** sT'ye model hatası payı, donmuşken (a, b) kovaryansının büyümesi, uyarım olmadan eğime güvenmemek; T8 için iki gecikmeli model ya da hıza bağlı sT (14B–14D)~~ → Bulgu 15, aday L (lead-lag); ızgara payı ve donmuşken büyüme gereksiz/zararlı
 - [ ] Yeni ayrılmış kümede BME için simülatörden **farklı** bir termal yapı (ikinci derece yol, farklı ortam); L'nin yapısı simülatörle aynı (15A, ADR-012)
-- [ ] Yeni ayrılmış kümede sıcaklık profillerini ve ısıtıcı zamanlarını çeşitlendirmek (15E)
+- [ ] Yeni ayrılmış kümeyi önceden ilan edilmiş aralıklardan otomatik üretmek: profil, ısıtıcı, termal yapı, histerezis, tohum 200+ (15E, §15 kararları)
 - [ ] τ_B / τ_I'nin ayrı ayrı 20–25 s kaymasının kaynağı (ayrık gecikme filtresi?, 15D); net gecikme doğru
 - [ ] T5'te yalnız tohum 108 ve 118'in kilitlenme nedenini doğrulamak (ısıtıcı anında b yakınsamış mı? 14B)
 - [ ] Yeni sürüm için **yeni** bir ayrılmış küme (tohum 200+, yeni senaryolar); §13'teki küme artık görülmüş sayılıyor
-- [ ] Basamak arızasında doğru davranış: kalıcı ofset "arıza" mı, "yeni normal" mi? Formel tanıma yazmak (12B)
+- [x] ~~Basamak arızasında doğru davranış: kalıcı ofset "arıza" mı, "yeni normal" mi? (12B)~~ → Karar (§15): arıza değil, üçüncü durum "ofset olayı: tespit edildi, raporlandı, yeniden kalibre edildi". Formel tanıma yazılacak.
 - [ ] Artık öz-ilişkisini "model güvenilmez" durumu için kullanmayı değerlendirmek (12E, ADR-010)
 - [ ] Bellek bütçesi: v4'te 90 Kalman filtresi × 14 sayı ≈ 5 KB (float) veya ~2,5 KB (16 bit), ATmega328P'nin 2 KB'ını aşıyor; sadeleştirme gerekiyor (örneğin genişlik ızgarası)
 - [ ] "En küçük algılanabilir kayma hızı"nı K ve izin verilen gecikme cinsinden formel tanıma yazmak (9D)
