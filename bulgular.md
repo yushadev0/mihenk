@@ -66,6 +66,7 @@ Rapor bu tuzakları "müfredat sınıf 8" olarak topluyor. G1'in değeri kolay s
 | 14 | [`g1_diag_tsrc_lock.m`](matlab/g1/v6/g1_diag_tsrc_lock.m) | Tanı: sıcaklık kaynağı modelinin kilitlenmesi (13D), kapılı / kapısız / ısıtıcısız | ✅ kopya 200/200 birebir · T2/T5: ısıtıcı tetikliyor, yanlış eğim ve payı olmayan sT kilitliyor · T8: model yapısı uyuşmazlığı · ❌ kapıyı kaldırmak çözüm değil |
 | 15 | [`g1_dev_tsrc_v6.m`](matlab/g1/v6/g1_dev_tsrc_v6.m) | v6 sıcaklık kaynağı modeli: lead-lag, ızgara payı, donmuşken büyüme ve ablasyonları; geliştirme + kullanılmış küme | ✅ v5 kopyası 280/280 birebir · ✅ lead-lag (L) bütün kilitleri kaldırıyor (T2 179 → 0, T8 40 → 0, T5 12,7 → 0) · aday L · ⚠ yapı simülatörle aynı (ADR-012) · ❌ donmuşken büyüme ısıtıcıyı ve kaymayı yutuyor |
 | 16 | [`g1_prototype_v6.m`](matlab/g1/v6/g1_prototype_v6.m) | v6 (A: lead-lag T kaynağı, B: olay sonu bırakma, C1: ofset olayı, C2: model güvenilmez) ve ablasyonları; geliştirme + kullanılmış küme | ✅ eşdeğerlik 0 · ✅ T src dışı alarm 13 → 0, EMI sonrası %25 → %0, basamak kapsaması %11–76 → %99 · aday v6 · ❌ K1b: histerezis uyuşmazlığı (T9 beyaz 52/saat) · ⚠ C1 uyuşmazlıkta kaymayı ofset sanıyor · ⚠ C2 etkisiz |
+| 17 | [`g1_diag_v6_side.m`](matlab/g1/v6/g1_diag_v6_side.m) | Tanı: v6 yan etkileri (16E), referans maskesi ve model izi | ❌ H1/H3 reddedildi · mz: eşiğe yakın yanlılık, 10 tohumun 2sinde · ✅ erken bırakma sistematik (10/10): donmuş kanalda model hatası (T − T0)² ile ölçekleniyor, 15C ile aynı hata |
 
 **Kritik kurallar** (MATLAB referans modelinde her zaman uygulanacak):
 
@@ -1307,6 +1308,52 @@ Seçim kuralına göre aday **v6**. Hiçbir ablasyon "hiçbir yerde daha kötü 
 - **T9'daki 16B mekanizması oynatıcıda doğrudan görülüyor:**
   - az kayması 4,62'de yakalanıyor ve 5,11'de ofset olayı sayılıyor. Kanal 6,10'a kadar sessiz kalıyor, yani kayma ~1 saat kaçırılıyor.
   - Sağlam kanallarda (gy, gz, ay) dönüş noktalarından sonra ofset olayları var.
+
+---
+
+## 17. Tanı: v6'nın iki yan etkisi (16E)
+
+**Script:** [`matlab/g1/v6/g1_diag_v6_side.m`](matlab/g1/v6/g1_diag_v6_side.m) · **Çıktı:** [`g1_diag_v6_side_output.txt`](matlab/g1/v6/g1_diag_v6_side_output.txt) · **Figür:** [`g1_diag_v6_side.png`](matlab/figures/g1_diag_v6_side.png)
+
+Kullanıcı koştu. Yalnızca tanı amaçlı; v6'da bir şey değiştirilmedi.
+
+**Ne yapıldı:**
+- `g1_detect_v6.m`'ye iki tanı anahtarı eklendi. Varsayılanlarında davranış değişmiyor.
+  - `refMask`: kanal kararlarında kullanılabilecek referansları sınırlıyor.
+  - `trace`: seçili genişlikteki modelin ofset ve tempco değerlerini kaydediyor.
+- T2 / beyaz / tohum 100 üç varyantla koşuldu: v6, noA ve yalnız ICM referanslı v6.
+- mz'nin alarm başlangıcı ile ax basamağı etrafı blok blok yazdırıldı.
+- Tohum 100–109'da yan etkilerin ne kadar yaygın olduğu sayıldı.
+
+**Bulgu 17A: mz alarmı BME referansından gelmiyor. 16E'deki yorumum yanlıştı.**
+- **H1 (referanslar arasında gidip gelmek) reddedildi:** mz'nin iki referansa göre z'si neredeyse aynı (zB ≈ zI − 0,3). İkisi de 3,6–3,9 saat arasında sürekli hafif negatif (ortalama ~ −0,8σ). Kullanılan değer çoğu blokta zI.
+- **Ortak kök:** CUSUM, bu kalıcı küçük yanlılığı **üç varyantta da** biriktiriyor.
+  - Platonun başında (3,0–4,0 saat) zirveler v6'da ~14, noA'da ~8, yalnız ICM'de ~5,5.
+  - Rampanın sonunda (6,6–7,0 saat) üçünde de ~6.
+  - v6 eşiği (h = 10) küçük bir farkla aşıyor, diğerleri aşmıyor. Varyantların geçmişi 3,14 saatte, noA'da BME'nin suçlanmaya başladığı anda ayrışıyor.
+- **Yaygınlık:** Tohum 100–109'da sağlam kanalda alarm yalnız iki tohumda var. Tohum 100'de v6'da mz 42 blok. Tohum 108'de mz v6'da 6 blok, noA'da 4, yalnız ICM'de 4 blok.
+- **Sonuç:** Bu, eşiğe yakın bir model yanlılığı; tohuma göre eşiği aşıp aşmıyor. §16'daki "noA 0,8 / v6 6,6" farkı bu tek tohumdan geliyor. "v5'in kilidi BME referansındaki bir sorunu gizliyordu" yorumu desteklenmiyor.
+- **Yanlılığın nedeni bilinmiyor.** Termal dönüşlerden sonra görünüyor. Manyetometrenin kendi gecikmesi (90 s) ve gradyanı referanslardan farklı; ama bu tek başına saatlerce süren bir yanlılığı açıklamıyor. **Açık konu.**
+
+**Bulgu 17B: Erken bırakmanın nedeni, donmuş kanalın tahmin belirsizliğinin bir blokta patlaması. Bu sistematik.**
+- **H3 (referans değişimi) reddedildi:** ax'ın iki referansa göre z'si birebir aynı (25,59 / 25,72, sonra 2,99 / 3,01). Yalnız ICM referanslı koşuda da aynı şey oluyor.
+- **Gözlem:** Basamak 0,2 mg ve sürüyor. Buna rağmen z, ilk blokta 25,6'dan bir sonraki blokta 3,0'a düşüyor. Sonra 2,38, 1,87, 1,61, 1,36 diye sönüyor, yani ~3/√n gibi (3/√2 = 2,1; 3/√3 = 1,7; 3/√4 = 1,5; 3/√5 = 1,3).
+- **Mekanizma (hesapla tutarlı, ayrıca koşturularak doğrulanmadı):**
+  - v5'in B düzeltmesi, donmuş kanalın tempco'suna her blokta qm = sb²/1440 kadar varyans ekliyor. İvmeölçerde sb = 0,15 mg/°C, yani qm = 1,6·10⁻⁵.
+  - Bu varyans tahmine (T − T0)² çarpanıyla giriyor; T0 koşunun ilk bloğundaki sıcaklık. Platoda T − T0 ≈ 14,5 °C, yani bir blokta eklenen varyans ≈ 0,0033 mg², std ≈ 0,057 mg.
+  - 0,2 mg'lık basamak da z ≈ 3,5'e düşüyor; gözlenen 3,0. Sonraki bloklarda std √n ile büyüyor ve z √n ile sönüyor.
+  - |z| < 3 olan 5 blok dolunca olay sonu kuralı (B) kanalı bırakıyor.
+- **Yaygınlık:** 10 tohumun 10'unda ax, 4,09–4,11 saatte, iki varyantta da bırakılıyor.
+- **15C ile aynı tasarım hatası:** Orada sıcaklık kaynağı modelinde (L − L0) vardı, burada kanal modelinde (T − T0) var. Tempco'ya eklenen model hatası, sıcaklığın **koşu başındaki** değerden uzaklığıyla ölçekleniyor. Oysa önemli olan, kanalın **donduğu andan** beri sıcaklığın ne kadar değiştiği.
+- **Bu, önceki bulguların bir kısmını da açıklıyor olabilir:**
+  - 12B: serbest bırakma testinin basamakları bırakması.
+  - 16B: C1'in uyuşmazlık altında kaymayı ofset sanması.
+  - Uzak bir platoda donan her kanalın sapması, gerçek büyüklüğünden bağımsız olarak hızla "anlamsız" hâle geliyor.
+
+**v7 için anlamı (henüz uygulanmadı):**
+1. **Donma anına göre ölçeklenen model hatası:** Kanal donunca model hatası (T − T_donma)² ile büyümeli. Platoda donan bir kanal gerçek sapmasını korur, rampada ise belirsizlik sıcaklık değiştikçe büyür.
+2. **Ofset olayını açıkça tanımak:** 1. madde uygulanınca bir basamak artık kendiliğinden "küçülmeyecek". Büyümeyen ama büyük kalan bir sapma (|z| ≫ 3, eğim yok) doğrudan ofset olayı olarak tanınmalı. Bu kullanıcının kararıyla uyumlu (§15).
+3. **mz yanlılığının nedeni:** Eşiğe yakın, termal dönüşlerden sonra görülen bir yanlılık. 1. maddeden sonra yeniden bakılmalı.
 
 ---
 
