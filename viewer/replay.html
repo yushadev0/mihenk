@@ -252,32 +252,32 @@ kbd { font: inherit; font-size: 12px; border: 1px solid var(--rule); border-bott
     't2-plateau-step_white_100': {
       short: 'Isıtıcıdan sonra takılma',
       title: 'Isıtıcıdan sonra takılıp kalan model',
-      look: "2,0–2,4 saat arasında BME'nin ısıtıcısı çalışıyor; iki model de bunu doğru yakalıyor. Isıtıcı bitince v5'in çizgisi +7 civarında kalıyor ve 3,1 ile 6,1 saat arasında boşuna alarm veriyor. v6 ısıtıcıdan hemen sonra sıfıra dönüyor. 4,0 saatte ax kanalında gerçek bir basamak arızası başlıyor.",
+      look: "2,0–2,4 saat arasında BME'nin ısıtıcısı çalışıyor; iki model de bunu doğru yakalıyor. Isıtıcı bitince v5'in çizgisi +7 civarında kalıyor ve 3,1 ile 6,1 saat arasında boşuna alarm veriyor; v6 hemen sıfıra dönüyor. Kanallarda bunun bir bedeli var: v6'da BME referansı yeniden kullanılınca mz 3,8–4,8 saat arasında boşuna suçlanıyor (v5'te yok). 4,0 saatte ax kanalında gerçek bir basamak başlıyor; v6 onu 4,09'da erken bırakıyor, 5,3'te yeniden yakalıyor ve 6,14'te ofset olayı olarak raporluyor.",
     },
     't2-plateau-step_colored_100': {
       short: 'Kalıcı ofset',
       title: 'Kalıcı ofset: arıza mı, yeni normal mi?',
-      look: "4,0 saatte ax kanalına kalıcı bir ofset ekleniyor. v5 bunu hemen yakalıyor ama yaklaşık yarım saat sonra bırakıyor, çünkü sapma artık büyümüyor. Kararlaştırdığımız üçüncü durum (ofset olayı: tespit edildi, yeniden kalibre edildi) tam bu durum için. 0,8 saatteki kısa ay alarmı ise yanlış.",
+      look: "4,0 saatte ax kanalına kalıcı bir ofset ekleniyor. İki sürüm de bunu hemen yakalıyor ve yaklaşık yarım saat sonra bırakıyor, çünkü sapma artık büyümüyor. v5 sessizce bırakıyor; v6 ise 4,54 saatte bunu ofset olayı olarak raporlayıp kanalı yeniden kalibre ediyor (yeşil ◆). 0,8 saatteki kısa ay alarmı iki sürümde de yanlış.",
     },
     't8-cycle-clean_white_100': {
       short: 'Hızlı sıcaklık döngüsü',
       title: 'Hızlı sıcaklık döngüsü, arıza yok',
-      look: "Ortam 3 saatlik periyotla ±8 °C salınıyor ve hiçbir sensör arızalı değil. v5 tek gecikme varsaydığı için 1,8–2,5 saat arasında BME'yi boşuna şüpheli buluyor. v6 yalnızca 4,0 saatteki ısıtıcıda alarm veriyor; bu doğru.",
+      look: "Ortam 3 saatlik periyotla ±8 °C salınıyor ve hiçbir sensör arızalı değil. v5 tek gecikme varsaydığı için 1,8–2,5 saat arasında BME'yi boşuna şüpheli buluyor. v6 yalnızca 4,0 saatteki ısıtıcıda alarm veriyor; bu doğru. Kanallarda iki sürüm de sessiz.",
     },
     't9-relax-az_white_100': {
       short: 'Farklı histerezis',
       title: 'Histerezis beklenenden farklı',
-      look: "Bu koşuda ICM'nin histerezisi dedektörün varsaydığı biçimde değil. Sıcaklık yön değiştirdiğinde (yaklaşık 2,9, 4,4 ve 6,0 saat) v5 sağlam kanalları suçluyor. 4,5 saatte az kanalında gerçek bir kayma başlıyor ve 4,6'da yakalanıyor. Bu sorun v6'nın sıradaki işi.",
+      look: "ICM'nin histerezisi dedektörün varsaydığı biçimde değil. Sıcaklık yön değiştirdiğinde (yaklaşık 2,9, 4,4 ve 6,0 saat) iki sürüm de sağlam kanalları suçluyor; v6'nın 'model güvenilmez' durumu (taralı) yalnızca kısa anlarda devreye giriyor. 4,5 saatte az kanalında gerçek bir kayma başlıyor ve 4,6'da yakalanıyor. Ama v6 5,11 saatte bu kaymayı ofset sanıyor (kırmızı ◆), kanalı yeniden kalibre ediyor ve az'ı 6,1 saate kadar kaçırıyor. Sağlam kanallarda da ofset olayları var (gy, gz, ay).",
     },
     't6-emi-plateau_colored_100': {
       short: 'Manyetik parazit',
       title: 'Dışarıdan manyetik parazit',
-      look: "3,6–3,85 saat arasında dışarıdan bir manyetik parazit var; üç manyetometre kanalının alarm vermesi beklenen davranış. Sorun parazit bittikten sonra: kanallar hemen bırakılmıyor, my kanalı 4,6 saate kadar suçlu kalıyor.",
+      look: "3,6–3,85 saat arasında dışarıdan bir manyetik parazit var; üç manyetometre kanalının alarm vermesi beklenen davranış. Asıl fark parazit bittikten sonra: v5 kanalları 4,6 saate kadar suçlu tutuyor, v6 parazit biter bitmez (3,92 saatte) üçünü birden bırakıyor.",
     },
     't7-bme-step_white_100': {
       short: 'BME arızası',
       title: 'BME sıcaklık okumasında arıza',
-      look: "4,5 saatte BME'nin sıcaklık okuması 1 °C kayıyor. İki model de bunu hemen yakalıyor ve suçu hareket kanallarına değil sıcaklık kaynağına yüklüyor. İstenen davranış bu.",
+      look: "4,5 saatte BME'nin sıcaklık okuması 1 °C kayıyor. İki sürüm de bunu hemen yakalıyor ve suçu hareket kanallarına değil sıcaklık kaynağına yüklüyor. İstenen davranış bu.",
     },
   };
 

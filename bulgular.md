@@ -1292,6 +1292,22 @@ Seçim kuralına göre aday **v6**. Hiçbir ablasyon "hiçbir yerde daha kötü 
   - C1'in uyuşmazlık altında kaymayı ofset sanması.
 - İkisinin kökü aynı: kanal modeli, ICM'nin histerezis biçimini temsil edemiyor.
 
+**Bulgu 16E: Oynatıcıda görülen iki yan etki (T2 / beyaz, tohum 100). Toplu tabloda da izi var, mekanizma doğrulanmadı.**
+- **Kaynak:** [`g1_export_replay.m`](matlab/g1/v6/g1_export_replay.m) ile dışa aktarılan koşu, [G1 Oynatıcı](viewer/replay.html)'da incelendi. Kontrol: v5 ve v6'nın zT'si, sıcaklık kaynağı modelinin ayrı hesabıyla 6/6 koşuda birebir aynı.
+- **A'nın kanallardaki bedeli:**
+  - v5'te sıcaklık kaynağı kilidi 3,1–6,1 saat arasında BME referansını kullanılamaz yapıyordu. v6'da kilit yok, BME referansı yeniden kullanılıyor.
+  - Bunun bir sonucu olarak mz, 3,8–4,8 saat arasında boşuna suçlanıyor. v5'te bu alarm yok.
+  - Toplu tabloda da tutarlı: T2 / beyazda en kötü koşu, noA'da (v5'in sıcaklık kaynağı) 0,8/saat, A'nın açık olduğu bütün varyantlarda 6,6/saat.
+  - Yani v5'in kilidi, BME referansındaki başka bir sorunu gizliyormuş. **Mekanizma doğrulanmadı.**
+- **B, kalıcı bir basamağı da "olay bitti" sanabiliyor:**
+  - ax basamağı 4,0 saatte |z| ≥ 10 ile yakalanıyor. 5 blok sakin geçince 4,09'da bırakılıyor; olay sonu bırakmasının tanımına uyuyor.
+  - Basamak sürdüğü için 5,3'te yeniden yakalanıyor ve 6,14'te ofset olayı olarak raporlanıyor.
+  - Toplu tabloda T2 / beyazın yalnız alarmlarla hesaplanan kapsaması v5'te %75, v6'da %46.
+  - Muhtemel neden: kanal donmuşken kullanılabilir iki referanstan hangisinin basamağı daha iyi açıkladığı değişiyor ve |z| düşüyor. **Doğrulanmadı.**
+- **T9'daki 16B mekanizması oynatıcıda doğrudan görülüyor:**
+  - az kayması 4,62'de yakalanıyor ve 5,11'de ofset olayı sayılıyor. Kanal 6,10'a kadar sessiz kalıyor, yani kayma ~1 saat kaçırılıyor.
+  - Sağlam kanallarda (gy, gz, ay) dönüş noktalarından sonra ofset olayları var.
+
 ---
 
 ## Açık konular
