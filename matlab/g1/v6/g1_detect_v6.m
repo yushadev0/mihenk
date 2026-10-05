@@ -80,7 +80,9 @@ o = struct( ...
     'unreliable',  true, ...        % (C2)
     'Wac',         30, ...          % ... autocorrelation window [blocks]
     'rThr',        3/sqrt(30), ...  % ... 3 sigma of r1 under white innovations
-    'nGroupsUnrel', 2);             % ... sensing elements needed
+    'nGroupsUnrel', 2, ...          % ... sensing elements needed
+    'refMask',     [true true], ... % diagnostic only: references allowed for channel decisions [ICM BME]
+    'trace',       false);          % diagnostic only: record offset and tempco of each channel model
 if nargin > 2
     for f = fieldnames(opt)', o.(f{1}) = opt.(f{1}); end
 end
@@ -137,6 +139,7 @@ R.sensorFlag = false(nB, nC);  R.unreliable = R.sensorFlag;  R.offsetEvent = R.s
 R.state = zeros(nB, nC, 'uint8');
 R.tempFlag = false(nB, 1);  R.blameBme = R.tempFlag;  R.blameIcm = R.tempFlag;  R.tempAmbig = R.tempFlag;
 R.released = false(nB, nC);  R.releaseType = zeros(nB, nC, 'uint8');  R.switchReset = false(nB, 1);
+if o.trace, R.thA = nan(nB, nC, 2);  R.thB = R.thA;  R.usable = false(nB, 2); end
 
 Sp = zeros(1, nC);  Sn = Sp;
 iwPrev = [];
@@ -192,7 +195,8 @@ for k = 1:nB
         bI = tf && ~bB;
     end
     amb  = tf && ~bB && ~bI;
-    usable = [~bI, ~bB];
+    usable = [~bI, ~bB] & o.refMask;
+    if ~any(usable), usable = o.refMask; end   % only reachable with a refMask
 
     % --- channel anomaly, common-mode event
     Zu = zc(:, usable);
@@ -288,6 +292,14 @@ for k = 1:nB
                 Pm(1, 1, c, r, iw) = var0(c);
             end
         end
+    end
+
+    if o.trace                      % prior state of the selected width, per reference
+        for r = 1:2
+            R.thA(k, :, r) = theta(1, :, r, iwb(r));
+            R.thB(k, :, r) = theta(3, :, r, iwb(r));
+        end
+        R.usable(k, :) = usable;
     end
 
     % --- measurement updates (gated), for every width candidate
