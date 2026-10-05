@@ -1,0 +1,79 @@
+dev    base             done (46 s)
+dev    hold-fault       done (101 s)
+dev    accel-step       done (153 s)
+dev    two-faults       done (201 s)
+dev    emi              done (246 s)
+dev    bme-fault        done (297 s)
+dev    hyst-relax       done (349 s)
+dev    day-cycle        done (403 s)
+spent  t1-fast-ramp     done (522 s)
+spent  t2-plateau-step  done (616 s)
+spent  t3-slow-sine     done (705 s)
+spent  t4-mag-drift     done (795 s)
+spent  t5-two-heaters   done (894 s)
+spent  t6-emi-plateau   done (982 s)
+spent  t7-bme-step      done (1072 s)
+spent  t8-cycle-clean   done (1167 s)
+spent  t9-relax-az      done (1261 s)
+spent  t10-slow-drift   done (1354 s)
+
+C1 v5 variant vs acceptance CSV (spent set): 0 mismatches of 200 runs (must be 0)
+C2 v5 variant vs g1_v5_results.csv (dev set, info only): 0 mismatches of 80 runs
+
+Per scenario: outside = mean [max] flags/run; heat = mean heater-window share flagged;
+fault = mean BME-fault share flagged; delay = median first flag after fault [min]
+
+[dev]
+scenario         | v5                    | L                     | G                     | LG                    | LGF                  
+base             |   0.5 [  1] 0.98 |   0.0 [  0] 0.96 |   0.5 [  1] 0.98 |   0.0 [  0] 0.96 |   0.0 [  0] 0.68
+hold-fault       |   0.5 [  1] 0.98 |   0.0 [  0] 0.96 |   0.5 [  1] 0.98 |   0.0 [  0] 0.96 |   0.0 [  0] 0.68
+accel-step       |   0.5 [  1] 0.98 |   0.0 [  0] 0.96 |   0.5 [  1] 0.98 |   0.0 [  0] 0.96 |   0.0 [  0] 0.68
+two-faults       |   0.5 [  1] 0.98 |   0.0 [  0] 0.96 |   0.5 [  1] 0.98 |   0.0 [  0] 0.96 |   0.0 [  0] 0.68
+emi              |   0.5 [  1] 0.98 |   0.0 [  0] 0.96 |   0.5 [  1] 0.98 |   0.0 [  0] 0.96 |   0.0 [  0] 0.68
+bme-fault        |   0.5 [  1] 0.98 |   0.0 [  0] 0.96 |   0.5 [  1] 0.98 |   0.0 [  0] 0.96 |   0.0 [  0] 0.68
+  BME fault      | cov 0.92 dly  14.5  | cov 0.93 dly  13.5  | cov 0.91 dly  16.5  | cov 0.92 dly  15.5  | cov 0.66 dly  62.5 
+hyst-relax       |   0.5 [  1] 0.98 |   0.0 [  0] 0.96 |   0.5 [  1] 0.98 |   0.0 [  0] 0.96 |   0.0 [  0] 0.68
+day-cycle        |   0.0 [  0] 1.00 |   0.0 [  0] 0.96 |   0.0 [  0] 0.96 |   0.0 [  0] 0.92 |   0.0 [  0] 0.76
+
+[spent]
+scenario         | v5                    | L                     | G                     | LG                    | LGF                  
+t1-fast-ramp     |   0.0 [  0] 0.95 |   0.0 [  0] 0.95 |   0.0 [  0] 0.95 |   0.0 [  0] 0.95 |   0.0 [  0] 0.95
+t2-plateau-step  | 179.2 [194] 1.00 |   0.0 [  0] 0.91 |   7.8 [155] 0.97 |   0.0 [  0] 0.86 |   0.0 [  0] 0.68
+t3-slow-sine     |   0.0 [  0] 0.95 |   0.0 [  0] 0.95 |   0.0 [  0] 0.95 |   0.0 [  0] 0.95 |   0.0 [  0] 0.78
+t4-mag-drift     |   0.0 [  0] 0.95 |   0.0 [  0] 0.95 |   0.0 [  0] 0.95 |   0.0 [  0] 0.95 |   0.0 [  0] 0.95
+t5-two-heaters   |  12.7 [127] 0.98 |   0.0 [  0] 0.94 |   0.0 [  0] 0.96 |   0.0 [  0] 0.91 |   0.0 [  0] 0.85
+t6-emi-plateau   |   0.0 [  0] 0.94 |   0.0 [  0] 0.95 |   0.0 [  0] 0.91 |   0.0 [  0] 0.92 |   0.0 [  0] 0.68
+t7-bme-step      |   0.0 [  0] 0.99 |   0.0 [  0] 0.95 |   0.0 [  0] 0.97 |   0.0 [  0] 0.91 |   0.0 [  0] 0.68
+  BME fault      | cov 1.00 dly   0.5  | cov 1.00 dly   0.5  | cov 1.00 dly   0.5  | cov 1.00 dly   0.5  | cov 1.00 dly   0.5 
+t8-cycle-clean   |  40.0 [ 44] 0.91 |   0.0 [  0] 0.95 |   0.0 [  0] 0.86 |   0.0 [  0] 0.91 |   0.0 [  0] 0.68
+t9-relax-az      |   0.0 [  0] 0.95 |   0.0 [  0] 0.95 |   0.0 [  0] 0.95 |   0.0 [  0] 0.95 |   0.0 [  0] 0.95
+t10-slow-drift   |   0.0 [  0] 0.95 |   0.0 [  0] 0.95 |   0.0 [  0] 0.95 |   0.0 [  0] 0.95 |   0.0 [  0] 0.95
+
+LG learned structure at end of run (median over seeds): tau_B [s], b, c [s]
+(simulator truth: tau_B = 200, tau_I = 120, b = 1, so c ~ 120)
+  dev    base               220   1.000   145.0
+  dev    hold-fault         220   1.000   145.0
+  dev    accel-step         220   1.000   145.0
+  dev    two-faults         220   1.000   145.0
+  dev    emi                220   1.000   145.0
+  dev    bme-fault          240   1.000   163.5
+  dev    hyst-relax         220   1.000   145.0
+  dev    day-cycle          220   1.000   145.3
+  spent  t1-fast-ramp       220   1.000   145.0
+  spent  t2-plateau-step    220   1.000   145.7
+  spent  t3-slow-sine       200   1.000   124.9
+  spent  t4-mag-drift       220   1.000   144.9
+  spent  t5-two-heaters     220   1.000   145.7
+  spent  t6-emi-plateau     220   1.000   143.9
+  spent  t7-bme-step        220   1.000   145.2
+  spent  t8-cycle-clean     220   1.000   144.7
+  spent  t9-relax-az        200   1.000   125.2
+  spent  t10-slow-drift       0   1.000     0.0
+
+Selection: scenario-level metrics, LG vs each other variant
+  v5   vs LG: worse somewhere 1, better somewhere 1
+  L    vs LG: worse somewhere 0, better somewhere 1
+  G    vs LG: worse somewhere 1, better somewhere 1
+  LGF  vs LG: worse somewhere 1, better somewhere 0
+  -> candidate: L
+  K3b target (mean outside <= 1 per scenario) missed by L in 0 scenario(s)

@@ -64,6 +64,7 @@ Rapor bu tuzakları "müfredat sınıf 8" olarak topluyor. G1'in değeri kolay s
 | 12 | [`g1_prototype_v5.m`](matlab/g1/v5/g1_prototype_v5.m) | G1 v5 geliştirme koşusu: CUSUM üst sınırı, dondurulmuş kanalda taban, serbest bırakma testi, model değişiminde sıfırlama | ✅ aday v5 · ✅ baştan kilitlenme gitti · ❌ geliştirmede K1b, K3a, K3c, K3d kalıyor · ⚠️ basamak arızası serbest bırakılıyor |
 | 13 | [`g1_acceptance_test.m`](matlab/g1/test/g1_acceptance_test.m) | Kabul testi, ayrılmış küme (10 senaryo × 2 gürültü × 20 tohum), tek atış | ❌ **FAIL** (K1b, K1c, K2c renkli, K3b, K3c) · ✅ tespit, gecikme, manyetometre arızası, BME basamağı genelleniyor |
 | 14 | [`g1_diag_tsrc_lock.m`](matlab/g1/v6/g1_diag_tsrc_lock.m) | Tanı: sıcaklık kaynağı modelinin kilitlenmesi (13D), kapılı / kapısız / ısıtıcısız | ✅ kopya 200/200 birebir · T2/T5: ısıtıcı tetikliyor, yanlış eğim ve payı olmayan sT kilitliyor · T8: model yapısı uyuşmazlığı · ❌ kapıyı kaldırmak çözüm değil |
+| 15 | [`g1_dev_tsrc_v6.m`](matlab/g1/v6/g1_dev_tsrc_v6.m) | v6 sıcaklık kaynağı modeli: lead-lag, ızgara payı, donmuşken büyüme ve ablasyonları; geliştirme + kullanılmış küme | ✅ v5 kopyası 280/280 birebir · ✅ lead-lag (L) bütün kilitleri kaldırıyor (T2 179 → 0, T8 40 → 0, T5 12,7 → 0) · aday L · ⚠ yapı simülatörle aynı (ADR-012) · ❌ donmuşken büyüme ısıtıcıyı ve kaymayı yutuyor |
 
 **Kritik kurallar** (MATLAB referans modelinde her zaman uygulanacak):
 
@@ -1128,6 +1129,83 @@ Bu parametrelerin hepsi v6'nın yeni ayrılmış kümesi ilan edilmeden önce sa
 
 ---
 
+## 15. G1 v6: sıcaklık kaynağı modeli, geliştirme koşusu
+
+**Script:** [`matlab/g1/v6/g1_dev_tsrc_v6.m`](matlab/g1/v6/g1_dev_tsrc_v6.m) · **Model:** [`g1_tsrc_v6.m`](matlab/g1/v6/g1_tsrc_v6.m) · **Çıktı:** [`g1_dev_tsrc_v6_output.txt`](matlab/g1/v6/g1_dev_tsrc_v6_output.txt) · **Ham sonuçlar:** [`g1_dev_tsrc_v6_results.csv`](matlab/g1/v6/g1_dev_tsrc_v6_results.csv) · **Figür:** [`g1_dev_tsrc_v6.png`](matlab/figures/g1_dev_tsrc_v6.png)
+
+Kullanıcı koştu. Model, varyantlar, kontroller ve seçim kuralı sonuçlardan önce commit edildi (60dccc3).
+
+**Ne yapıldı:** §14'teki teşhise göre sıcaklık kaynağı modelinde üç değişiklik yapıldı. Her biri ayrı bir anahtar, böylece her biri tek tek ablasyonla ölçülebiliyor:
+1. **Lead-lag yapısı (L).**
+   - İki kalıp da ortamı birinci derece bir gecikmeyle izliyor (τ_I ve τ_B). Ortamı denklemden çıkarınca tam ilişki `T_bme = L + τ_I·dL/dt + sabit` oluyor; burada `L = lag(T_icm, τ_B)`.
+   - Türev üçüncü bir regresör olarak eklendi. Model parametrelerde doğrusal kalıyor; ızgarada yalnız τ_B aranıyor, τ_I katsayı olarak öğreniliyor.
+   - v5 bunun τ_I = 0 olan özel hâli.
+2. **Izgara hata payı (G).**
+   - Gecikme 20 s'lik ızgaradan seçiliyor. Bu yüzden varyansa `Δτ²/12 · (dL/dt)²` ekleniyor.
+   - Değer ayarlanmadı, ızgara adımından geliyor.
+3. **Donmuşken kovaryans büyümesi (F).**
+   - Kanallardaki B düzeltmesinin karşılığı.
+   - Sonuçlardan önce aday dışı bırakıldı, yalnızca ablasyon olarak koşuldu. Gerekçesi: kalıcı bir BME ofsetini "eğim değişti" diye yutacağı öngörülüyordu (12B ikilemi).
+
+**Varyantlar ve veri:**
+- **Varyantlar:** v5, L, G, LG (önceden ilan edilen aday) ve LGF.
+- **Geliştirme kümesi:** g1_scenarios_v3, 8 senaryo × tohum 0–9.
+- **Kullanılmış test kümesi:** 10 senaryo × tohum 100–119. §13'te görüldüğü için artık geliştirme verisi.
+- Model yalnızca sıcaklıkları okuyor, bu yüzden yalnız beyaz gürültü koşuldu.
+
+**Kontroller:**
+- **C1:** v5 varyantı, kabul testi CSV'siyle 200/200 koşuda birebir aynı.
+- **C2:** v5 varyantı, v5 geliştirme CSV'siyle 80/80 koşuda birebir aynı.
+
+Yani "v5" sütunu gerçekten v5.
+
+| Senaryo (seçme) | v5 | L | G | LG | LGF |
+|---|---|---|---|---|---|
+| T2 olay dışı alarm, ortalama [en kötü] | 179,2 [194] | **0 [0]** | 7,8 [155] | 0 [0] | 0 [0] |
+| T5 | 12,7 [127] | **0 [0]** | 0 [0] | 0 [0] | 0 [0] |
+| T8 | 40,0 [44] | **0 [0]** | 0 [0] | 0 [0] | 0 [0] |
+| Diğer 15 senaryo | ≤ 0,5 [1] | 0 [0] | ≤ 0,5 [1] | 0 [0] | 0 [0] |
+| Isıtıcı penceresinde alarm payı (aralık) | 0,91–1,00 | 0,91–0,96 | 0,86–0,98 | 0,86–0,96 | 0,68–0,95 |
+| BME kayması (geliştirme): kapsama / gecikme medyanı | 0,92 / 14,5 dk | 0,93 / 13,5 dk | 0,91 / 16,5 dk | 0,92 / 15,5 dk | 0,66 / 62,5 dk |
+| T7 BME basamağı: kapsama / gecikme | 1,00 / 0,5 dk | 1,00 / 0,5 dk | 1,00 / 0,5 dk | 1,00 / 0,5 dk | 1,00 / 0,5 dk |
+
+**Bulgu 15A: Kilitleri tek başına lead-lag yapısı çözüyor. Seçim kuralına göre aday LG değil, L.**
+- L, 18 senaryonun 280 koşusunun hiçbirinde ısıtıcı dışında alarm vermiyor. T2'de 179'dan 0'a, T8'de 40'tan 0'a, T5'te 12,7'den 0'a iniyor.
+- Isıtıcı ve BME arızası yakalanmaya devam ediyor.
+- LG de olay dışı alarm vermiyor, ama ızgara payı sT'yi genişlettiği için ısıtıcıyı daha az yakalıyor (ör. T2'de 0,86, L'de 0,91). BME kaymasında da L'den 2 dk geç.
+- L hiçbir ölçütte LG'den kötü değil ve birkaçında daha iyi. İlan edilmiş kurala göre aday **L**. Izgara payı, yapı doğru kurulunca gereksiz kalıyor.
+- §14B'deki "yanlış eğim" de yapı kaynaklıymış: L ve LG'de koşu sonunda öğrenilen eğim her senaryoda b = 1,000 (v5'te kilit anında 0,984–0,986).
+- **Uyarı (ADR-012, döngüsellik):** Simülatör tam olarak bu fiziği kullanıyor (iki birinci derece gecikme). Yani simüle veride L'nin yapısı kusursuz uyuyor; bu sonuç büyük ölçüde bundan geliyor. Gerçek bir kartta termal yollar birinci derece olmayacak. L'nin değeri, yapısı farklı bir termal modelde ölçülmeden bilinemez. **Yeni ayrılmış kümede BME için farklı bir termal yapı olmalı** (ör. iki düğümlü / ikinci derece bir yol, ya da sensörlerin farklı ortam gördüğü hava akımı).
+
+**Bulgu 15B: Yalnız ızgara payı (G) kilitleri kısmen çözüyor, ama güvenilir değil.**
+- T5 ve T8 sıfırlanıyor.
+- T2'de 20 tohumun 19'unda kilit kalkıyor, tohum 100'de ise 155 blokluk kilit sürüyor.
+- Yani yanlış yapının bedelini genişletilmiş bir hata bütçesi yalnızca çoğu zaman karşılıyor.
+
+**Bulgu 15C: F (donmuşken büyüme) ısıtıcıyı ve kaymayı yutuyor. T7 basamağı için yaptığım öngörü ise yanlıştı.**
+- LGF'de ısıtıcı penceresinde alarm payı 0,68'e düşüyor. Şekilde ısıtıcı zirvesi v5'te grafiğin dışına çıkarken LGF'de ~17'de kalıyor: model dondukça sT büyüyor ve ısıtıcının kendisini kısmen "açıklıyor".
+- Geliştirmedeki BME kaymasında kapsama 0,92'den 0,66'ya düşüyor, gecikme 15'ten 62 dakikaya çıkıyor.
+- **Öngörü hatası:** T7'deki 1 °C'lik basamağın ~1 saatte yutulacağını öngörmüştüm. Gerçekleşmedi, kapsama 1,00 kaldı. Şekilde zT 4,5–6 saat arasında ~+7'de duruyor, iniş rampası bitince büyüyor.
+- **Muhtemel neden (doğrulanmadı):** Eğim belirsizliğinin sT'ye katkısı `(L − L0)²` ile ölçekleniyor. L0 koşunun ilk bloğundaki sıcaklık. İniş rampasında sıcaklık başlangıca döndükçe bu katkı küçülüyor. Yani F'nin etkisi sıcaklığın başlangıca uzaklığına bağlı; bu, merkezlemenin bir yan etkisi, tasarlanmış bir davranış değil.
+- Sonuç yine de aynı: F aday değil. Aday dışı bırakma kararı doğruydu, ama gerekçesi (T7) yanlıştı.
+
+**Bulgu 15D: Öğrenilen yapı fiziksel olarak tutarlı, tek tek parametreler kaymış.**
+- Gerçek değerler τ_B = 200 s ve τ_I = 120 s. L/LG'nin öğrendiği medyan değerler çoğu senaryoda τ_B = 220 s ve c ≈ 145 s; T3 ve T9'da 200 / 125 s.
+- Tek tek değerler 20–25 s kaymış, ama farkları (net gecikme) 75–80 s ile gerçek değere (80 s) yakın. Rampalarda net gecikme iyi belirleniyor, iki zaman sabitinin ayrı ayrı değerleri zayıf belirleniyor.
+- Kaymanın bir kısmı ayrık uygulamadan geliyor olabilir: gecikme filtresindeki bir adımlık (10 s) gecikme ve blok ortalaması. **Doğrulanmadı.**
+- **T10 (sabit 28 °C):** τ_B = 0 ve c = 0 kalıyor. Termal uyarım yok, bütün adayların skoru eşit ve ilk aday seçiliyor. Alarm da yok, yani zararsız. Bu, 6F'deki belirlenebilirlik koşulunun sıcaklık kanalındaki hâli: yapı yalnızca uyarımla öğrenilebiliyor.
+
+**Bulgu 15E: Geliştirme kümesi bu model için zayıf. Kendi tasarım hatam.**
+- Geliştirmedeki 8 senaryonun 6'sı aynı sıcaklık profilini, aynı ısıtıcıyı ve aynı birim tohumlarını kullanıyor. Bu yüzden sıcaklık kaynağı sonuçları birebir aynı.
+- Bağımsız sıcaklık senaryosu sayısı yalnızca 3: varsayılan profil, day-cycle ve bme-fault.
+- Ayrımı yapan veri kullanılmış test kümesi. Yeni ayrılmış küme tasarlanırken sıcaklık profilleri ve ısıtıcı zamanları senaryolar arasında çeşitlendirilmeli.
+
+**Bellek notu:** L'de aday başına 3 parametre var. Saklananlar: θ (3) + P (6, simetrik) + skor (1) + gecikme filtresi durumu (1) + önceki blok sonu (1) = 12 sayı. 16 adayla bu 192 sayı, float olarak ~770 B. v5'te ~450 B'ydı. Net gecikme iyi belirlendiği için ızgara seyreltilebilir (bellek bütçesi açık konusu).
+
+**Sonuç:** v6'nın sıcaklık kaynağı modeli **L**: lead-lag yapısı, ızgara payı yok, donmuşken büyüme yok. 13D'deki kilit, simülasyonda yapı düzeltilerek tamamen kalkıyor. Ama bu sonuç simülatörle aynı yapıya dayanıyor (15A). Gerçek değeri, yeni ayrılmış kümedeki farklı termal yapı senaryosunda ölçülecek.
+
+---
+
 ## Açık konular
 
 - [x] ~~Termal katsayıları ICM-42688-P veri sayfasından teyit etmek~~ → Bulgu 4
@@ -1160,7 +1238,10 @@ Bu parametrelerin hepsi v6'nın yeni ayrılmış kümesi ilan edilmeden önce sa
 - [x] ~~v5 geliştirme koşusu → §11'deki kurala göre aday seçimi~~ → §12, aday v5
 - [x] ~~Ayrılmış test (`g1_acceptance_test.m`, tek atış)~~ → §13, FAIL
 - [x] ~~Tanı: sıcaklık kaynağı modelinin T2, T5 ve T8'de kilitlenmesi (13D)~~ → Bulgu 14 (T2/T5: ısıtıcı + yanlış eğim + payı olmayan sT; T8: model yapısı)
-- [ ] **G1 v6, sıcaklık kaynağı modeli:** sT'ye model hatası payı, donmuşken (a, b) kovaryansının büyümesi, uyarım olmadan eğime güvenmemek; T8 için iki gecikmeli model ya da hıza bağlı sT (14B–14D)
+- [x] ~~**G1 v6, sıcaklık kaynağı modeli:** sT'ye model hatası payı, donmuşken (a, b) kovaryansının büyümesi, uyarım olmadan eğime güvenmemek; T8 için iki gecikmeli model ya da hıza bağlı sT (14B–14D)~~ → Bulgu 15, aday L (lead-lag); ızgara payı ve donmuşken büyüme gereksiz/zararlı
+- [ ] Yeni ayrılmış kümede BME için simülatörden **farklı** bir termal yapı (ikinci derece yol, farklı ortam); L'nin yapısı simülatörle aynı (15A, ADR-012)
+- [ ] Yeni ayrılmış kümede sıcaklık profillerini ve ısıtıcı zamanlarını çeşitlendirmek (15E)
+- [ ] τ_B / τ_I'nin ayrı ayrı 20–25 s kaymasının kaynağı (ayrık gecikme filtresi?, 15D); net gecikme doğru
 - [ ] T5'te yalnız tohum 108 ve 118'in kilitlenme nedenini doğrulamak (ısıtıcı anında b yakınsamış mı? 14B)
 - [ ] Yeni sürüm için **yeni** bir ayrılmış küme (tohum 200+, yeni senaryolar); §13'teki küme artık görülmüş sayılıyor
 - [ ] Basamak arızasında doğru davranış: kalıcı ofset "arıza" mı, "yeni normal" mi? Formel tanıma yazmak (12B)

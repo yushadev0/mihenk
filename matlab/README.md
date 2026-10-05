@@ -46,6 +46,8 @@ Findings and the reasoning behind every script are logged in [`../bulgular.md`](
 | `g1/test/g1_acceptance_test.m` | script | One-shot G1 acceptance test, PASS/FAIL per declared criterion |
 | `g1/test/g1_smoke_test.m` | script | Simulates every held-out scenario without running a detector |
 | `g1/v6/g1_diag_tsrc_lock.m` | script | Diagnosis of the temperature-source lock in the acceptance test (bulgular 13D/14), replica of the v5 temperature-source model |
+| `g1/v6/g1_tsrc_v6.m` | function | v6 temperature-source model: lead-lag structure, lag-grid error term and frozen covariance growth, each a switch |
+| `g1/v6/g1_dev_tsrc_v6.m` | script | Dev run of the v6 temperature-source model vs v5 and ablations (dev set + spent test set), selection by the declared rule |
 
 Detectors receive only firmware-visible inputs.
 
