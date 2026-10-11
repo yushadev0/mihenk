@@ -1,0 +1,47 @@
+Trace on vs off: max difference 0 (OK)
+
+A. False-alarm episodes of v9 (>= 30 blocks, longest 3 per run)
+
+[dev] base / white seed 9: false flags/h v9 35.1 (csv 35.1), v9noE 2.7 (csv 2.7)
+  mz 1.68-5.36 h (222 min), ends: offset event, heater in episode: yes, ICM T range 10.21 degC
+     E evaluations 210: |slope| >= dMin in 94%, only via t*se in 6%; median |slope|/dMin 3.13, median t*se/dMin 0.35, best (|slope|+t*se)/dMin 1.00
+     residual vs ICM T in the episode: R^2 0.73, slope -0.00736 uT/degC
+     growth test would release: at 1.96 h (18 min after the start)
+     v9noE on mz: 1.68-1.94 h (17 min), ends: offset event
+     -> unexplained (longest episode of the run)
+
+[dev] base / colored seed 8: false flags/h v9 32.7 (csv 32.7), v9noE 0.2 (csv 0.2)
+  gx 1.68-5.09 h (206 min), ends: offset event, heater in episode: yes, ICM T range 10.21 degC
+     E evaluations 206: |slope| >= dMin in 98%, only via t*se in 2%; median |slope|/dMin 2.38, median t*se/dMin 0.10, best (|slope|+t*se)/dMin 1.03
+     residual vs ICM T in the episode: R^2 0.97, slope 0.00382 dps/degC
+     growth test would release: at 1.68 h (1 min after the start)
+     v9noE on gx: no flag in this interval
+     -> H2 (longest episode of the run)
+
+[spent] t6-emi-plateau / white seed 103: false flags/h v9 53.5 (csv 53.5), v9noE 0.3 (csv 0.3)
+  ax 1.68-7.14 h (329 min), ends: CUSUM fell, heater in episode: yes, ICM T range 13.01 degC
+     E evaluations 329: |slope| >= dMin in 99%, only via t*se in 1%; median |slope|/dMin 64.94, median t*se/dMin 4.25, best (|slope|+t*se)/dMin 6.72
+     residual vs ICM T in the episode: R^2 1.00, slope 0.13 mg/degC
+     growth test would release: at 1.71 h (3 min after the start)
+     v9noE on ax: 1.68-1.69 h (2 min), ends: offset event
+     -> H2 (longest episode of the run)
+
+[spent] t1-fast-ramp / white seed 108: false flags/h v9 46.9 (csv 46.9), v9noE 0.6 (csv 0.6)
+  ax 1.68-6.54 h (293 min), ends: CUSUM fell, heater in episode: yes, ICM T range 15.00 degC
+     E evaluations 293: |slope| >= dMin in 100%, only via t*se in 0%; median |slope|/dMin 96.15, median t*se/dMin 9.31, best (|slope|+t*se)/dMin 13.25
+     residual vs ICM T in the episode: R^2 0.99, slope -0.166 mg/degC
+     growth test would release: at 1.68 h (1 min after the start)
+     v9noE on ax: no flag in this interval
+     -> H2 (longest episode of the run)
+
+[dev] base / white seed 0: false flags/h v9 0.0 (csv 0.0), v9noE 0.0 (csv 0.0)
+  no episode of >= 30 blocks
+
+B. t10-slow-drift / colored, gx drift 0.015 dps/h
+seed 101: dMin 0.0116, true rate 0.0150 (1.29 x dMin); E evaluations after the fault 121, median slope / true 1.13
+   offset event at 3.02 h: slope 0.0024 (0.16 x true, 0.20 x dMin), t*se 0.0031, window 30 blocks, ICM T range 0.00 degC
+   offset event at 4.33 h: slope 0.0056 (0.37 x true, 0.48 x dMin), t*se 0.0058, window 30 blocks, ICM T range 0.00 degC
+seed 104: dMin 0.0116, true rate 0.0150 (1.29 x dMin); E evaluations after the fault 228, median slope / true 0.99
+   offset event at 2.91 h: slope 0.0058 (0.39 x true, 0.50 x dMin), t*se 0.0034, window 30 blocks, ICM T range 0.00 degC
+seed 100: dMin 0.0116, true rate 0.0150 (1.29 x dMin); E evaluations after the fault 284, median slope / true 1.04
+   no offset event; best (|slope| + t*se) / dMin 1.01

@@ -72,6 +72,7 @@ Rapor bu tuzakları "müfredat sınıf 8" olarak topluyor. G1'in değeri kolay s
 | 19 | [`g1_prototype_v8.m`](matlab/g1/v8/g1_prototype_v8.m) | v8 (v6 + D1 + R: gevşeme histerezisi adayları) ve ablasyonları, v6'ya karşı iki adımlı kural | ✅ eşdeğerlik 0, iki regresyon 4·10⁻¹⁵ · ✅ R histerezis alarmlarını kaldırıyor (beyaz en kötü 51,6 → 3,8/saat) · ❌ renkli kapsama %79,7 → %78,0 (tolerans 1 puan) → kurala göre G1 = v6 · ⚠ kayıp çoğunlukla D1'den, two-faults'ta sistematik · ⚠ renkli gürültüde biçim seçimi şaşıyor |
 | 19 (tanı) | [`g1_diag_v8.m`](matlab/g1/v8/g1_diag_v8.m) | Kapsama kaybının mekanizması; ızgara dışı histerezis parametreleri ve taze tohumlarla genelleme | ❌ H1 two-faults'ta reddedildi: kayıp C2'den ("güvenilmez" arızalı blokların %57'si) · ✅ day-cycle ve T9 / renklide H1 doğrulandı (D1 + büyüme testi rampada ofset sanıyor) · ✅ R ızgara dışına genelleniyor (τ = 600: en kötü 78 → 3,3/saat), tohumlara uyum yok · ❌ D1, τ = 600'de K1b'yi aşıyor |
 | 20 | [`g1_prototype_v9.m`](matlab/g1/v9/g1_prototype_v9.m) | v9 (v8 − C2 + E: ofset olayı için eşdeğerlik testi) ve ablasyonları, v6'ya karşı iki adımlı kural | ✅ eşdeğerlik 0, iki regresyon 4·10⁻¹⁵ · ✅ C2'siz two-faults %55 → %98 · ✅ E rampada ofset sanmayı çözüyor · ❌ E bazı yanlış alarmları bırakamıyor (en kötü 53,5 beyaz, 32,7 renkli) → kurala göre G1 = v6 · ⚠ v9noE (= v8 − C2) iki eşiği de geçiyor ama 1. adım onu seçemiyor (kural açığı) |
+| 20 (tanı) | [`g1_diag_v9.m`](matlab/g1/v9/g1_diag_v9.m) | E'nin bırakamadığı yanlış alarmlar ve T10'daki ofset olayları | ✅ iz davranışı değiştirmiyor, oranlar CSV ile aynı · H2 dört koşunun üçünde (kural gereği kabul edilmedi), H3 hiçbirinde · ⚠ geliştirmedeki iki koşu 10F'nin baştan kilitlenen kanalları: E, büyüme testinin güvenlik kapısını kapatıyor · ❌ T10: renkli gürültüde 30 blokluk pencerede se iyimser → öneri v10 = v9noE |
 
 **Kritik kurallar** (MATLAB referans modelinde her zaman uygulanacak):
 
@@ -1599,7 +1600,7 @@ Veri v6–v8 ile aynı (geliştirme tohum 0–9 + kullanılmış küme tohum 100
 - **Basamak arızaları artık ofset olayı:** accel-step ve T2 / beyazda alarm kapsaması düşüyor (%99 → %85, %98 → %62), toplam kapsama aynı kalıyor ya da artıyor. Kanal kalıcı sapmayı yaklaşık bir saat sonra ofset olayı olarak raporluyor; bu, §15'teki karara uygun davranış.
 - **Bedel 1, bırakılamayan yanlış alarmlar:** E olan iki varyantta 10/saat'i aşan koşu sayısı 0–1'den 7–8'e çıkıyor. Bunlar birkaç tohumda yoğunlaşıyor:
   - geliştirme kümesinde tek bir tohum (beyazda 9, renklide 8), arızasız senaryolar dahil hepsinde aynı değer (35,1 ve 32,7/saat). Yani yanlış alarm senaryonun arızasından değil, o tohumun sağlıklı bir kanalından geliyor;
-  - bu koşularda ısıtıcı penceresinde (ısıtıcı açıkken ve sonraki soğuma süresince) herhangi bir sensörde alarm olan blok sayısı 25 (v9noE'de 0). Alarm ısıtıcı penceresine denk geliyor (T1 tohum 108'de ise ısıtıcı yok);
+  - bu koşularda ısıtıcı penceresinde (ısıtıcı açıkken ve sonraki soğuma süresince) herhangi bir sensörde alarm olan blok sayısı 25 (v9noE'de 0). Alarm ısıtıcı penceresine de yayılıyor, ama ısıtıcıdan önce başlıyor (20D). T1 tohum 108'de bu sayı 0, çünkü oradaki ısıtıcı arıza başladıktan sonra geliyor ve ölçüt arızalı dönemi saymıyor;
   - kullanılmış kümede T6 tohum 103 (53,5) ve T1 tohum 108 (46,9).
   - Renkli gürültüde yanlış alarm medyanı da 0,1'den 0,9/saat'e çıkıyor.
 - **Bedel 2, yavaş kayma ofset sanılıyor:** T10 / renklide (gx, 0,015 °/s/saat) kapsama %91 → %86, arızalı kanalda ofset olayı 0 → 0,3. Kayma hızı renkli dMin'in (gx 0,0116) yalnız ~1,3 katı; duman testinde işaretlenen risk gerçekleşti.
@@ -1614,6 +1615,54 @@ Veri v6–v8 ile aynı (geliştirme tohum 0–9 + kullanılmış küme tohum 100
 **Sonraki adım için öneri:**
 1. **Kısa tanı (H2):** [`g1_diag_v9.m`](matlab/g1/v9/g1_diag_v9.m). E'nin yanlış alarm kuyruğundaki dört koşu (geliştirme beyaz tohum 9, renkli tohum 8, T6 tohum 103, T1 tohum 108) ve T10 / renklideki ofset olayları. Hangi kanal, ne zaman donuyor; eğim, se ve dMin oranı; artık sıcaklığı izliyor mu; v9noE'de aynı alarm büyüme testiyle mi bırakılıyor. Okuma kuralı (H2 / H3 / açıklanamadı) betiğin başında, sonuçlardan önce commit edildi. Tanı izi için dedektöre yalnız `trace` açıkken dolan çıktılar eklendi; davranış değişmedi, betik bunu ayrıca denetliyor.
 2. **v10:** Tanıya göre ya dMin'e donmuş modelin tahmin hatasından gelen bir eğim payı eklenir (E kalır, rampa kazancı korunur), ya da v10 = v9noE olur. İki durumda da 1. adım önce düzeltilir ve geliştirme sayıları görülmüş sayılır; karar yeni ayrılmış kümede verilir.
+
+### 20 (devam). Tanı: E'nin bırakamadığı alarmlar ve T10'daki ofset olayları
+
+**Script:** [`matlab/g1/v9/g1_diag_v9.m`](matlab/g1/v9/g1_diag_v9.m) · **Çıktı:** [`g1_diag_v9_output.txt`](matlab/g1/v9/g1_diag_v9_output.txt)
+
+Kullanıcı koştu. Okuma kuralı sonuçlardan önce commit edildi (14056c3). Kontroller:
+- İz açıkken ve kapalıyken durum ve skor birebir aynı (fark 0).
+- Betiğin hesapladığı yanlış alarm oranları CSV ile aynı (35,1 / 32,7 / 53,5 / 46,9; v9noE 2,7 / 0,2 / 0,3 / 0,6).
+
+**Bulgu 20D: Kurala göre H2 dört koşunun üçünde geçerli; dördüncüsü "açıklanamadı". H2 bu yüzden 20B'nin mekanizması olarak kabul edilmiyor.**
+
+| Koşu | Kanal | Alarm süresi | Nasıl bitti | Eğim ≥ dMin olan değerlendirme | Eğim / dMin (medyan) | Artık–sıcaklık R² | Büyüme testi bırakırdı | Kural |
+|---|---|---|---|---|---|---|---|---|
+| geliştirme base / beyaz, tohum 9 | mz | 222 dk | ofset olayı | %94 | 3,1 | 0,73 | 18 dk sonra | açıklanamadı |
+| geliştirme base / renkli, tohum 8 | gx | 206 dk | ofset olayı | %98 | 2,4 | 0,97 | 1 dk sonra | H2 |
+| T6 / beyaz, tohum 103 | ax | 329 dk | CUSUM düştü | %99 | 65 | 1,00 | 3 dk sonra | H2 |
+| T1 / beyaz, tohum 108 | ax | 293 dk | CUSUM düştü | %100 | 96 | 0,99 | 1 dk sonra | H2 |
+| kontrol: base / beyaz, tohum 0 | — | 30 bloktan uzun alarm yok | | | | | | |
+
+- Dört koşuda da E'yi geçirmeyen şey eğimin kendisi; belirsizlik (t·se) değil. **H3 hiçbir koşuda geçerli değil.**
+- Dört koşuda da büyüme testi aynı kanalı 1–18 dakika içinde bırakırdı. v9noE gerçekten bırakıyor (en fazla 17 dk) ya da kanalı hiç işaretlemiyor.
+- Tek sapma beyaz tohum 9: eğim ve büyüme testi şartları sağlanıyor, ama artık sıcaklığı yalnız R² = 0,73 ile izliyor (eşik 0,8). Kural gereği "açıklanamadı".
+- T6 ve T1'de artığın sıcaklığa göre eğimi 0,13 ve −0,17 mg/°C. Bu, donmuş modelin sıcaklık katsayısının büyük ölçüde yanlış olduğu anlamına geliyor. Eğim dMin'in 65–96 katı; küçük bir model hatası payı bunu kapatamaz.
+
+**Sonuç sonrası gözlem (kural dışı, işaretli):**
+- Dört alarm da puanlanan pencerenin ilk bloğunda (1,68 saat) başlıyor. Yani kanallar pencere başlamadan önce işaretlenmiş; asıl başlangıç anı bu betikte ölçülmedi.
+- Geliştirme kümesindeki iki koşu, 10F'deki **baştan kilitlenen kanalların** ta kendisi: beyaz tohum 9'da mz, renkli tohum 8'de gx. v5'teki büyüme testi (C) bu kilitleri serbest bırakarak çözmüştü (§12). E, büyüme testinin yerini aldığı için bu güvenlik kapısını kapattı ve eski kilitler geri döndü.
+- Yani E'nin sorunu küçük ve birikimli bir model hatası değil, **model tanımlanmadan dondurulmuş kanallar**. Böyle bir kanalın artığı sıcaklıkla birlikte hareket ediyor. Rampada bu durum gerçek bir kaymadan ayırt edilemiyor, çünkü sıcaklık zamanla doğrusal değişirken "sıcaklık katsayısı hatası" ve "kayma" aynı eğimi üretiyor (tanınabilirlik, 6F ile aynı aile). E rampada "kayma yok"u yapısı gereği kanıtlayamıyor.
+
+**Bulgu 20E: T10'da kuralın şartı sağlandı, ama kuralda yazılı yorum verilere uymuyor.**
+
+| Tohum | Ofset olayı | O andaki eğim (gerçek kaymaya oranı) | t·se | Pencere |
+|---|---|---|---|---|
+| 101 | 3,02 saat | 0,0024 (0,16×) | 0,0031 | 30 blok |
+| 101 | 4,33 saat | 0,0056 (0,37×) | 0,0058 | 30 blok |
+| 104 | 2,91 saat | 0,0058 (0,39×) | 0,0034 | 30 blok |
+| 100 (kontrol) | yok | en iyi (|eğim| + t·se) / dMin 1,01 | | |
+
+- Gerçek kayma hızı 0,015 °/s/saat, dMin 0,0116. Üç bırakmada da eğim tahmini dMin'in altında, yani kuralın şartı sağlandı.
+- Kuralda yazılı yorum "dMin, G1'in yakalaması gereken en küçük kaymaya çok yakın" idi. Veriler buna uymuyor. Tahminler gerçeğin 0,16–0,39 katı ve |eğim| + t·se en fazla 0,011. dMin gerçek kayma hızına (0,015) eşit olsaydı bile kanal bırakılırdı.
+- **Sonuç sonrası yorum:** Bırakmaların hepsi en kısa pencerede (30 blok, yani kanal donduktan hemen sonraki ilk değerlendirme) ve sıcaklık sabitken (aralık 0,00 °C) oluyor. Eğim tahmininin gerçekleşen hatası (~0,009–0,013) t·se'nin (~0,003–0,006) 2–4 katı. Renkli gürültüde artıklar ilişkili ve en küçük kareler se'si (bağımsız artık varsayımıyla) belirsizliği olduğundan küçük gösteriyor. Bu, 10F'deki "ilişkili artık ARL0 hesabını geçersiz kılıyor" sorununun eşdeğerlik testindeki karşılığı.
+
+**Tanının sonucu:**
+- E iki ayrı nedenle güvenilmez:
+  1. Rampada tanımlanmamış bir modeli kaymadan ayıramıyor ve 10F'nin kilitlerini geri getiriyor (20D).
+  2. Renkli gürültüde kısa pencerede kendinden fazla emin (20E).
+- E'yi onarmak için hem sıcaklık katsayısı belirsizliğinin hem de artık ilişkisinin teste girmesi gerekiyor. İkisi de yeni tasarım demek. Üstelik görülmüş bir geliştirme kümesinde ayarlanacaklardı.
+- **Öneri:** v10 = v9noE (= v8 − C2). E çıkar. Rampada ofset sanma sorunu (19F; day-cycle ve T9 / renkli) açık konu olarak kalır; v9noE'de bu sorun eşiklerin içinde.
 
 ---
 
@@ -1657,7 +1706,9 @@ Veri v6–v8 ile aynı (geliştirme tohum 0–9 + kullanılmış küme tohum 100
 - [ ] Yeni sürüm için **yeni** bir ayrılmış küme (tohum 200+, yeni senaryolar); §13'teki küme artık görülmüş sayılıyor
 - [x] ~~Basamak arızasında doğru davranış: kalıcı ofset "arıza" mı, "yeni normal" mi? (12B)~~ → Karar (§15): arıza değil, üçüncü durum "ofset olayı: tespit edildi, raporlandı, yeniden kalibre edildi". Formel tanıma yazılacak.
 - [x] ~~Artık öz-ilişkisini "model güvenilmez" durumu için kullanmayı değerlendirmek (12E, ADR-010)~~ → C2 olarak denendi; etkisiz (16C) ve iki eşzamanlı arızada zararlı (19E), v9'da kapatıldı (20A)
-- [ ] Tanı: E'nin bırakamadığı yanlış alarmlar (H2: dMin donmuş modelin tahmin hatasını içermiyor, 20B)
+- [x] ~~Tanı: E'nin bırakamadığı yanlış alarmlar (H2: dMin donmuş modelin tahmin hatasını içermiyor, 20B)~~ → 20D–20E: tanımlanmadan dondurulmuş kanallar (10F) ve renkli gürültüde iyimser se; E bu hâliyle bırakılıyor
+- [ ] Rampada kaymayı ofset sanma (19F), E olmadan yine açık: sıcaklık katsayısı belirsizliğini ve artık ilişkisini hesaba katan bir "kayma yok" testi, yeni bir geliştirme kümesinde
+- [ ] Baştan kilitlenme (10F) büyüme testiyle bırakılıyor ama tetiği duruyor: model tanımlanmadan dondurmamak
 - [ ] Seçim kuralının 1. adımını simetrik yapmak (ablasyon tam sürüme karşı 2. adımın testiyle), bir sonraki koşudan önce (20C)
 - [ ] Bellek bütçesi: v4'te 90 Kalman filtresi × 14 sayı ≈ 5 KB (float) veya ~2,5 KB (16 bit), ATmega328P'nin 2 KB'ını aşıyor; sadeleştirme gerekiyor (örneğin genişlik ızgarası)
 - [ ] "En küçük algılanabilir kayma hızı"nı K ve izin verilen gecikme cinsinden formel tanıma yazmak (9D)

@@ -93,7 +93,7 @@ export const timeline = [
   },
   {
     v: 'v9', kind: 'now', title: 'Şu an: iki düzeltme, biri tuttu',
-    text: 'İki eşzamanlı arızayı yutan "model güvenilmez" durumu kaldırıldı. Kalıcı sapmayı ofset saymak için "kayma yok"un kanıtını isteyen yeni test rampadaki hatayı çözdü, ama bazı yanlış alarmları bırakamadı. Kural yine v6\'yı seçti; nedeni inceleniyor.',
+    text: 'İki eşzamanlı arızayı yutan "model güvenilmez" durumu kaldırıldı. Kalıcı sapmayı ofset saymak için "kayma yok"un kanıtını isteyen yeni test rampadaki hatayı çözdü, ama bazı yanlış alarmları bırakamadı. Kural yine v6\'yı seçti. Tanıya göre yeni test, model henüz öğrenilmeden dondurulan kanalları gerçek kaymadan ayıramıyor; bu hâliyle bırakılıyor.',
     plus: ['iki arızada kapsama %55 → %98'], minus: ['en kötü yanlış alarm 53,5/saat'], ref: '§20',
   },
 ];
