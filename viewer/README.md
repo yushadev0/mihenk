@@ -16,7 +16,7 @@ Controls: space plays and pauses, the left and right arrows step one block (ten 
 
 ## Publishing
 
-`site/index.html` is the project page at https://yusa.app/mihenk/. To publish the page, the viewer and the current `data/` to the server (plain static files under the nginx root, no server config needed), run:
+The project page at https://yusa.app/mihenk/ is the React + Vite app in [`../web/`](../web/README.md). To build it and publish it together with the viewer and the current `data/` (plain static files under the nginx root, no server config needed), run:
 
 ```
 sh viewer/deploy.sh

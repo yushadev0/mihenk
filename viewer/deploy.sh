@@ -1,21 +1,30 @@
 #!/bin/sh
-# Publish the landing page and the replay viewer to https://yusa.app/mihenk/.
+# Publish the project page and the replay viewer to https://yusa.app/mihenk/.
 # Layout on the server (nginx root /var/www/yusa.app, plain static files):
-#   mihenk/index.html          <- site/index.html
+#   mihenk/                    <- web/ (React + Vite build)
+#   mihenk/data/story.json     <- web/public/data/story.json (matlab/g1/site/g1_export_site.m)
 #   mihenk/replay/index.html   <- replay.html wrapped in a document skeleton
 #   mihenk/replay/data/*.json  <- data/
 # Usage: sh viewer/deploy.sh   (SSH_KEY and SSH_TARGET can be overridden)
 set -eu
 
 here=$(cd "$(dirname "$0")" && pwd)
+web="$here/../web"
 key=${SSH_KEY:-$HOME/.ssh/cantiin_deploy}
 target=${SSH_TARGET:-yusa@207.180.223.10}
 remote=/var/www/yusa.app/mihenk
 
+if [ ! -f "$web/public/data/story.json" ]; then
+  echo "web/public/data/story.json is missing: run matlab/g1/site/g1_export_site.m first" >&2
+  exit 1
+fi
+(cd "$web" && npm run build --silent)
+
 stage=$(mktemp -d)
 trap 'rm -rf "$stage"' EXIT
+cp -R "$web/dist/." "$stage/"
+rm -f "$stage/data/story.dev.json"          # dev-only layout fixture, never published
 mkdir -p "$stage/replay/data"
-cp "$here/site/index.html" "$stage/index.html"
 cp "$here"/data/*.json "$stage/replay/data/"
 
 # replay.html is a fragment (no doctype). The redirect makes /mihenk/replay

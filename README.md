@@ -1,4 +1,5 @@
-| [`viewer/`](viewer/README.md) | G1 replay viewer and project page, live at [yusa.app/mihenk/replay](https://yusa.app/mihenk/replay/) |
+| [`web/`](web/README.md) | Project page (Turkish), live at [yusa.app/mihenk](https://yusa.app/mihenk/) |
+| [`viewer/`](viewer/README.md) | G1 replay viewer, live at [yusa.app/mihenk/replay](https://yusa.app/mihenk/replay/) |
 # MIHENK
 
 **Multi-sensor Intrinsic Health Estimation & Numerical Kernel**
