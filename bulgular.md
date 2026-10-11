@@ -73,6 +73,7 @@ Rapor bu tuzakları "müfredat sınıf 8" olarak topluyor. G1'in değeri kolay s
 | 19 (tanı) | [`g1_diag_v8.m`](matlab/g1/v8/g1_diag_v8.m) | Kapsama kaybının mekanizması; ızgara dışı histerezis parametreleri ve taze tohumlarla genelleme | ❌ H1 two-faults'ta reddedildi: kayıp C2'den ("güvenilmez" arızalı blokların %57'si) · ✅ day-cycle ve T9 / renklide H1 doğrulandı (D1 + büyüme testi rampada ofset sanıyor) · ✅ R ızgara dışına genelleniyor (τ = 600: en kötü 78 → 3,3/saat), tohumlara uyum yok · ❌ D1, τ = 600'de K1b'yi aşıyor |
 | 20 | [`g1_prototype_v9.m`](matlab/g1/v9/g1_prototype_v9.m) | v9 (v8 − C2 + E: ofset olayı için eşdeğerlik testi) ve ablasyonları, v6'ya karşı iki adımlı kural | ✅ eşdeğerlik 0, iki regresyon 4·10⁻¹⁵ · ✅ C2'siz two-faults %55 → %98 · ✅ E rampada ofset sanmayı çözüyor · ❌ E bazı yanlış alarmları bırakamıyor (en kötü 53,5 beyaz, 32,7 renkli) → kurala göre G1 = v6 · ⚠ v9noE (= v8 − C2) iki eşiği de geçiyor ama 1. adım onu seçemiyor (kural açığı) |
 | 20 (tanı) | [`g1_diag_v9.m`](matlab/g1/v9/g1_diag_v9.m) | E'nin bırakamadığı yanlış alarmlar ve T10'daki ofset olayları | ✅ iz davranışı değiştirmiyor, oranlar CSV ile aynı · H2 dört koşunun üçünde (kural gereği kabul edilmedi), H3 hiçbirinde · ⚠ geliştirmedeki iki koşu 10F'nin baştan kilitlenen kanalları: E, büyüme testinin güvenlik kapısını kapatıyor · ❌ T10: renkli gürültüde 30 blokluk pencerede se iyimser → öneri v10 = v9noE |
+| 21 | [`g1_acceptance_test2.m`](matlab/g1/test2/g1_acceptance_test2.m) | v10 (= v9noE) ve v6, ikinci ayrılmış küme: 100 tohumdan otomatik üretilmiş senaryo × 2 gürültü, PI histerezisi, ikinci derece BME yolu (önceden ilan) | Küme, ölçütler (K1–K4) ve iki karar kuralı sonuçlardan önce commit'lendi |
 
 **Kritik kurallar** (MATLAB referans modelinde her zaman uygulanacak):
 
@@ -1666,6 +1667,74 @@ Kullanıcı koştu. Okuma kuralı sonuçlardan önce commit edildi (14056c3). Ko
 
 ---
 
+## 21. G1 v10 ve ikinci ayrılmış küme (önceden ilan)
+
+**Durum:** Bu bölüm, v10, ayrılmış küme, ölçütler ve iki karar kuralı, **bu kümede hiçbir dedektör koşulmadan** yazılıp commit'lendi. Kullanıcı v10 = v9noE kararını §20'den sonra verdi.
+
+**Scriptler:** [`g1_detect_v10.m`](matlab/g1/v10/g1_detect_v10.m) · [`g1_scenarios_test2.m`](matlab/g1/test2/g1_scenarios_test2.m) (küme üreteci) · [`g1_smoke_test2.m`](matlab/g1/test2/g1_smoke_test2.m) (ön kontroller) · [`g1_acceptance_test2.m`](matlab/g1/test2/g1_acceptance_test2.m) (tek atışlık test)
+
+**v10:** `g1_detect_v9`'un büyüme testli ve C2'siz hâli, yani v9noE'nin işlem işlem aynısı: v6 (A, B, C1) + D1 + R. E çıkarıldı (20D, 20E). v10 v9 koşusundan sonra seçildiği için geliştirme sayıları görülmüş sayılıyor. Kararı yalnız bu küme veriyor.
+
+**Neden yeni bir küme:** §13'teki küme görüldü (v5'te), dört sürümdür kullanılmış küme olarak koşuluyor. Yeni küme üç şeyi sınıyor:
+1. **Seçilmemiş senaryolar.** Senaryolar elle yazılmadı. Her tohum (200–299) ilan edilen aralıklardan kendi rastgele akışıyla (tohum 50000 + s) bir senaryo çekiyor. Bu tohumlar daha önce hiç kullanılmadı (geliştirme 0–9, kullanılmış küme 100–119, tanı 300–309).
+2. **Modellenmemiş üçüncü histerezis biçimi (19D):** Prandtl–Ishlinskii operatörü, yani farklı genişlikte iki play operatörünün ortalaması. G1 yalnız tek play ve gevşeme biçimlerini tanıyor. Bu, R'nin biçime aşırı uyup uymadığını gösterecek tek sınav.
+3. **BME688 için farklı termal yol (15A):** Koşuların yarısında BME yolu ikinci dereceden (iki ardışık gecikme, ikincisi 100–400 s). v6'nın sıcaklık kaynağı modeli (lead-lag) simülatörün birinci derece yapısıyla aynıydı (ADR-012).
+
+**Simülatör değişikliği:** `thermal_node` iki isteğe bağlı alan aldı: `hystWidths` (iki ya da daha fazla genişlik: PI biçimi) ve `tau2` (ikinci gecikme aşaması). `simulate_node` bunları `hystType = "pi"`, `hystWidths` ve `bmeTau2` alanlarıyla açıyor. İkinci derece yolda ısıtıcının gerçek değer penceresi soğumayı da kapsayacak biçimde `3·(τ + τ2)` oluyor. `D.truth.Teff` eklendi (yalnız tanı için). Varsayılan, play ve gevşeme yolları değişmedi; duman testi bunu v9 CSV'sine karşı ve "iki eşit genişlikli PI = play" eşitliğiyle denetliyor.
+
+**Küme: 10 aile × 10 tohum × 2 gürültü = 200 koşu,** hepsi 8 saat. Aile = (s − 200) mod 10.
+
+| Aile | Sınıf | Olay |
+|---|---|---|
+| drift-ramp | arıza | Rastgele kanalda kayma, trapez profil |
+| drift-sine | arıza | Rastgele kanalda kayma, sinüs profil |
+| step | arıza | Rastgele kanalda basamak (ofset) |
+| slow | yavaş | Sabit sıcaklıkta yavaş kayma (K2d), jiroskop ya da ivmeölçer |
+| two-faults | arıza | İki farklı algılama elemanında iki kayma, en fazla 30 dk arayla |
+| clean | yok | Arıza yok |
+| heaters | yok | Arıza yok, üç ısıtıcı patlaması |
+| emi | yok | Manyetometrede EMI |
+| bme-drift | yok | BME688 sıcaklığında kayma |
+| bme-step | yok | BME688 sıcaklığında basamak |
+
+**İlan edilen aralıklar** (her biri düzgün dağılımdan; işaretler rastgele):
+- **Profil:** trapez (taban 15–30 °C, fark 8–18 °C, rampa 5–15 °C/saat, ilk plato 0,75–1,5 saat, üst plato 1–2,5 saat) ya da sinüs (ortalama 20–32 °C, genlik 4–10 °C, periyot 2–6 saat, rastgele faz). drift-ramp ve drift-sine aileleri biçimi sabitliyor, diğerleri yarı yarıya çekiyor; slow sabit 18–35 °C.
+- **Isıtıcı:** 1–2 patlama (heaters ailesinde 3), her biri 10–20 dk, [1, 7,6] saatin eşit dilimlerine birer tane.
+- **Histerezis (ICM):** üçte bir play (genişlik 0,5–1,5 °C), üçte bir gevşeme (τ 90–600 s), üçte bir PI (genişlikler 0,2–0,6 ve 1,0–2,0 °C).
+- **BME yolu:** yarı yarıya birinci derece ya da ikinci derece (τ2 100–400 s).
+- **Kayma büyüklüğü:** jiroskop 0,02–0,04 °/s/saat, ivmeölçer 0,3–0,6 mg/saat, manyetometre 0,3–0,6 µT/saat; başlangıç 2,5–5,5 saat.
+- **Basamak:** jiroskop 0,02–0,05 °/s, ivmeölçer 0,2–0,5 mg, manyetometre 0,5–1,5 µT; başlangıç 2,5–5,5 saat.
+- **Yavaş kayma:** jiroskop 0,015–0,025 °/s/saat, ivmeölçer 0,22–0,35 mg/saat (renkli Allan uyumunun 5·K·√1 saat değerinin yaklaşık 1,1 katı ve üstü); başlangıç 1,5–3 saat.
+- **EMI:** başlangıç 2–5 saat, süre 10–40 dk, eksen başına genlik 0,5–2 µT.
+- **BME arızası:** kayma 0,5–2 °C/saat ya da basamak 0,5–2 °C; başlangıç 2,5–5,5 saat.
+
+**Puanlama (§11'den farkları, çok durumlu çıktı nedeniyle; v6–v9 geliştirme koşularındaki tanımlarla aynı):**
+- Yanlış alarm = arızasız kanalda 1. durum (EMI sırasında manyetometre hariç). Arızasız kanaldaki bir ofset olayı yanlış alarm **olayı** sayılıyor (K1c).
+- Bir basamak arızası, ilk ofset olayından itibaren raporlanmış sayılıyor (§15 kararı). Gecikme, başlangıçtan sonraki ilk 1. durum.
+- K2a, K2b, K2c ve K2d **arıza başına** hesaplanıyor (two-faults'ta iki arıza ayrı sayılıyor). Tespit edilmeyen arıza K2a'da kaçırılmış sayılıyor.
+- Puanlama penceresi iki dedektör için ortak (v0'ın penceresiyle kesişim).
+
+**Ölçütler (her gürültü tipi için ayrı ayrı):** K1a–K3f §11'deki eşiklerle aynı. Yeni ölçüt:
+- **K4:** Arızalı blokların "güvenilmez" (3. durum) payı, ortalama ≤ %10. Gerekçe: 19E'de C2'nin gerçek arızaları yuttuğu görüldü; bir dedektör arızayı "güvenilmez" diyerek saklayıp kapsama ölçütünden kaçamamalı. v10'da C2 kapalı olduğu için bu ölçüt v10 için kendiliğinden sağlanıyor; v6 için bağlayıcı.
+
+**Ölçüt ile tasarım tutarlılığı (13E'deki hatanın tekrarlanmaması için, ilan sırasında kontrol edildi):**
+- K3c: EMI en geç 5,67 saatte bitiyor, sonrasında en az 2,3 saat var. Olay sonu bırakması (B) tepe |z| ≥ 10 ve 5 sessiz blok istiyor; 0,5 µT'lik EMI manyetometre gürültüsünün çok üstünde. %10'a ulaşılabilir.
+- K2a: Arızalar en geç 5,5 saatte başlıyor, 120 dk'lık pencere koşunun içinde kalıyor. K2d: yavaş kaymalar en geç 3 saatte başlıyor, 180 dk sığıyor.
+- K2b: geliştirmede v9noE'nin medyanları 5,5 / 25,5 dk; eşikler 15 / 40 dk.
+
+**Karar 1, G1 dedektörü** (v8/v9 koşularındaki 2. adımla aynı kural, bu kez ayrılmış veride). v10, v6'nın yerini yalnız şu iki şart birlikte sağlanırsa alıyor:
+- (a) aile × gürültü hücreleri (20) × 13 ölçütte, kötü olduğu hücreden çok iyi olduğu hücre var;
+- (b) iki gürültü tipinde de, bütün koşular üzerinden: en kötü yanlış alarm ≤ v6, ortalama kapsama ≥ v6 − 1 puan, ortalama tespit ≥ v6.
+
+**Karar 2, kabul:** G1'in simülasyon aşaması, karar 1'in seçtiği dedektör K1a–K4'ün **hepsini** iki gürültü tipinde de geçerse kapanıyor. Ölçüt tablosu iki dedektör için de yazdırılıyor.
+
+**Sonuç ne olursa olsun:**
+- Koşu bir kez yapılıyor. Kalan ölçüt yazılıyor, iddianın kapsamı daraltılıyor. Bu kümeye bakarak ayar yapılmıyor ve küme bundan sonra kullanılmış sayılıyor.
+- İzin verilen tek müdahale, dedektörün mantığını değiştirmeyen hata düzeltmesi.
+- Aile, histerezis biçimi ve BME yolu kırılımları yalnız betimleyici. Karar onlarla verilmiyor, ama bir ölçüt kalırsa nedenini onlar gösterecek (örneğin PI biçiminde K1b kalırsa R biçime aşırı uymuş demektir).
+
+---
+
 ## Açık konular
 
 - [x] ~~Termal katsayıları ICM-42688-P veri sayfasından teyit etmek~~ → Bulgu 4
@@ -1699,11 +1768,11 @@ Kullanıcı koştu. Okuma kuralı sonuçlardan önce commit edildi (14056c3). Ko
 - [x] ~~Ayrılmış test (`g1_acceptance_test.m`, tek atış)~~ → §13, FAIL
 - [x] ~~Tanı: sıcaklık kaynağı modelinin T2, T5 ve T8'de kilitlenmesi (13D)~~ → Bulgu 14 (T2/T5: ısıtıcı + yanlış eğim + payı olmayan sT; T8: model yapısı)
 - [x] ~~**G1 v6, sıcaklık kaynağı modeli:** sT'ye model hatası payı, donmuşken (a, b) kovaryansının büyümesi, uyarım olmadan eğime güvenmemek; T8 için iki gecikmeli model ya da hıza bağlı sT (14B–14D)~~ → Bulgu 15, aday L (lead-lag); ızgara payı ve donmuşken büyüme gereksiz/zararlı
-- [ ] Yeni ayrılmış kümede BME için simülatörden **farklı** bir termal yapı (ikinci derece yol, farklı ortam); L'nin yapısı simülatörle aynı (15A, ADR-012)
-- [ ] Yeni ayrılmış kümeyi önceden ilan edilmiş aralıklardan otomatik üretmek: profil, ısıtıcı, termal yapı, histerezis, tohum 200+ (15E, §15 kararları)
+- [x] ~~Yeni ayrılmış kümede BME için simülatörden **farklı** bir termal yapı (ikinci derece yol, farklı ortam); L'nin yapısı simülatörle aynı (15A, ADR-012)~~ → §21 (ilan edildi)
+- [x] ~~Yeni ayrılmış kümeyi önceden ilan edilmiş aralıklardan otomatik üretmek: profil, ısıtıcı, termal yapı, histerezis, tohum 200+ (15E, §15 kararları)~~ → §21 (ilan edildi)
 - [ ] τ_B / τ_I'nin ayrı ayrı 20–25 s kaymasının kaynağı (ayrık gecikme filtresi?, 15D); net gecikme doğru
 - [ ] T5'te yalnız tohum 108 ve 118'in kilitlenme nedenini doğrulamak (ısıtıcı anında b yakınsamış mı? 14B)
-- [ ] Yeni sürüm için **yeni** bir ayrılmış küme (tohum 200+, yeni senaryolar); §13'teki küme artık görülmüş sayılıyor
+- [x] ~~Yeni sürüm için **yeni** bir ayrılmış küme (tohum 200+, yeni senaryolar); §13'teki küme artık görülmüş sayılıyor~~ → §21 (ilan edildi)
 - [x] ~~Basamak arızasında doğru davranış: kalıcı ofset "arıza" mı, "yeni normal" mi? (12B)~~ → Karar (§15): arıza değil, üçüncü durum "ofset olayı: tespit edildi, raporlandı, yeniden kalibre edildi". Formel tanıma yazılacak.
 - [x] ~~Artık öz-ilişkisini "model güvenilmez" durumu için kullanmayı değerlendirmek (12E, ADR-010)~~ → C2 olarak denendi; etkisiz (16C) ve iki eşzamanlı arızada zararlı (19E), v9'da kapatıldı (20A)
 - [x] ~~Tanı: E'nin bırakamadığı yanlış alarmlar (H2: dMin donmuş modelin tahmin hatasını içermiyor, 20B)~~ → 20D–20E: tanımlanmadan dondurulmuş kanallar (10F) ve renkli gürültüde iyimser se; E bu hâliyle bırakılıyor

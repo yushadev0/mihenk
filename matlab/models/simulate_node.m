@@ -14,8 +14,11 @@ function D = simulate_node(S)
 %               mag [channel unit per hour | channel unit]; may be empty
 %     emi       [] | struct t0, t1 [s], amp [1x3 uT] - magnetometer only
 %     bmeFault  [] | struct t0 [s], type "drift" | "step", mag [degC/h | degC]
-%     hystType  "play" | "relax" (ICM thermal hysteresis form), hystTau [s],
-%               hystWidth [degC] play width of the ICM (default 1.0)
+%     hystType  "play" | "relax" | "pi" (ICM thermal hysteresis form), hystTau [s],
+%               hystWidth [degC] play width of the ICM (default 1.0),
+%               hystWidths [degC] widths of the "pi" (Prandtl-Ishlinskii) form
+%     bmeTau2   [s] second lag stage of the BME688 path (0 = first order,
+%               default; bulgular section 21)
 %
 %   Firmware-visible outputs (60 s block means unless noted):
 %     D.Y       [nB x 9]  gx gy gz [dps] | ax ay az [mg] | mx my mz [uT]
@@ -24,7 +27,7 @@ function D = simulate_node(S)
 %     D.Ticm, D.Tbme      same readouts on the thermal grid (D.tT, 10 s)
 %   Ground truth (evaluation only - never give it to a detector):
 %     D.truth.fault [nB x 9], D.truth.heater, D.truth.emi, D.truth.tempFault
-%     [nB x 1] logical; D.truth.Tamb, Tdie, unit (sampled coefficients)
+%     [nB x 1] logical; D.truth.Tamb, Tdie, Teff, unit (sampled coefficients)
 
 h = 3600;
 def = struct( ...
@@ -45,7 +48,9 @@ def = struct( ...
     'bmeFault',  [], ...
     'hystType',  "play", ...
     'hystTau',   180, ...
-    'hystWidth', 1.0);
+    'hystWidth', 1.0, ...
+    'hystWidths', [], ...
+    'bmeTau2',   0);
 def.faults = struct('ch', 3, 't0', 4.5*h, 'type', "drift", 'mag', 0.03);
 if nargin < 1, S = struct(); end
 for f = fieldnames(S)', def.(f{1}) = S.(f{1}); end
@@ -68,6 +73,12 @@ sensors(1).hystWidth = S.hystWidth;
 if S.hystType == "relax"
     sensors(1).hystWidth = 0;
     sensors(1).hystTau   = S.hystTau;
+elseif S.hystType == "pi"
+    sensors(1).hystWidth = 0;
+    sensors(1).hystWidths = S.hystWidths;
+end
+if S.bmeTau2 > 0
+    sensors(3).tau2 = S.bmeTau2;
 end
 P = repmat([ICM_P, 1e-3, 1e-3], nT, 1);
 for i = 1:size(S.heaterOn, 1)                 % one burst per row [on off]
@@ -178,7 +189,7 @@ D.truth.fault  = fault;
 D.truth.heater = false(nB, 1);
 for i = 1:size(S.heaterOn, 1)
     D.truth.heater = D.truth.heater | ...
-        (D.tB >= S.heaterOn(i, 1) & D.tB < S.heaterOn(i, 2) + 3*sensors(3).tau);
+        (D.tB >= S.heaterOn(i, 1) & D.tB < S.heaterOn(i, 2) + 3*(sensors(3).tau + S.bmeTau2));
 end
 D.truth.emi = false(nB, 1);
 if ~isempty(S.emi)
@@ -190,6 +201,7 @@ if ~isempty(S.bmeFault)
 end
 D.truth.Tamb    = Tamb;
 D.truth.Tdie    = Tdie;
+D.truth.Teff    = Teff;                     % temperature seen by the thermal bias
 D.truth.unit    = unit;
 D.truth.sensors = sensors;
 end

@@ -12,7 +12,7 @@ Findings and the reasoning behind every script are logged in [`../bulgular.md`](
 |---|---|---|
 | [`models/`](models/) | Reusable model functions: per-sensor thermal model, synthetic node | No — called by scripts |
 | [`checks/`](checks/) | Self-checks of the reference model (Allan terms, thermal model) | Yes |
-| [`g1/`](g1/) | G1 (thermal common-mode decomposition): shared helpers at the root, one folder per version (`v0/` … `v9/`), `test/` for the acceptance test | `g1_prototype_*.m` |
+| [`g1/`](g1/) | G1 (thermal common-mode decomposition): shared helpers at the root, one folder per version (`v0/` … `v10/`), `test/` and `test2/` for the acceptance tests | `g1_prototype_*.m` |
 | [`figures/`](figures/) | Figures referenced from `bulgular.md` | — |
 
 | File | Kind | What |
@@ -63,6 +63,10 @@ Findings and the reasoning behind every script are logged in [`../bulgular.md`](
 | `g1/v9/g1_prototype_v9.m` | script | v9 dev run: v6, v8, v9 and ablations noE/noC2, regressions vs the v8 CSV, selection within v9 and then against v6 |
 | `g1/v9/g1_smoke_v9.m` | script | Quick equivalence and run check before the v9 dev run |
 | `g1/v9/g1_diag_v9.m` | script | Diagnosis after the v9 dev run (bulgular 20B): unreleased false alarms of the equivalence test, offset events on the T10 slow drift |
+| `g1/v10/g1_detect_v10.m` | function | v10 detector: g1_detect_v9 with the growth release test and C2 off (= v9noE) |
+| `g1/test2/g1_scenarios_test2.m` | function | Second held-out set: one scenario per seed 200-299, drawn from declared ranges (bulgular 21) |
+| `g1/test2/g1_smoke_test2.m` | script | Checks before the second acceptance test: simulator regression, drawn scenarios, run check (no metrics) |
+| `g1/test2/g1_acceptance_test2.m` | script | One-shot second acceptance test: v10 vs v6, G1 detector rule and criteria K1-K4 |
 | `g1/site/g1_export_site.m` | script | Exports the run behind the main-idea scene of the project page (`web/public/data/story.json`) |
 
 Detectors receive only firmware-visible inputs.

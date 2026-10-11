@@ -92,9 +92,14 @@ export const timeline = [
     plus: ['en kötü yanlış alarm 51,6 → 3,8/saat'], minus: ['renkli kapsama %79,7 → %78,0'], ref: '§19',
   },
   {
-    v: 'v9', kind: 'now', title: 'Şu an: iki düzeltme, biri tuttu',
+    v: 'v9', kind: 'fail', title: 'İki düzeltme, biri tuttu',
     text: 'İki eşzamanlı arızayı yutan "model güvenilmez" durumu kaldırıldı. Kalıcı sapmayı ofset saymak için "kayma yok"un kanıtını isteyen yeni test rampadaki hatayı çözdü, ama bazı yanlış alarmları bırakamadı. Kural yine v6\'yı seçti. Tanıya göre yeni test, model henüz öğrenilmeden dondurulan kanalları gerçek kaymadan ayıramıyor; bu hâliyle bırakılıyor.',
     plus: ['iki arızada kapsama %55 → %98'], minus: ['en kötü yanlış alarm 53,5/saat'], ref: '§20',
+  },
+  {
+    v: 'v10', kind: 'now', title: 'Şu an: ikinci kabul testi',
+    text: 'Tutan düzeltme alındı, tutmayan bırakıldı. Bu sürüm, daha önce hiç kullanılmamış 100 tohumdan otomatik üretilen yeni senaryolarda v6 ile karşılaştırılıyor. Senaryolarda dedektörün tanımadığı üçüncü bir histerezis biçimi ve farklı bir sıcaklık yolu da var. Ölçütler ve karar kuralı koşudan önce kayda geçirildi; test bir kez koşulacak.',
+    plus: [], minus: [], ref: '§21',
   },
 ];
 

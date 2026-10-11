@@ -20,13 +20,22 @@ function [Tdie, Teff] = thermal_node(t, Tamb, P, sensors)
 %   (stress relaxation). Used for model-mismatch tests (ADR-012), since the
 %   G1 detector assumes the play form.
 %
+%   Optional field hystWidths [degC], a vector of two or more widths,
+%   selects a Prandtl-Ishlinskii operator: equally weighted play operators
+%   in parallel, Teff their mean. G1 models neither this form nor its
+%   parameters (third form for the held-out set, bulgular section 21).
+%
+%   Optional field tau2 [s] > 0 adds a second lag stage: the die follows
+%   the first thermal mass with its own time constant (second-order path,
+%   bulgular section 21). Self-heating enters the first stage.
+%
 %   Inputs
 %     t        [n x 1]  time [s], uniform step
 %     Tamb     [n x 1]  ambient temperature [degC]
 %     P        [n x m]  power dissipated by each sensor [W]
 %     sensors  [1 x m]  struct with fields
 %                       tau [s], gradient [degC], Rth [degC/W], hystWidth [degC],
-%                       optional hystTau [s]
+%                       optional hystTau [s], hystWidths [degC], tau2 [s]
 %   Outputs
 %     Tdie     [n x m]  die temperature [degC]
 %     Teff     [n x m]  temperature seen by the thermal bias (hysteresis applied) [degC]
@@ -49,20 +58,28 @@ for j = 1:m
     w = s.hystWidth / 2;
     relax = isfield(s, 'hystTau') && s.hystTau > 0;
     if relax, ah = 1 - exp(-dt / s.hystTau); end
+    multi = isfield(s, 'hystWidths') && numel(s.hystWidths) > 1;   % Prandtl-Ishlinskii
+    if multi, w = s.hystWidths(:)' / 2; end
+    second = isfield(s, 'tau2') && ~isempty(s.tau2) && s.tau2 > 0;   % second-order path
+    if second, a2 = 1 - exp(-dt / s.tau2); end
 
     T = u(1);                    % start in equilibrium
-    p = T;
+    T2 = T;
+    p = T * ones(1, numel(w));
     for k = 1:n
         if k > 1
+            if second, T2 = T2 + a2 * (T - T2); end
             T = T + a * (u(k-1) - T);
         end
+        Td = T;
+        if second, Td = T2; end
         if relax
-            p = p + ah * (T - p);            % relaxation hysteresis
+            p = p + ah * (Td - p);           % relaxation hysteresis
         else
-            p = min(max(p, T - w), T + w);   % play operator
+            p = min(max(p, Td - w), Td + w); % play operator (several in parallel: PI)
         end
-        Tdie(k, j) = T;
-        Teff(k, j) = p;
+        Tdie(k, j) = Td;
+        Teff(k, j) = mean(p);
     end
 end
 end
