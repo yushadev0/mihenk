@@ -6,6 +6,7 @@ Bu dosyada her test/kontrol scripti için şunlar kayıtlıdır: **nerede olduğ
 **Kabul toleransı:** ±%10 (M1 faz çıkış kriteri, [`mihenk.md` §10.4](mihenk.md)).
 **Parametre kaynakları:** Her değerin kaynağı script içinde belirtilir: `datasheet` veya `assumed`. İlke için bkz. [`mihenk.md` §S2.5](mihenk.md).
 **Klasör düzeni:** [`matlab/README.md`](matlab/README.md). Modeller `matlab/models/`, kontrol scriptleri `matlab/checks/`, G1 prototipleri `matlab/g1/`, figürler [`matlab/figures/`](matlab/figures/) altında. Klasör düzeni §6'dan sonra kuruldu; önceki girdilerdeki commit'ler dosyaları eski yerleriyle (`matlab/reference-model/`, `figures/`) gösterir.
+**G1 Oynatıcı (yayında):** [yusa.app/mihenk/replay](https://yusa.app/mihenk/replay/) · proje sayfası [yusa.app/mihenk](https://yusa.app/mihenk/). Kaynak ve yayın betiği: [`viewer/`](viewer/README.md).
 
 ---
 
@@ -1295,7 +1296,7 @@ Seçim kuralına göre aday **v6**. Hiçbir ablasyon "hiçbir yerde daha kötü 
 - İkisinin kökü aynı: kanal modeli, ICM'nin histerezis biçimini temsil edemiyor.
 
 **Bulgu 16E: Oynatıcıda görülen iki yan etki (T2 / beyaz, tohum 100). Toplu tabloda da izi var, mekanizma doğrulanmadı.**
-- **Kaynak:** [`g1_export_replay.m`](matlab/g1/v6/g1_export_replay.m) ile dışa aktarılan koşu, [G1 Oynatıcı](viewer/replay.html)'da incelendi. Kontrol: v5 ve v6'nın zT'si, sıcaklık kaynağı modelinin ayrı hesabıyla 6/6 koşuda birebir aynı.
+- **Kaynak:** [`g1_export_replay.m`](matlab/g1/v6/g1_export_replay.m) ile dışa aktarılan koşu, [G1 Oynatıcı](viewer/replay.html)'da incelendi (yayında: [yusa.app/mihenk/replay](https://yusa.app/mihenk/replay/)). Kontrol: v5 ve v6'nın zT'si, sıcaklık kaynağı modelinin ayrı hesabıyla 6/6 koşuda birebir aynı.
 - **A'nın kanallardaki bedeli:**
   - v5'te sıcaklık kaynağı kilidi 3,1–6,1 saat arasında BME referansını kullanılamaz yapıyordu. v6'da kilit yok, BME referansı yeniden kullanılıyor.
   - Bunun bir sonucu olarak mz, 3,8–4,8 saat arasında boşuna suçlanıyor. v5'te bu alarm yok.

@@ -1,3 +1,4 @@
+| [`viewer/`](viewer/README.md) | G1 replay viewer and project page, live at [yusa.app/mihenk/replay](https://yusa.app/mihenk/replay/) |
 # MIHENK
 
 **Multi-sensor Intrinsic Health Estimation & Numerical Kernel**
@@ -5,6 +6,8 @@
 A physics–sensor–microcontroller co-simulation environment for reference-free health estimation on heterogeneous, resource-constrained sensor nodes.
 
 > **Status:** MATLAB reference-model track (M1-M) started — see [`matlab/`](matlab/) and [`bulgular.md`](bulgular.md). The full design lives in the report — see [Documents](#documents).
+>
+> **Live:** project page [yusa.app/mihenk](https://yusa.app/mihenk/) · G1 replay viewer [yusa.app/mihenk/replay](https://yusa.app/mihenk/replay/)
 
 ## Research question
 
