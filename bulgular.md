@@ -70,6 +70,7 @@ Rapor bu tuzakları "müfredat sınıf 8" olarak topluyor. G1'in değeri kolay s
 | 17 | [`g1_diag_v6_side.m`](matlab/g1/v6/g1_diag_v6_side.m) | Tanı: v6 yan etkileri (16E), referans maskesi ve model izi | ❌ H1/H3 reddedildi · mz: eşiğe yakın yanlılık, 10 tohumun 2sinde · ✅ erken bırakma sistematik (10/10): donmuş kanalda model hatası (T − T0)² ile ölçekleniyor, 15C ile aynı hata |
 | 18 | [`g1_prototype_v7.m`](matlab/g1/v7/g1_prototype_v7.m) | v7 (D1: donma anına göre model hatası, D2: büyük ve büyümeyen sapma = ofset) ve ablasyonları | ✅ eşdeğerlik 0, v6 regresyonu 4·10⁻¹⁵ · ✅ D1 basamağın erken bırakılmasını çözüyor · ❌ D1 histerezis uyuşmazlığını açığa çıkarıyor (T9 beyaz 52 → 127/saat) · ❌ D2 yavaş kaymaları ofset sanıyor · kurala göre aday v7, ama v6 genel olarak daha iyi; kuralda önceki sürüm karşılaştırması yoktu |
 | 19 | [`g1_prototype_v8.m`](matlab/g1/v8/g1_prototype_v8.m) | v8 (v6 + D1 + R: gevşeme histerezisi adayları) ve ablasyonları, v6'ya karşı iki adımlı kural | ✅ eşdeğerlik 0, iki regresyon 4·10⁻¹⁵ · ✅ R histerezis alarmlarını kaldırıyor (beyaz en kötü 51,6 → 3,8/saat) · ❌ renkli kapsama %79,7 → %78,0 (tolerans 1 puan) → kurala göre G1 = v6 · ⚠ kayıp çoğunlukla D1'den, two-faults'ta sistematik · ⚠ renkli gürültüde biçim seçimi şaşıyor |
+| 19 (tanı) | [`g1_diag_v8.m`](matlab/g1/v8/g1_diag_v8.m) | Kapsama kaybının mekanizması; ızgara dışı histerezis parametreleri ve taze tohumlarla genelleme | ❌ H1 two-faults'ta reddedildi: kayıp C2'den ("güvenilmez" arızalı blokların %57'si) · ✅ day-cycle ve T9 / renklide H1 doğrulandı (D1 + büyüme testi rampada ofset sanıyor) · ✅ R ızgara dışına genelleniyor (τ = 600: en kötü 78 → 3,3/saat), tohumlara uyum yok · ❌ D1, τ = 600'de K1b'yi aşıyor |
 
 **Kritik kurallar** (MATLAB referans modelinde her zaman uygulanacak):
 
@@ -1486,6 +1487,70 @@ Veri v6 ve v7 ile aynı (geliştirme kümesi tohum 0–9 + kullanılmış küme 
 **Sonraki adım:** [`g1_diag_v8.m`](matlab/g1/v8/g1_diag_v8.m), iki bölüm:
 1. **Mekanizma (19B):** two-faults, day-cycle / renkli ve T9 / renklide arızalı kanal başına kapsama, serbest bırakmalar (tür), ofset olayları ve bırakmadan sonra kaybedilen bloklar; H1'in sınanması.
 2. **Genelleme (19D):** Taze tohumlarda (300–309; ayrılmış küme bu aralığı kullanmayacak) ızgarada olmayan parametrelerle v6, noD1 ve v8: gevşeme τ = 90 ve 600 s, play genişliği 0,6 ve 1,6 °C (simülatöre varsayılanı 1,0 olan bir genişlik alanı eklendi; varsayılan yol bit düzeyinde aynı), ayrıca two-faults ve day-cycle'ın taze tohumları.
+
+### 19 (devam). Tanı: kapsama kaybının mekanizması ve genelleme
+
+**Script:** [`matlab/g1/v8/g1_diag_v8.m`](matlab/g1/v8/g1_diag_v8.m) · **Çıktı:** [`g1_diag_v8_output.txt`](matlab/g1/v8/g1_diag_v8_output.txt)
+
+Kullanıcı koştu. H1 ve okuma kuralı sonuçlardan önce commit edildi (44633a1). Kontroller:
+- `simulate_node` varsayılan yolu ile `hystWidth = 1,0` birebir aynı (fark 0).
+- Mekanizma bölümünde yeniden hesaplanan kapsama, geliştirme koşusunun CSV'siyle aynı (en büyük fark 5·10⁻¹⁶).
+
+**Bulgu 19E: H1 two-faults için reddedildi. Kayıp C2'den geliyor; D1 onu büyütüyor.**
+- two-faults / beyazda v8 arızalı kanalları **hiç serbest bırakmıyor** (büyüme testi bırakması 0/10 tohum). H1'in öngördüğü yol bu senaryoda yok.
+- Olay kaydı (tohum 0): gz ve ax 4,58 saatte suçlanıyor, sonra bayrak bir serbest bırakma olmadan düşüyor, 6,61 saatte yeniden kalkıyor.
+- Bayrağı serbest bırakmasız düşüren şey C2 ("model güvenilmez", §16): CUSUM'u sıfırlıyor ve kanalı 3. duruma alıyor. Geliştirme CSV'sindeki güvenilmez payı:
+
+| two-faults | v6 | noR | noD1 | v8 |
+|---|---|---|---|---|
+| Arızalı blokların "güvenilmez" payı, beyaz | %40 | %57 | %40 | %57 |
+| Kapsama (yalnız alarm), beyaz | %55 | %41 | %55 | %41 |
+| Arızalı blokların "güvenilmez" payı, renkli | %19 | %25 | %18 | %23 |
+
+- Beyazda kapsama ile güvenilmez payı birlikte %95–98'e tamamlanıyor: kaybolan blokların neredeyse hepsi C2'ye gidiyor.
+- **Mekanizma (çıkarım):** İki farklı sensing elemanında (jiroskop ve ivmeölçer) aynı anda başlayan iki kayma, z'lerde yüksek öz-ilişki üretiyor. Sıcaklık da rampada. Bu, C2'nin tetik koşulunun ("en az iki elemanda ilişkili artık + sıcaklık hareket etti") birebir aynısı. Yani C2 iki gerçek arızayı "model güvenilmez" diye okuyor. D1, donmuş kanalın sapmasını koruduğu için öz-ilişki daha uzun sürüyor ve pay %40'tan %57'ye çıkıyor.
+- v6 da bu senaryoda aynı nedenle kayıp yaşıyor; bu yüzden two-faults v6'da bile %55.
+- **C2 için anlamı:** §16C'de C2'nin etkisiz olduğu bulunmuştu. Şimdi iki eşzamanlı arızada zararlı olduğu da görüldü. Kaldırılması gerekiyor.
+
+**Bulgu 19F: day-cycle ve T9 / renklide H1'in mekanizması doğrulandı.**
+- D1 olan varyantlarda büyüme testi gz'yi ya da az'ı rampada ofset olayı olarak bırakıyor; yeniden kalibrasyon kaymayı yutuyor:
+
+| Senaryo | | v6 | noR | noD1 | v8 |
+|---|---|---|---|---|---|
+| day-cycle / renkli | büyüme bırakması olan tohum | 0/10 | 7/10 | 0/10 | 8/10 |
+| | bırakmadan sonra kaybedilen blok | %0 | %9 | %0 | %10 |
+| | kapsama | %85 | %77 | %86 | %77 |
+| T9 / renkli | büyüme bırakması olan tohum | 3/10 | 8/10 | 2/10 | 7/10 |
+| | kaybedilen blok | %13 | %21 | %11 | %22 |
+| | kapsama | %62 | %54 | %58 | %53 |
+
+- Bırakmaların %88–100'ü rampada (son 30 blokta ICM sıcaklığı > 1 °C değişmiş). Kaybedilen bloklar kapsama farkının büyük kısmını açıklıyor (day-cycle: 10 puan kayıp, 8–9 puan fark).
+- **Mekanizma:** D1'in donma anına sabitlenen model hatası `(T − T_donma)²` ile büyüyor. Döngüsel ya da uzun rampalarda kanalın tahmin belirsizliği büyüyor, |z| 3'ün altına iniyor. Yavaş bir kaymada 30 blokluk eğim de gürültünün içinde kalınca büyüme testi "büyüme yok" diyor ve kanal ofset sayılıyor. Bu, 18B'deki güç (power) sorununun D1'li hâli.
+
+**Bulgu 19G: R ızgara dışına genelleniyor; geliştirme farkları taze tohumlarda tekrarlanıyor.** Taze tohum 300–309:
+
+| Hücre | Ölçüt | v6 | noD1 | v8 |
+|---|---|---|---|---|
+| relax τ = 90 / beyaz | en kötü yanlış alarm/saat | 7,7 | **0,0** | **0,0** |
+| relax τ = 600 / beyaz | en kötü | 78,0 | **3,3** | 16,3 |
+| | medyan | 66,1 | 0,3 | 2,3 |
+| | kapsama | %85 | %98 | %98 |
+| play 0,6 ve 1,6 / beyaz | en kötü | 0,0 | 0,0–0,2 | 0,0–0,2 |
+| renkli hücrelerin hepsi | en kötü | 4,6–4,7 | 4,7 | 4,7 |
+| two-faults / beyaz | kapsama | %51 | %51 | %41 |
+| day-cycle / renkli | kapsama | %89 | %89 | %81 |
+
+- **τ'ya uyum yok:** Izgarada olmayan τ = 90 ve 600 s'de R'nin üstünlüğü sürüyor. τ = 600'de v6 saatte 66 alarm (medyan) üretirken noD1 0,3.
+- **Play tarafında zarar yok:** Izgarada olmayan genişliklerde (0,6 ve 1,6) R nötr.
+- **Renkli gürültüde R nötr:** Bütün renkli hücrelerde üç dedektör aynı. Renkli gürültüde histerezis uyuşmazlığı zaten gürültü bütçesinin içinde kalıyordu (13B). Play 0,6 / renklide biçim seçimi blokların %18–21'inde gevşemeye kayıyor (19C), ama sonuca etkisi yok.
+- **Tohumlara uyum yok:** two-faults ve day-cycle'daki kayıplar taze tohumlarda da aynı büyüklükte tekrarlanıyor.
+- **D1'in bedeli burada da görünüyor:** τ = 600 / beyazda v8'in en kötü koşusu 16,3/saat, K1b eşiğinin (≤ 6) üstünde; noD1'de 3,3.
+- **Bu bölümün cevaplayamadığı:** Modellenmemiş üçüncü bir histerezis biçimine uyum. Bunu yalnızca yeni ayrılmış küme sınayabilir (19D).
+
+**Tanının sonucu:**
+- v8'in kapsama kaybının iki kaynağı da adı konmuş, düzeltilebilir mekanizmalar: **C2** (iki eşzamanlı arızada) ve **D1 × büyüme testi** (rampada ofset sanma). İkisi de yapısal bir bedel değil.
+- R, hedeflediği yerde ve ızgara dışında net kazanç; play senaryolarında ve renkli gürültüde nötr.
+- Bu yüzden sonuç sonrası tolerans artışına gerek görünmüyor; düzeltmeleri içeren bir v9 doğru yol.
 
 ---
 

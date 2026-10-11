@@ -1,0 +1,199 @@
+simulate_node default vs hystWidth = 1.0: max |dY| 0, max |dT| 0
+
+=== A. Mechanism of the coverage loss ===
+
+Event log, two-faults / white, seed 0, v8
+  gz (fault from 4.50 h): 4.58 h flag (zI 8.1, T 36.2); 6.61 h flag (zI 171.8, T 25.2)
+  ax (fault from 4.50 h): 4.58 h flag (zI 3.1, T 36.2); 6.61 h flag (zI 126.9, T 25.2)
+
+Event log, two-faults / white, seed 0, v8noD1
+  gz (fault from 4.50 h): 4.58 h flag (zI 8.1, T 36.2); 6.61 h flag (zI 78.0, T 25.2)
+  ax (fault from 4.50 h): 4.58 h flag (zI 3.1, T 36.2); 6.61 h flag (zI 40.0, T 25.2)
+
+[dev] two-faults / white, seeds 0-9
+det      ch        cov    delay     rel1   seeds rel2   rel2/run     lost    on ramp
+v6       gz        57%      4.5      0.0         0/10        0.0       0%          -
+v6       ax        53%      5.5      0.0         1/10        0.1       4%       100%
+v6       run coverage 55%
+v8noR    gz        41%      4.5      0.0         0/10        0.0       0%          -
+v8noR    ax        41%      5.5      0.0         0/10        0.0       0%          -
+v8noR    run coverage 41%
+v8noD1   gz        57%      4.5      0.0         0/10        0.0       0%          -
+v8noD1   ax        53%      5.5      0.0         1/10        0.1       4%       100%
+v8noD1   run coverage 55%
+v8       gz        41%      4.5      0.0         0/10        0.0       0%          -
+v8       ax        41%      5.5      0.0         0/10        0.0       0%          -
+v8       run coverage 41%
+
+[dev] two-faults / colored, seeds 0-9
+det      ch        cov    delay     rel1   seeds rel2   rel2/run     lost    on ramp
+v6       gz        68%     15.0      0.0         1/10        0.1       3%       100%
+v6       ax        56%     32.0      0.0         0/10        0.0       0%          -
+v6       run coverage 62%
+v8noR    gz        65%     15.0      0.0         0/10        0.0       0%          -
+v8noR    ax        49%     32.0      0.0         0/10        0.0       0%          -
+v8noR    run coverage 57%
+v8noD1   gz        69%     16.5      0.0         1/10        0.1       3%       100%
+v8noD1   ax        55%     32.0      0.0         0/10        0.0       0%          -
+v8noD1   run coverage 62%
+v8       gz        66%     17.5      0.0         0/10        0.0       0%          -
+v8       ax        49%     32.0      0.0         0/10        0.0       0%          -
+v8       run coverage 58%
+
+[dev] day-cycle / colored, seeds 0-9
+det      ch        cov    delay     rel1   seeds rel2   rel2/run     lost    on ramp
+v6       gz        85%     18.0      0.0         0/10        0.0       0%          -
+v6       run coverage 85%
+v8noR    gz        77%     18.0      0.0         7/10        0.7       9%       100%
+v8noR    run coverage 77%
+v8noD1   gz        86%     18.0      0.0         0/10        0.0       0%          -
+v8noD1   run coverage 86%
+v8       gz        77%     18.0      0.0         8/10        0.8      10%       100%
+v8       run coverage 77%
+
+[spent] t9-relax-az / colored, seeds 100-109
+det      ch        cov    delay     rel1   seeds rel2   rel2/run     lost    on ramp
+v6       az        62%     44.0      0.0         3/10        0.3      13%       100%
+v6       run coverage 62%
+v8noR    az        54%     44.0      0.0         8/10        0.8      21%        88%
+v8noR    run coverage 54%
+v8noD1   az        58%     56.5      0.0         2/10        0.2      11%       100%
+v8noD1   run coverage 58%
+v8       az        53%     51.5      0.0         7/10        0.7      22%       100%
+v8       run coverage 53%
+
+Check: run coverage vs g1_v8_results.csv (v6, v8): max |difference| 5e-16 (OK)
+
+=== B. Generalization: off-grid parameters, fresh seeds 300-309 ===
+
+relax90 / white
+                                    v6    v8noD1        v8
+false flags/h (worst)              7.7       0.0       0.0
+false flags/h (median)             1.2       0.0       0.0
+false episodes/h (mean)           0.60      0.00      0.00
+coverage (mean)                    98%       98%       98%
+detected (mean)                   100%      100%      100%
+delay [min] (median)               4.5       4.5       4.5
+relaxation form (mean)               -       80%       80%
+offset events, healthy             0.1       0.0       0.0
+
+relax90 / colored
+                                    v6    v8noD1        v8
+false flags/h (worst)              4.7       4.7       4.7
+false flags/h (median)             0.0       0.0       0.0
+false episodes/h (mean)           0.08      0.08      0.08
+coverage (mean)                    90%       91%       90%
+detected (mean)                   100%      100%      100%
+delay [min] (median)              17.5      16.5      16.5
+relaxation form (mean)               -       38%       39%
+offset events, healthy             0.2       0.2       0.2
+
+relax600 / white
+                                    v6    v8noD1        v8
+false flags/h (worst)             78.0       3.3      16.3
+false flags/h (median)            66.1       0.3       2.3
+false episodes/h (mean)           6.55      0.19      0.35
+coverage (mean)                    85%       98%       98%
+detected (mean)                   100%      100%      100%
+delay [min] (median)               4.5       4.5       4.5
+relaxation form (mean)               -      100%      100%
+offset events, healthy             2.8       0.0       0.2
+
+relax600 / colored
+                                    v6    v8noD1        v8
+false flags/h (worst)              4.6       4.7       4.7
+false flags/h (median)             0.0       0.0       0.0
+false episodes/h (mean)           0.09      0.08      0.08
+coverage (mean)                    90%       89%       89%
+detected (mean)                   100%      100%      100%
+delay [min] (median)              16.5      18.5      18.5
+relaxation form (mean)               -       88%       88%
+offset events, healthy             0.3       0.2       0.2
+
+play0.6 / white
+                                    v6    v8noD1        v8
+false flags/h (worst)              0.0       0.2       0.2
+false flags/h (median)             0.0       0.0       0.0
+false episodes/h (mean)           0.00      0.02      0.02
+coverage (mean)                    98%       98%       98%
+detected (mean)                   100%      100%      100%
+delay [min] (median)               4.5       4.5       4.5
+relaxation form (mean)               -        0%        0%
+offset events, healthy             0.0       0.0       0.0
+
+play0.6 / colored
+                                    v6    v8noD1        v8
+false flags/h (worst)              4.7       4.7       4.7
+false flags/h (median)             0.0       0.0       0.0
+false episodes/h (mean)           0.08      0.08      0.08
+coverage (mean)                    90%       90%       90%
+detected (mean)                   100%      100%      100%
+delay [min] (median)              14.5      14.5      14.5
+relaxation form (mean)               -       18%       21%
+offset events, healthy             0.2       0.2       0.2
+
+play1.6 / white
+                                    v6    v8noD1        v8
+false flags/h (worst)              0.0       0.0       0.0
+false flags/h (median)             0.0       0.0       0.0
+false episodes/h (mean)           0.00      0.00      0.00
+coverage (mean)                    98%       98%       98%
+detected (mean)                   100%      100%      100%
+delay [min] (median)               4.5       4.5       4.5
+relaxation form (mean)               -        0%        0%
+offset events, healthy             0.0       0.0       0.0
+
+play1.6 / colored
+                                    v6    v8noD1        v8
+false flags/h (worst)              4.7       4.7       4.7
+false flags/h (median)             0.0       0.0       0.0
+false episodes/h (mean)           0.05      0.05      0.05
+coverage (mean)                    91%       91%       91%
+detected (mean)                   100%      100%      100%
+delay [min] (median)              16.0      16.5      16.5
+relaxation form (mean)               -        4%        4%
+offset events, healthy             0.1       0.1       0.1
+
+two-faults / white
+                                    v6    v8noD1        v8
+false flags/h (worst)              0.0       0.0       0.0
+false flags/h (median)             0.0       0.0       0.0
+false episodes/h (mean)           0.00      0.00      0.00
+coverage (mean)                    51%       51%       41%
+detected (mean)                   100%      100%      100%
+delay [min] (median)               5.5       5.5       5.5
+relaxation form (mean)               -        0%        0%
+offset events, healthy             0.0       0.0       0.0
+
+two-faults / colored
+                                    v6    v8noD1        v8
+false flags/h (worst)              0.0       0.0       0.0
+false flags/h (median)             0.0       0.0       0.0
+false episodes/h (mean)           0.00      0.00      0.00
+coverage (mean)                    62%       62%       59%
+detected (mean)                   100%      100%      100%
+delay [min] (median)              36.5      37.5      37.5
+relaxation form (mean)               -       19%       10%
+offset events, healthy             0.0       0.0       0.0
+
+day-cycle / white
+                                    v6    v8noD1        v8
+false flags/h (worst)              0.0       0.0       0.0
+false flags/h (median)             0.0       0.0       0.0
+false episodes/h (mean)           0.00      0.00      0.00
+coverage (mean)                    98%       98%       97%
+detected (mean)                   100%      100%      100%
+delay [min] (median)               4.5       4.5       4.5
+relaxation form (mean)               -        0%        0%
+offset events, healthy             0.0       0.0       0.0
+
+day-cycle / colored
+                                    v6    v8noD1        v8
+false flags/h (worst)              3.0       3.0       3.5
+false flags/h (median)             0.0       0.0       0.0
+false episodes/h (mean)           0.02      0.02      0.02
+coverage (mean)                    89%       89%       81%
+detected (mean)                   100%      100%      100%
+delay [min] (median)              13.0      13.0      12.5
+relaxation form (mean)               -        1%        1%
+offset events, healthy             0.0       0.0       0.0
