@@ -1,4 +1,7 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import Lenis from 'lenis';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Story from './Story.jsx';
 import { BULGULAR, REPO, RAPOR, beforeAfter, timeline, acceptance } from './content.js';
 
@@ -6,25 +9,67 @@ const Icon = ({ d }) => (
   <svg className="ico" viewBox="0 0 34 34" fill="none" stroke="var(--ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{d}</svg>
 );
 
+const GitHubMark = ({ size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+    <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
+  </svg>
+);
+
+// Healthy channels share one thermal shape; one channel slowly walks away.
+function HeroWaves() {
+  const refs = [useRef(null), useRef(null), useRef(null)];
+  useEffect(() => {
+    const n = 140, Wd = 1000;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const draw = (ph) => {
+      const lines = [
+        { base: 28, amp: 18, drift: 0 },
+        { base: 50, amp: 14, drift: 0 },
+        { base: 70, amp: 11, drift: 1 },
+      ];
+      lines.forEach((ln, i) => {
+        let d = '';
+        for (let k = 0; k <= n; k++) {
+          const u = k / n;
+          const s = Math.sin(u * Math.PI * 3.2 - ph);
+          const away = ln.drift * Math.pow(Math.max(0, u - 0.55) / 0.45, 1.6) * (30 + 8 * Math.sin(ph * 0.5));
+          const y = ln.base + s * ln.amp + away;
+          d += (k ? 'L' : 'M') + (u * Wd).toFixed(1) + ' ' + y.toFixed(2);
+        }
+        if (refs[i].current) refs[i].current.setAttribute('d', d);
+      });
+    };
+    if (reduce) { draw(0.6); return undefined; }
+    let raf = 0, t0 = performance.now();
+    const loop = (now) => { draw(((now - t0) / 1000) * 0.9); raf = requestAnimationFrame(loop); };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  return (
+    <svg className="hero-wave" viewBox="0 0 1000 124" preserveAspectRatio="none" aria-hidden="true">
+      <path ref={refs[0]} className="flat" fill="none" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+      <path ref={refs[1]} className="flat" fill="none" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+      <path ref={refs[2]} className="off" fill="none" strokeWidth="2.6" vectorEffect="non-scaling-stroke" />
+    </svg>
+  );
+}
+
 function Hero() {
-  // healthy channels follow one shape, one channel walks away
-  const n = 120, wv = (k) => Math.sin(k / n * Math.PI * 2.2) * 18;
-  const line = (f) => Array.from({ length: n + 1 }, (_, k) => `${k ? 'L' : 'M'}${(k / n * 1000).toFixed(1)} ${f(k).toFixed(1)}`).join('');
   return (
     <section className="hero">
       <div className="wrap">
-        <p className="eyebrow">Araştırma projesi · Aksaray Üniversitesi</p>
         <h1>MIHENK</h1>
         <p className="q">Bir sensör, bozulduğunu kendisi anlayabilir mi?</p>
         <p className="lead">
           Küçük, ucuz ve tek başına çalışan sensör düğümleri için referanssız sağlık kestirimi. Yedek sensör, GPS
           ya da kalibrasyon manevrası olmadan, düğümün kendi ölçümlerine ne kadar güvenebileceğini kestirmeye çalışıyoruz.
         </p>
-        <svg className="hero-wave" viewBox="0 0 1000 96" preserveAspectRatio="none" aria-hidden="true">
-          <path className="flat" d={line((k) => 22 + wv(k))} fill="none" strokeWidth="2" />
-          <path className="flat" d={line((k) => 38 + wv(k) * 0.8)} fill="none" strokeWidth="2" />
-          <path className="off" d={line((k) => 54 + wv(k) * 0.6 + Math.max(0, k - 70) * 0.5)} fill="none" strokeWidth="2.4" />
-        </svg>
+        <div className="hero-links">
+          <a className="btn primary" href={REPO}><GitHubMark /> GitHub'da incele</a>
+          <a className="btn" href={BULGULAR}>Bulgular günlüğü</a>
+          <a className="btn" href={RAPOR}>Tasarım raporu (PDF)</a>
+        </div>
+        <HeroWaves />
         <a className="cue" href="#fikir">Nasıl çalıştığını görmek için kaydırın ↓</a>
       </div>
     </section>
@@ -365,7 +410,60 @@ function Hardware() {
   );
 }
 
+function Sources() {
+  const items = [
+    { href: REPO, t: 'Kaynak kod', d: 'MATLAB referans modeli, G1 dedektörünün bütün sürümleri, test betikleri ve bu sayfanın kendisi.', go: 'GitHub', gh: true },
+    { href: BULGULAR, t: 'Bulgular günlüğü', d: 'Her betiğin neyi, nasıl ve neden test ettiği ve ne bulduğu. Bu sayfadaki sayıların kaynağı.', go: 'Oku' },
+    { href: RAPOR, t: 'Tasarım raporu', d: 'Mimari, tasarım kararları, kalite kapıları, riskler ve değerlendirme planı.', go: 'PDF' },
+  ];
+  return (
+    <section id="kaynaklar">
+      <div className="wrap">
+        <p className="eyebrow">Daha fazlası</p>
+        <h2 className="narrow">Her şey açık</h2>
+        <p className="lead narrow">
+          Kod, ham sonuçlar ve her deneyin gerekçesi GitHub'da. Bu sayfada gördüğünüz her sayıyı oradan izleyebilirsiniz.
+        </p>
+        <div className="sources">
+          {items.map((it) => (
+            <a key={it.t} className={'source' + (it.gh ? ' gh' : '')} href={it.href}>
+              <span className="src-t">{it.gh && <GitHubMark size={22} />}{it.t}</span>
+              <span className="src-d">{it.d}</span>
+              <span className="src-go">{it.go} →</span>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Smooth scrolling (Lenis) driving ScrollTrigger; in-page anchors go through Lenis too.
+function useSmoothScroll() {
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
+    const lenis = new Lenis({ duration: 1.15, easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)) });
+    lenis.on('scroll', ScrollTrigger.update);
+    const tick = (time) => lenis.raf(time * 1000);
+    gsap.ticker.add(tick);
+    gsap.ticker.lagSmoothing(0);
+    const onClick = (e) => {
+      const a = e.target.closest('a[href^="#"]');
+      if (!a) return;
+      const id = a.getAttribute('href');
+      const el = id === '#top' ? 0 : document.querySelector(id);
+      if (el === null) return;
+      e.preventDefault();
+      lenis.scrollTo(el, { offset: -64 });
+      history.replaceState(null, '', id);
+    };
+    document.addEventListener('click', onClick);
+    return () => { document.removeEventListener('click', onClick); gsap.ticker.remove(tick); lenis.destroy(); };
+  }, []);
+}
+
 export default function App() {
+  useSmoothScroll();
   return (
     <>
       <header className="bar">
@@ -376,6 +474,7 @@ export default function App() {
             <a className="opt" href="#yontem">Yöntem</a>
             <a href="#bulgular">Bulgular</a>
             <a href="replay/">Oynatıcı</a>
+            <a className="gh-link" href={REPO} aria-label="GitHub deposu"><GitHubMark /> <span>GitHub</span></a>
           </nav>
         </div>
       </header>
@@ -387,6 +486,7 @@ export default function App() {
         <Method />
         <Findings />
         <Hardware />
+        <Sources />
       </main>
       <footer>
         <div className="wrap">
