@@ -37,6 +37,16 @@ export const beforeAfter = [
     ],
     ref: '§12 → §16',
   },
+  {
+    title: 'Görülmemiş senaryolarda en kötü koşu',
+    text: 'Elle seçilmemiş 100 yeni senaryoda, beyaz gürültüde en çok yanlış alarm veren koşu. İkinci histerezis biçimini tanıyan v10 kuyruğu beşte birine indirdi, ama eşik olan 6/saat\'in hâlâ üstünde.',
+    max: 161.4,
+    rows: [
+      { who: 'v6', lo: 161.4, hi: 161.4, label: '161,4 /saat' },
+      { who: 'v10', lo: 31.6, hi: 31.6, label: '31,6 /saat' },
+    ],
+    ref: '§21',
+  },
 ];
 
 // kind: ok (solved something), fail (exposed or broke something), now (in progress)
@@ -97,43 +107,46 @@ export const timeline = [
     plus: ['iki arızada kapsama %55 → %98'], minus: ['en kötü yanlış alarm 53,5/saat'], ref: '§20',
   },
   {
-    v: 'v10', kind: 'now', title: 'Şu an: ikinci kabul testi',
-    text: 'Tutan düzeltme alındı, tutmayan bırakıldı. Bu sürüm, daha önce hiç kullanılmamış 100 tohumdan otomatik üretilen yeni senaryolarda v6 ile karşılaştırılıyor. Senaryolarda dedektörün tanımadığı üçüncü bir histerezis biçimi ve farklı bir sıcaklık yolu da var. Ölçütler ve karar kuralı koşudan önce kayda geçirildi; test bir kez koşulacak.',
-    plus: [], minus: [], ref: '§21',
+    v: 'v10', kind: 'now', title: 'Şu an: yeni G1 dedektörü, kabul testi yine geçemedi',
+    text: 'Tutan düzeltme alındı, tutmayan bırakıldı. Daha önce hiç kullanılmamış 100 tohumdan otomatik üretilen senaryolarda v6 ile karşılaştırıldı ve önceden ilan edilen kurala göre onun yerini aldı. Tespit ölçütlerinin hepsini geçti; en kötü koşulardaki yanlış alarmlar ve sıcaklık kaynağı modelinin olay dışı alarmları yüzünden kabul testinden yine geçemedi.',
+    plus: ['en kötü koşu 161,4 → 31,6/saat', 'kapsama %78,6 → %97,6'], minus: ['en kötü koşu hâlâ ≤ 6 değil'], ref: '§21',
   },
 ];
 
-// v5 acceptance test, held-out set, one shot (bulgular section 13)
+// v10 acceptance test, second held-out set, one shot (bulgular section 21)
 export const acceptance = {
-  title: 'v5 kabul testi',
-  meta: '10 yeni senaryo × 2 gürültü tipi × 20 tohum = 400 koşu, tek atış',
+  title: 'v10 kabul testi',
+  meta: 'daha önce hiç kullanılmamış 100 tohumdan otomatik üretilen senaryo × 2 gürültü tipi = 200 koşu, tek atış',
+  note: 'Senaryoların içinde dedektörün tanımadığı bir histerezis biçimi ve farklı bir sıcaklık yolu da vardı. Tespit ölçütlerinin hepsi tuttu ve v10, önceki dedektör v6\'nın yerini aldı. En kötü koşulardaki yanlış alarmlar ve sıcaklık kaynağı modelinin olay dışı alarmları tutmadı. Bu küme artık kullanıldı; nedenler incelenecek, bir sonraki sürüm yeni bir kümeyle sınanacak.',
+  ref: '§21',
   groups: [
     {
       name: 'Yanlış alarm',
       rows: [
         ['Tipik koşuda yanlış suçlama', '≤ 0,5 /saat', [true, '0,00'], [true, '0,00']],
-        ['En kötü koşuda yanlış suçlama', '≤ 6 /saat', [false, '62,1'], [false, '26,1']],
-        ['Yeni başlayan yanlış alarm', '≤ 0,12 /saat', [false, '0,53'], [false, '0,14']],
+        ['En kötü koşuda yanlış suçlama', '≤ 6 /saat', [false, '31,6'], [false, '12,8']],
+        ['Yeni başlayan yanlış alarm', '≤ 0,12 /saat', [false, '0,19'], [true, '0,07']],
       ],
     },
     {
       name: 'Tespit',
       rows: [
-        ['120 dakika içinde tespit', '≥ %95', [true, '%100'], [true, '%98']],
-        ['Gecikme (medyan)', '≤ 15 / 40 dk', [true, '5,5'], [true, '27,0']],
-        ['Arıza boyunca suçlu tutma', '≥ %80', [true, '%92,5'], [false, '%66,6']],
+        ['120 dakika içinde tespit', '≥ %95', [true, '%100'], [true, '%100']],
+        ['Gecikme (medyan)', '≤ 15 / 40 dk', [true, '4,4'], [true, '16,0']],
+        ['Arıza boyunca suçlu tutma', '≥ %80', [true, '%97,7'], [true, '%81,8']],
         ['Sabit sıcaklıkta yavaş kayma', '≥ %80', [true, '%100'], [true, '%100']],
+        ['Arızayı "güvenilmez" diye saklamama', '≤ %10', [true, '%0'], [true, '%0']],
       ],
     },
     {
       name: 'Tuzaklar',
       rows: [
-        ['Isıtıcı sırasında sensör suçlama', '≤ 1 blok', [true, '0,37'], [true, '0,30']],
-        ['Olay dışında sıcaklık kaynağı alarmı', '≤ 1 blok', [false, '23,2'], [false, '23,2']],
-        ['EMI bittikten sonra manyetometre suçlama', '≤ %10', [false, '%16,0'], [false, '%14,2']],
-        ['Sıcaklık sensörü arızasında hareket kanalı suçlama', '≤ %5', [true, '%0,5'], [true, '%2,1']],
-        ['Sıcaklık sensörü arızasında ICM suçlama', '≤ %5', [true, '%0,0'], [true, '%0,1']],
-        ['Sıcaklık sensörü arızasında "BME" ya da "belirsiz"', '≥ %90', [true, '%100'], [true, '%99,9']],
+        ['Isıtıcı sırasında sensör suçlama', '≤ 1 blok', [false, '1,08'], [true, '0,74']],
+        ['Olay dışında sıcaklık kaynağı alarmı', '≤ 1 blok', [false, '19,1'], [false, '19,1']],
+        ['EMI bittikten sonra manyetometre suçlama', '≤ %10', [true, '%0,0'], [true, '%0,0']],
+        ['Sıcaklık sensörü arızasında hareket kanalı suçlama', '≤ %5', [true, '%2,6'], [true, '%1,0']],
+        ['Sıcaklık sensörü arızasında ICM suçlama', '≤ %5', [true, '%0,0'], [true, '%0,2']],
+        ['Sıcaklık sensörü arızasında "BME" ya da "belirsiz"', '≥ %90', [true, '%98,2'], [true, '%98,0']],
       ],
     },
   ],

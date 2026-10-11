@@ -73,7 +73,7 @@ Rapor bu tuzakları "müfredat sınıf 8" olarak topluyor. G1'in değeri kolay s
 | 19 (tanı) | [`g1_diag_v8.m`](matlab/g1/v8/g1_diag_v8.m) | Kapsama kaybının mekanizması; ızgara dışı histerezis parametreleri ve taze tohumlarla genelleme | ❌ H1 two-faults'ta reddedildi: kayıp C2'den ("güvenilmez" arızalı blokların %57'si) · ✅ day-cycle ve T9 / renklide H1 doğrulandı (D1 + büyüme testi rampada ofset sanıyor) · ✅ R ızgara dışına genelleniyor (τ = 600: en kötü 78 → 3,3/saat), tohumlara uyum yok · ❌ D1, τ = 600'de K1b'yi aşıyor |
 | 20 | [`g1_prototype_v9.m`](matlab/g1/v9/g1_prototype_v9.m) | v9 (v8 − C2 + E: ofset olayı için eşdeğerlik testi) ve ablasyonları, v6'ya karşı iki adımlı kural | ✅ eşdeğerlik 0, iki regresyon 4·10⁻¹⁵ · ✅ C2'siz two-faults %55 → %98 · ✅ E rampada ofset sanmayı çözüyor · ❌ E bazı yanlış alarmları bırakamıyor (en kötü 53,5 beyaz, 32,7 renkli) → kurala göre G1 = v6 · ⚠ v9noE (= v8 − C2) iki eşiği de geçiyor ama 1. adım onu seçemiyor (kural açığı) |
 | 20 (tanı) | [`g1_diag_v9.m`](matlab/g1/v9/g1_diag_v9.m) | E'nin bırakamadığı yanlış alarmlar ve T10'daki ofset olayları | ✅ iz davranışı değiştirmiyor, oranlar CSV ile aynı · H2 dört koşunun üçünde (kural gereği kabul edilmedi), H3 hiçbirinde · ⚠ geliştirmedeki iki koşu 10F'nin baştan kilitlenen kanalları: E, büyüme testinin güvenlik kapısını kapatıyor · ❌ T10: renkli gürültüde 30 blokluk pencerede se iyimser → öneri v10 = v9noE |
-| 21 | [`g1_acceptance_test2.m`](matlab/g1/test2/g1_acceptance_test2.m) | v10 (= v9noE) ve v6, ikinci ayrılmış küme: 100 tohumdan otomatik üretilmiş senaryo × 2 gürültü, PI histerezisi, ikinci derece BME yolu (önceden ilan) | Küme, ölçütler (K1–K4) ve iki karar kuralı sonuçlardan önce commit'lendi |
+| 21 | [`g1_acceptance_test2.m`](matlab/g1/test2/g1_acceptance_test2.m) | v10 (= v9noE) ve v6, ikinci ayrılmış küme: 100 tohumdan otomatik üretilmiş senaryo × 2 gürültü, PI histerezisi, ikinci derece BME yolu (önceden ilan) | Küme, ölçütler (K1–K4) ve iki karar kuralı sonuçlardan önce commit'lendi · ✅ **G1 = v10** (87 iyi / 12 kötü hücre; beyaz en kötü 161,4 → 31,6, kapsama %78,6 → %97,6) · ✅ K2a–K2d, K3c–K3f, K4 geçti · ❌ **kabul FAIL**: K1b (31,6 / 12,8), K1c beyaz, K3a beyaz (sınırda), K3b (ortak sıcaklık kaynağı modeli, 19,1) |
 
 **Kritik kurallar** (MATLAB referans modelinde her zaman uygulanacak):
 
@@ -1739,6 +1739,60 @@ Kullanıcı koştu. Okuma kuralı sonuçlardan önce commit edildi (14056c3). Ko
 - İzin verilen tek müdahale, dedektörün mantığını değiştirmeyen hata düzeltmesi.
 - Aile, histerezis biçimi ve BME yolu kırılımları yalnız betimleyici. Karar onlarla verilmiyor, ama bir ölçüt kalırsa nedenini onlar gösterecek (örneğin PI biçiminde K1b kalırsa R biçime aşırı uymuş demektir).
 
+### 21 (sonuç). İkinci kabul testi: G1 = v10, kabul FAIL
+
+**Script:** [`g1_acceptance_test2.m`](matlab/g1/test2/g1_acceptance_test2.m) (ee988b4'teki ilan edilmiş hâliyle, değiştirilmeden) · **Çıktı:** [`g1_acceptance2_output.txt`](matlab/g1/test2/g1_acceptance2_output.txt) · **Ham sonuçlar:** [`g1_acceptance2_runs.csv`](matlab/g1/test2/g1_acceptance2_runs.csv), [`g1_acceptance2_faults.csv`](matlab/g1/test2/g1_acceptance2_faults.csv)
+
+Kullanıcı bir kez koştu (200 koşu × 2 dedektör, ~20 dk). Hata düzeltmesi gerekmedi. Küme artık kullanılmış sayılıyor.
+
+**Karar 1: G1 dedektörü artık v10.**
+- (a) v10, 87 hücrede iyi / 12'sinde kötü → geçti.
+- (b) beyaz: en kötü 31,6 / 161,4, kapsama %97,6 / %78,6, tespit %100 / %100 → geçti.
+- (b) renkli: en kötü 12,8 / 33,8, kapsama %81,5 / %70,0, tespit %100 / %100 → geçti.
+
+**Karar 2: Kabul FAIL.** v10 beyazda 14 ölçütün 10'unu, renklide 12'sini geçiyor (v6: 5 ve 9).
+
+| Ölçüt | v10 beyaz | v10 renkli | v6 beyaz | v6 renkli |
+|---|---|---|---|---|
+| K1a yanlış alarm medyanı ≤ 0,5/saat | ✅ 0,00 | ✅ 0,00 | ✅ 0,32 | ✅ 0,00 |
+| K1b her koşu ≤ 6/saat | ❌ 31,6 | ❌ 12,8 | ❌ 161,4 | ❌ 33,8 |
+| K1c yanlış alarm olayı ≤ 0,12/saat | ❌ 0,194 | ✅ 0,071 | ❌ 2,06 | ❌ 0,141 |
+| K2a 120 dk içinde tespit ≥ %95 | ✅ %100 | ✅ %100 | ✅ %100 | ✅ %98 |
+| K2b gecikme medyanı (≤ 15 / ≤ 40 dk) | ✅ 4,4 | ✅ 16,0 | ✅ 4,6 | ✅ 13,9 |
+| K2c kapsama ≥ %80 | ✅ %97,7 | ✅ %81,8 | ❌ %66,0 | ❌ %61,0 |
+| K2d yavaş kayma, 180 dk içinde ≥ %80 | ✅ %100 | ✅ %100 | ✅ %100 | ✅ %100 |
+| K3a ısıtıcı ≤ 1 blok/koşu | ❌ 1,08 | ✅ 0,74 | ❌ 9,21 | ✅ 0,84 |
+| K3b olay dışı "T src" ≤ 1 blok/koşu | ❌ 19,1 | ❌ 19,1 | ❌ 19,1 | ❌ 19,1 |
+| K3c EMI sonrası ≤ %10 | ✅ %0,0 | ✅ %0,0 | ✅ %2,6 | ✅ %0,4 |
+| K3d BME arızasında hareket kanalı ≤ %5 | ✅ %2,6 | ✅ %1,0 | ❌ %12,2 | ✅ %1,1 |
+| K3e BME arızasında ICM ≤ %5 | ✅ %0,0 | ✅ %0,2 | ✅ %1,7 | ✅ %0,3 |
+| K3f BME veya belirsiz ≥ %90 | ✅ %98,2 | ✅ %98,0 | ✅ %96,6 | ✅ %98,0 |
+| K4 arızalı blokların "güvenilmez" payı ≤ %10 | ✅ %0 | ✅ %0 | ❌ %14,1 | ✅ %6,7 |
+
+**Bulgu 21A: v10'un geliştirmedeki üstünlüğü görülmemiş senaryolarda daha da büyüyor.** Geliştirmede v10 (v9noE) ile v6 arasındaki en kötü koşu farkı 3,8'e 51,6 idi; burada 31,6'ya 161,4.
+- 6/saat'i aşan koşu: v10'da 11 (9 beyaz, 2 renkli), v6'da 38 (32 beyaz, 6 renkli), 200'er koşudan.
+- **Tespit tarafının hepsi geçti:** K2a–K2d iki gürültüde de geçiyor, beyaz kapsama %97,7. two-faults kapsaması %98 / %86 (v6: %34 / %39); 19E'deki C2 sorunu ayrılmış kümede de doğrulandı.
+- **Tuzakların çoğu geçti:** EMI sonrası %0 (13E'deki ölçüt sorunu olay sonu bırakmasıyla çözülmüş görünüyor), BME arızası ölçütleri (K3d–K3f) ikinci derece BME yolunda da geçiyor.
+- **v6 bu kümede çöktü:** gevşeme biçiminde beyaz en kötü 161,4/saat, kapsama %69. Izgara dışı τ ve büyük histerezis sapmaları R'siz bir dedektör için §13'teki T9'dan çok daha ağır.
+
+**Bulgu 21B: K1b'nin kuyruğu üç kaynaktan geliyor; yalnız biri önceden öngörülmüştü.** v10'un 6/saat'i aşan 11 koşusu (betimleyici, sonuç sonrası):
+- **Izgara dışı uzun τ'lu gevşeme (5 koşu, τ 541–593 s):** 22,3 / 6,8 / 31,6 / 15,6 beyaz, 8,8 renkli. 19G bunu öngörmüştü: τ = 600'de D1'li v8'in en kötü koşusu 16,3, D1'siz noD1'in 3,3 idi. Bu kuyruk D1'in bedeli olabilir; doğrulanmadı.
+- **PI biçimi (3 koşu):** 13,1 / 8,8 / 30,6 beyaz. İlan edilen yorum ("PI'de K1b kalırsa R biçime aşırı uymuş demektir") şartı sağlandı: PI / beyaz en kötü 30,6. Ama kuyruk PI'ye özgü değil. PI'nin ortalama kapsaması %99 / %82 ve renkli en kötüsü 5,8; ayrıca modellenen play biçiminde de 23,7'lik bir koşu var. Yani "biçime aşırı uyum" bu kuyruğun **tek** açıklaması olamaz.
+- **Play biçimi (3 koşu):** heaters-236 / beyaz 23,7, clean-205 / renkli 12,8, heaters-216 / beyaz 6,2. Dedektörün modellediği biçimde kuyruk olması, histerezis dışında bir mekanizmaya işaret ediyor (adaylar: ısıtıcı, 10F tipi baştan kilitlenme). Doğrulanmadı.
+- Uzun τ'lu gevşeme koşuları çıkarılsa da K1b kalırdı (beyaz 30,6, renkli 12,8).
+
+**Bulgu 21C: K3b iki dedektörde ve iki gürültüde birebir aynı (19,1). Kaynak, ortak sıcaklık kaynağı modeli.**
+- "T src" alarmı yalnız sıcaklık okumalarına bakıyor ve v6 ile v10'da aynı model (A, lead-lag) kullanılıyor. Aynı tohumda sıcaklıklar gürültüden bağımsız olduğu için değerin aynı çıkması bekleniyor (13D ile aynı imza).
+- Olay dışında alarm 12 senaryoda var (100'den), koşu başına 55–294 blok. 7'si ikinci derece BME yolunda, 5'i birinci derecede. Yani tek neden ikinci derece yol değil. Mekanizma doğrulanmadı.
+- K3a / beyaz (1,08) sınırda kalıyor. Isıtıcı penceresinde alarmın en yüksek olduğu iki koşuda (heaters-216 ve heaters-286) "T src" alarmı da var (155 ve 153 blok).
+
+**Bulgu 21D: K1c / beyaz (0,194) aileye yayılmış.** En yüksekleri emi (0,43), drift-ramp (0,35), step ve bme-drift (0,28). Tek bir senaryo sınıfından gelmiyor.
+
+**Genel değerlendirme:**
+- G1 dedektörü v10. Simülasyon aşaması kapanmadı. Kalan dört ölçüt: K1b (iki gürültü), K1c (beyaz), K3a (beyaz, sınırda), K3b (iki gürültü, ortak sıcaklık kaynağı modeli).
+- **İddia kapsamı:** "v10, daha önce görmediği ve elle seçilmemiş senaryolarda, modellenmemiş bir histerezis biçimi ve farklı bir BME termal yolu altında da kayma ve basamak arızalarını gecikme ve kapsama ölçütlerinin hepsini geçerek tespit ediyor; tipik koşuda yanlış alarm üretmiyor." Sınırlama olarak yazılacaklar: en kötü koşuda yanlış alarm kuyruğu (yaklaşık 20 koşudan biri), ızgara dışı uzun τ'lu gevşeme, sıcaklık kaynağı modelinin olay dışı alarmları.
+- Bu kümeye bakarak ayar yapılmayacak. Sonraki adım tanı: K3b gürültüden bağımsız olduğu için tek tohumla incelenebilir (13D'deki yol); K1b kuyruğu için D1'in uzun τ'daki bedeli ve play'deki iki ısıtıcı koşusu. Tanıdan çıkan yeni bir sürüm, ancak üçüncü bir ayrılmış kümeyle sınanabilir.
+
 ---
 
 ## Açık konular
@@ -1784,6 +1838,9 @@ Kullanıcı koştu. Okuma kuralı sonuçlardan önce commit edildi (14056c3). Ko
 - [x] ~~Tanı: E'nin bırakamadığı yanlış alarmlar (H2: dMin donmuş modelin tahmin hatasını içermiyor, 20B)~~ → 20D–20E: tanımlanmadan dondurulmuş kanallar (10F) ve renkli gürültüde iyimser se; E bu hâliyle bırakılıyor
 - [ ] Rampada kaymayı ofset sanma (19F), E olmadan yine açık: sıcaklık katsayısı belirsizliğini ve artık ilişkisini hesaba katan bir "kayma yok" testi, yeni bir geliştirme kümesinde
 - [ ] Baştan kilitlenme (10F) büyüme testiyle bırakılıyor ama tetiği duruyor: model tanımlanmadan dondurmamak
+- [ ] Tanı (21C): sıcaklık kaynağı modelinin ikinci ayrılmış kümedeki olay dışı alarmları (12 senaryo, gürültüden bağımsız; tek tohumla incelenebilir)
+- [ ] Tanı (21B): K1b kuyruğu: ızgara dışı uzun τ gevşemede D1'in bedeli (19G) ve play biçimindeki ısıtıcılı iki koşu (heaters-236, heaters-216)
+- [ ] Üçüncü ayrılmış küme: tanıdan çıkacak bir sürüm ancak yeni bir kümeyle sınanabilir; ikinci küme (§21) kullanıldı
 - [ ] Seçim kuralının 1. adımını simetrik yapmak (ablasyon tam sürüme karşı 2. adımın testiyle), bir sonraki koşudan önce (20C)
 - [ ] Bellek bütçesi: v4'te 90 Kalman filtresi × 14 sayı ≈ 5 KB (float) veya ~2,5 KB (16 bit), ATmega328P'nin 2 KB'ını aşıyor; sadeleştirme gerekiyor (örneğin genişlik ızgarası)
 - [ ] "En küçük algılanabilir kayma hızı"nı K ve izin verilen gecikme cinsinden formel tanıma yazmak (9D)

@@ -21,7 +21,7 @@ g1   = fileparts(here);
 addpath(g1, fullfile(g1, 'test'));
 g1_setup();
 h = 3600;
-det = "v6";                         % current G1 detector (bulgular section 16)
+det = "v10";                        % current G1 detector (bulgular section 21)
 
 % Noise characterization, as in every dev run since v3
 none = struct('ch', {}, 't0', {}, 'type', {}, 'mag', {});
@@ -34,6 +34,7 @@ D = simulate_node();
 switch det
     case "v6", R = g1_detect_v6(D, NM);
     case "v8", R = g1_detect_v8(D, NM);
+    case "v10", R = g1_detect_v10(D, NM);
     otherwise, error('unknown detector %s', det);
 end
 

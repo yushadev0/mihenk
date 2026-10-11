@@ -336,7 +336,7 @@ function Acceptance() {
       <div className="acc-sum">
         <span>Beyaz: <b style={{ color: 'var(--ink)' }}>{pass(2)} / {all.length}</b> geçti</span>
         <span>Renkli: <b style={{ color: 'var(--ink)' }}>{pass(3)} / {all.length}</b> geçti</span>
-        <span>Sonuç: <b style={{ color: 'var(--bad)' }}>geçemedi</b> · bulgular §13</span>
+        <span>Sonuç: <b style={{ color: 'var(--bad)' }}>geçemedi</b> · bulgular {acceptance.ref}</span>
       </div>
     </>
   );
@@ -359,9 +359,7 @@ function Findings() {
 
         <h3 style={{ fontSize: 24, marginTop: 72 }}>Bir başarısızlık, olduğu gibi</h3>
         <p style={{ color: 'var(--muted)', marginTop: 8, maxWidth: 'var(--measure)' }}>
-          {acceptance.title}: {acceptance.meta}. Çekirdek tespit yeni senaryolarda da tuttu; en kötü koşulardaki
-          yanlış alarmlar ve bazı tuzaklar tutmadı. Bu küme artık kullanıldı; bir sonraki test, yeni ve önceden ilan
-          edilmiş bir kümeyle yapılacak.
+          {acceptance.title}: {acceptance.meta}. {acceptance.note}
         </p>
         <Acceptance />
 
