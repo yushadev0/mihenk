@@ -71,6 +71,7 @@ Rapor bu tuzakları "müfredat sınıf 8" olarak topluyor. G1'in değeri kolay s
 | 18 | [`g1_prototype_v7.m`](matlab/g1/v7/g1_prototype_v7.m) | v7 (D1: donma anına göre model hatası, D2: büyük ve büyümeyen sapma = ofset) ve ablasyonları | ✅ eşdeğerlik 0, v6 regresyonu 4·10⁻¹⁵ · ✅ D1 basamağın erken bırakılmasını çözüyor · ❌ D1 histerezis uyuşmazlığını açığa çıkarıyor (T9 beyaz 52 → 127/saat) · ❌ D2 yavaş kaymaları ofset sanıyor · kurala göre aday v7, ama v6 genel olarak daha iyi; kuralda önceki sürüm karşılaştırması yoktu |
 | 19 | [`g1_prototype_v8.m`](matlab/g1/v8/g1_prototype_v8.m) | v8 (v6 + D1 + R: gevşeme histerezisi adayları) ve ablasyonları, v6'ya karşı iki adımlı kural | ✅ eşdeğerlik 0, iki regresyon 4·10⁻¹⁵ · ✅ R histerezis alarmlarını kaldırıyor (beyaz en kötü 51,6 → 3,8/saat) · ❌ renkli kapsama %79,7 → %78,0 (tolerans 1 puan) → kurala göre G1 = v6 · ⚠ kayıp çoğunlukla D1'den, two-faults'ta sistematik · ⚠ renkli gürültüde biçim seçimi şaşıyor |
 | 19 (tanı) | [`g1_diag_v8.m`](matlab/g1/v8/g1_diag_v8.m) | Kapsama kaybının mekanizması; ızgara dışı histerezis parametreleri ve taze tohumlarla genelleme | ❌ H1 two-faults'ta reddedildi: kayıp C2'den ("güvenilmez" arızalı blokların %57'si) · ✅ day-cycle ve T9 / renklide H1 doğrulandı (D1 + büyüme testi rampada ofset sanıyor) · ✅ R ızgara dışına genelleniyor (τ = 600: en kötü 78 → 3,3/saat), tohumlara uyum yok · ❌ D1, τ = 600'de K1b'yi aşıyor |
+| 20 | [`g1_prototype_v9.m`](matlab/g1/v9/g1_prototype_v9.m) | v9 (v8 − C2 + E: ofset olayı için eşdeğerlik testi) ve ablasyonları, v6'ya karşı iki adımlı kural | ✅ eşdeğerlik 0, iki regresyon 4·10⁻¹⁵ · ✅ C2'siz two-faults %55 → %98 · ✅ E rampada ofset sanmayı çözüyor · ❌ E bazı yanlış alarmları bırakamıyor (en kötü 53,5 beyaz, 32,7 renkli) → kurala göre G1 = v6 · ⚠ v9noE (= v8 − C2) iki eşiği de geçiyor ama 1. adım onu seçemiyor (kural açığı) |
 
 **Kritik kurallar** (MATLAB referans modelinde her zaman uygulanacak):
 
@@ -1554,6 +1555,68 @@ Kullanıcı koştu. H1 ve okuma kuralı sonuçlardan önce commit edildi (44633a
 
 ---
 
+## 20. G1 v9: geliştirme koşusu ve v6 ile karşılaştırma
+
+**Script:** [`matlab/g1/v9/g1_prototype_v9.m`](matlab/g1/v9/g1_prototype_v9.m) · **Dedektör:** [`g1_detect_v9.m`](matlab/g1/v9/g1_detect_v9.m) · **Duman testi:** [`g1_smoke_v9.m`](matlab/g1/v9/g1_smoke_v9.m) · **Çıktı:** [`g1_v9_output.txt`](matlab/g1/v9/g1_v9_output.txt) · **Ham sonuçlar:** [`g1_v9_results.csv`](matlab/g1/v9/g1_v9_results.csv)
+
+Kullanıcı koştu. Dedektör, ablasyonlar ve seçim kuralı sonuçlardan önce commit edildi (8c714dc). Kural v8'inkiyle aynı (iki adım, aynı eşikler).
+
+**Ne yapıldı:** v9 = v8 − C2 + E.
+- **C2 kapalı (19E):** "Model güvenilmez" durumu iki eşzamanlı gerçek arızayı yutuyordu.
+- **E (ofset olayı için eşdeğerlik testi, 19F):** Büyüme testi "büyüme bulunamadı" deyince kanalı ofset olayı sayıyordu; rampada bu zayıf bir kanıttı. E bunun yerine "kayma yok"un kanıtını istiyor: donmuş kanalın artığı (kanal biriminde, D1'in şişirmesi girmiyor) donmadan beri en fazla 240 blok üzerinden zamana regresyonlanıyor ve kanal yalnız `|eğim| + t·se < dMin` ise ofset olayı oluyor. Bu, iki tek yönlü testin (TOST [R15]) ikisinin de dMin büyüklüğünde bir kaymayı reddetmesi demek. `dMin = 5·√3·σA(1 saat)` / saat, kanalın Allan uyumundan (9D'deki "en küçük algılanabilir kayma hızı"nın ilk formel hâli). Yeni ayarlanmış parametre yok.
+- Ablasyonlar: **v9noE** (= v8 − C2, büyüme testi) ve **v9noC2** (= v8 + E).
+
+Veri v6–v8 ile aynı (geliştirme tohum 0–9 + kullanılmış küme tohum 100–109, gürültü tipi başına 180 koşu). Kontroller:
+- **Eşdeğerlik:** C2 açık ve büyüme testiyle v9 = v8, fark 0.
+- **Regresyon:** v6 ve v8 satırları §19'daki CSV ile aynı (en büyük göreli fark 4·10⁻¹⁵ ve 2,8·10⁻¹⁵).
+
+| Ölçüt (bütün koşular) | v6 | v8 | v9noE (= v8 − C2) | v9noC2 (= v8 + E) | v9 |
+|---|---|---|---|---|---|
+| En kötü koşu, beyaz (yanlış alarm/saat) | 51,6 | **3,8** | **3,8** | 53,5 | 53,5 |
+| En kötü koşu, renkli | 13,6 | **11,8** | **11,8** | 32,7 | 32,7 |
+| 10/saat'i aşan koşu, beyaz / renkli (180'er koşudan) | 19 / 3 | 0 / 1 | 0 / 1 | 8 / 7 | 8 / 7 |
+| Kapsama, beyaz | %89,3 | %92,2 | %96,9 | %92,6 | **%97,5** |
+| Kapsama, renkli | %79,7 | %78,0 | **%81,0** | %76,8 | %80,3 |
+| Arızalı blokların "güvenilmez" payı, beyaz / renkli | %4 / %2 | %5 / %2 | %0 / %0 | %5 / %2 | %0 / %0 |
+| Tespit, beyaz / renkli | %100 / %99 | aynı | aynı | aynı | aynı |
+| Gecikme medyanı, beyaz / renkli (dk) | 5,5 / 25,5 | aynı | aynı | aynı | aynı |
+
+**Seçim kuralının sonucu: G1 dedektörü v6 olarak kalıyor.**
+- **1. adım (v9 ailesi):** aday v9. v9noE 20 hücrede kötü / 54'ünde iyi; v9noC2 48 kötü / 15 iyi. İkisi de "hiçbir yerde kötü değil" şartını sağlamıyor.
+- **2. adım (v9, v6'ya karşı):**
+  - (a) v9, 75 hücrede iyi / 63'ünde kötü → geçti.
+  - (b) beyaz: kapsama %97,5 / %89,3, tespit eşit, ama **en kötü 53,5 / 51,6** → kaldı.
+  - (b) renkli: kapsama %80,3 / %79,7, tespit eşit, ama **en kötü 32,7 / 13,6** → kaldı.
+- Bilgi için v9, v8'e karşı: 56 hücrede kötü / 56'sında iyi.
+
+**Bulgu 20A: C2'yi kaldırmak hedefini tutturdu.**
+- two-faults kapsaması: beyaz %55 (v6) / %41 (v8) → %96 (v9noE) / %98 (v9); renkli %62 / %58 → %83 / %87.
+- "Güvenilmez" payı bütün koşularda %0'a indi; 19E'deki mekanizma doğrulanmış oldu.
+- **Bedel küçük ve renkli gürültüde:** v9noE'de bazı renkli hücrelerin en kötü koşusu yükseldi (base 4,6 → 7,9, T1 6,2 → 9,5, T4 5,5 → 9,6/saat), sağlıklı kanallarda ofset olayı 0,1'den 0,2'ye çıktı. Hepsi bütün koşuların en kötüsünün (11,8) altında kalıyor.
+
+**Bulgu 20B: E rampada ofset sanmayı çözüyor, ama bazı yanlış alarmları hiç bırakamıyor.**
+- **Kazanç (19F'nin hedefi):** day-cycle / renkli kapsama %77 → %88 (arızalı kanalda ofset olayı 0,8 → 0); T9 / beyaz %92 → %97 (1,0 → 0).
+- **Basamak arızaları artık ofset olayı:** accel-step ve T2 / beyazda alarm kapsaması düşüyor (%99 → %85, %98 → %62), toplam kapsama aynı kalıyor ya da artıyor. Kanal kalıcı sapmayı yaklaşık bir saat sonra ofset olayı olarak raporluyor; bu, §15'teki karara uygun davranış.
+- **Bedel 1, bırakılamayan yanlış alarmlar:** E olan iki varyantta 10/saat'i aşan koşu sayısı 0–1'den 7–8'e çıkıyor. Bunlar birkaç tohumda yoğunlaşıyor:
+  - geliştirme kümesinde tek bir tohum (beyazda 9, renklide 8), arızasız senaryolar dahil hepsinde aynı değer (35,1 ve 32,7/saat). Yani yanlış alarm senaryonun arızasından değil, o tohumun sağlıklı bir kanalından geliyor;
+  - bu koşularda ısıtıcının yanındaki sensörde 25 alarm var (v9noE'de 0);
+  - kullanılmış kümede T6 tohum 103 (53,5) ve T1 tohum 108 (46,9).
+  - Renkli gürültüde yanlış alarm medyanı da 0,1'den 0,9/saat'e çıkıyor.
+- **Bedel 2, yavaş kayma ofset sanılıyor:** T10 / renklide (gx, 0,015 °/s/saat) kapsama %91 → %86, arızalı kanalda ofset olayı 0 → 0,3. Kayma hızı renkli dMin'in (gx 0,0116) yalnız ~1,3 katı; duman testinde işaretlenen risk gerçekleşti.
+- **Mekanizma doğrulanmadı.** Tahmin (H2): dMin yalnız sensör gürültüsünden türetiliyor, donmuş modelin sıcaklıkla büyüyen tahmin hatasını içermiyor. Isıtıcı gibi bir sıcaklık değişiminde sağlıklı kanalın artığında da bir eğim oluşuyor; eğim dMin'den büyük olduğu için "kayma yok" hiçbir zaman gösterilemiyor ve alarm sürüyor. Büyüme testi aynı alarmı (z büyümediği için) bırakıyordu.
+
+**Bulgu 20C: Kuralın dışında kalan bir gözlem: v9noE iki eşiği de geçiyor.** (Sonuç sonrası gözlem; G1 kararını değiştirmez.)
+- v9noE, v6'ya karşı: beyaz en kötü 3,8 / 51,6, kapsama %96,9 / %89,3; renkli en kötü 11,8 / 13,6, kapsama %81,0 / %79,7; tespit eşit. 2. adımın (b) şartını iki gürültü tipinde de sağlıyor.
+- Kural onu seçemiyor: 1. adım bir ablasyonu yalnız "hiçbir yerde kötü değilse" seçiyor; v9noE 54 hücrede iyi, 20'sinde kötü (çoğu E'nin kazandırdığı rampa hücreleri).
+- **Kuraldaki zayıflık:** 1. adım asimetrik. Tam sürüme karşı açıkça daha iyi bir ablasyon tek bir kötü hücre yüzünden elenebiliyor. §18'deki "önceki sürümle karşılaştırma yok" eksiği gibi bu da kuralın bir açığı. Kural, bir sonraki koşudan önce ve sonuç görmeden düzeltilecek.
+- v9noE'nin geliştirme kümesindeki sayıları artık görülmüş sayıları. Onu seçmek bir sonuç sonrası karar olur; asıl sınavı ancak yeni ayrılmış küme olabilir.
+
+**Sonraki adım için öneri:**
+1. **Kısa tanı (H2):** E'nin yanlış alarm kuyruğundaki dört koşu (geliştirme beyaz tohum 9, renkli tohum 8, T6 tohum 103, T1 tohum 108). Hangi kanal, ne zaman donuyor; eğim, se ve dMin oranı; v9noE'de aynı alarm büyüme testiyle mi bırakılıyor.
+2. **v10:** Tanıya göre ya dMin'e donmuş modelin tahmin hatasından gelen bir eğim payı eklenir (E kalır, rampa kazancı korunur), ya da v10 = v9noE olur. İki durumda da 1. adım önce düzeltilir ve geliştirme sayıları görülmüş sayılır; karar yeni ayrılmış kümede verilir.
+
+---
+
 ## Açık konular
 
 - [x] ~~Termal katsayıları ICM-42688-P veri sayfasından teyit etmek~~ → Bulgu 4
@@ -1593,7 +1656,9 @@ Kullanıcı koştu. H1 ve okuma kuralı sonuçlardan önce commit edildi (44633a
 - [ ] T5'te yalnız tohum 108 ve 118'in kilitlenme nedenini doğrulamak (ısıtıcı anında b yakınsamış mı? 14B)
 - [ ] Yeni sürüm için **yeni** bir ayrılmış küme (tohum 200+, yeni senaryolar); §13'teki küme artık görülmüş sayılıyor
 - [x] ~~Basamak arızasında doğru davranış: kalıcı ofset "arıza" mı, "yeni normal" mi? (12B)~~ → Karar (§15): arıza değil, üçüncü durum "ofset olayı: tespit edildi, raporlandı, yeniden kalibre edildi". Formel tanıma yazılacak.
-- [ ] Artık öz-ilişkisini "model güvenilmez" durumu için kullanmayı değerlendirmek (12E, ADR-010)
+- [x] ~~Artık öz-ilişkisini "model güvenilmez" durumu için kullanmayı değerlendirmek (12E, ADR-010)~~ → C2 olarak denendi; etkisiz (16C) ve iki eşzamanlı arızada zararlı (19E), v9'da kapatıldı (20A)
+- [ ] Tanı: E'nin bırakamadığı yanlış alarmlar (H2: dMin donmuş modelin tahmin hatasını içermiyor, 20B)
+- [ ] Seçim kuralının 1. adımını simetrik yapmak (ablasyon tam sürüme karşı 2. adımın testiyle), bir sonraki koşudan önce (20C)
 - [ ] Bellek bütçesi: v4'te 90 Kalman filtresi × 14 sayı ≈ 5 KB (float) veya ~2,5 KB (16 bit), ATmega328P'nin 2 KB'ını aşıyor; sadeleştirme gerekiyor (örneğin genişlik ızgarası)
 - [ ] "En küçük algılanabilir kayma hızı"nı K ve izin verilen gecikme cinsinden formel tanıma yazmak (9D)
 - [ ] G1 skorunu kalibre edilmiş bir güven skoruna çevirmek (ECE, reliability diagram; ADR-010)
@@ -1615,6 +1680,7 @@ Metinde [R#] olarak anılıyor. ISA-18.2 ve EEMUA 191 standartlarının [R7] met
 **Karar istatistiği**
 - **[R5]** E. S. Page, "Continuous inspection schemes", *Biometrika*, 41(1/2), 100–115, 1954. CUSUM'ın ilk tanımı. → §7, §9 (işaretli CUSUM)
 - **[R6]** NIST/SEMATECH, *e-Handbook of Statistical Methods*, "Cusum Average Run Length". <https://www.itl.nist.gov/div898/handbook/pmc/section3/pmc3131.htm> → §9 (ARL0), §11
+- **[R15]** D. J. Schuirmann, "A comparison of the two one-sided tests procedure and the power approach for assessing the equivalence of average bioavailability", *Journal of Pharmacokinetics and Biopharmaceutics*, 15(6), 657–680, 1987. İki tek yönlü test (TOST) ile eşdeğerlik. → §20 (E)
 
 **Alarm yükü ve bütünlük standartları** (§11 ölçütlerinin gerekçesi)
 - **[R7]** ANSI/ISA-18.2, *Management of Alarm Systems for the Process Industries*, ve EEMUA Publication 191, *Alarm Systems – A Guide to Design, Management and Procurement*. Standartların metni okunmadı; sayılar [R8]–[R9]'dan alındı.

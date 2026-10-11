@@ -87,9 +87,14 @@ export const timeline = [
     plus: ['erken bırakma çözüldü'], minus: ['histerezis alarmları arttı'], ref: '§17–18',
   },
   {
-    v: 'v8', kind: 'now', title: 'Şu an: ikinci histerezis biçimi',
-    text: 'Kanal modeli, histerezisin ikinci bir biçimini de tanıyacak. v6 ile önceden ilan edilmiş bir kuralla karşılaştırılıyor.',
-    plus: [], minus: [], ref: 'devam ediyor',
+    v: 'v8', kind: 'fail', title: 'İkinci histerezis biçimi: kural v6\'da kaldı',
+    text: 'Kanal modeli histerezisin ikinci biçimini de tanıyor; bu biçimden gelen yanlış alarmlar neredeyse tamamen gitti. Ama renkli gürültüde kapsama, önceden ilan edilen 1 puanlık toleransı aştı. Tanı kaybın iki kaynağını buldu.',
+    plus: ['en kötü yanlış alarm 51,6 → 3,8/saat'], minus: ['renkli kapsama %79,7 → %78,0'], ref: '§19',
+  },
+  {
+    v: 'v9', kind: 'now', title: 'Şu an: iki düzeltme, biri tuttu',
+    text: 'İki eşzamanlı arızayı yutan "model güvenilmez" durumu kaldırıldı. Kalıcı sapmayı ofset saymak için "kayma yok"un kanıtını isteyen yeni test rampadaki hatayı çözdü, ama bazı yanlış alarmları bırakamadı. Kural yine v6\'yı seçti; nedeni inceleniyor.',
+    plus: ['iki arızada kapsama %55 → %98'], minus: ['en kötü yanlış alarm 53,5/saat'], ref: '§20',
   },
 ];
 
