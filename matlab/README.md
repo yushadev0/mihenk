@@ -12,7 +12,7 @@ Findings and the reasoning behind every script are logged in [`../bulgular.md`](
 |---|---|---|
 | [`models/`](models/) | Reusable model functions: per-sensor thermal model, synthetic node | No — called by scripts |
 | [`checks/`](checks/) | Self-checks of the reference model (Allan terms, thermal model) | Yes |
-| [`g1/`](g1/) | G1 (thermal common-mode decomposition): shared helpers at the root, one folder per version (`v0/` … `v8/`), `test/` for the acceptance test | `g1_prototype_*.m` |
+| [`g1/`](g1/) | G1 (thermal common-mode decomposition): shared helpers at the root, one folder per version (`v0/` … `v9/`), `test/` for the acceptance test | `g1_prototype_*.m` |
 | [`figures/`](figures/) | Figures referenced from `bulgular.md` | — |
 
 | File | Kind | What |
@@ -59,6 +59,9 @@ Findings and the reasoning behind every script are logged in [`../bulgular.md`](
 | `g1/v8/g1_prototype_v8.m` | script | v8 dev run: v6, v8 and ablations noR/noD1, regressions vs v6 and v7noD2, selection within v8 and then against v6 |
 | `g1/v8/g1_smoke_v8.m` | script | Quick equivalence and run check before the v8 dev run |
 | `g1/v8/g1_diag_v8.m` | script | Diagnosis after the v8 dev run (bulgular 19): mechanism of the coverage loss, generalization to off-grid hysteresis parameters on fresh seeds |
+| `g1/v9/g1_detect_v9.m` | function | v9 detector: v8 without C2 and with an equivalence test for offset events (E) |
+| `g1/v9/g1_prototype_v9.m` | script | v9 dev run: v6, v8, v9 and ablations noE/noC2, regressions vs the v8 CSV, selection within v9 and then against v6 |
+| `g1/v9/g1_smoke_v9.m` | script | Quick equivalence and run check before the v9 dev run |
 | `g1/site/g1_export_site.m` | script | Exports the run behind the main-idea scene of the project page (`web/public/data/story.json`) |
 
 Detectors receive only firmware-visible inputs.
