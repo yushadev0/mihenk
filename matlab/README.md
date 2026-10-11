@@ -12,7 +12,7 @@ Findings and the reasoning behind every script are logged in [`../bulgular.md`](
 |---|---|---|
 | [`models/`](models/) | Reusable model functions: per-sensor thermal model, synthetic node | No — called by scripts |
 | [`checks/`](checks/) | Self-checks of the reference model (Allan terms, thermal model) | Yes |
-| [`g1/`](g1/) | G1 (thermal common-mode decomposition): shared helpers at the root, one folder per version (`v0/` … `v7/`), `test/` for the acceptance test | `g1_prototype_*.m` |
+| [`g1/`](g1/) | G1 (thermal common-mode decomposition): shared helpers at the root, one folder per version (`v0/` … `v8/`), `test/` for the acceptance test | `g1_prototype_*.m` |
 | [`figures/`](figures/) | Figures referenced from `bulgular.md` | — |
 
 | File | Kind | What |
@@ -55,6 +55,9 @@ Findings and the reasoning behind every script are logged in [`../bulgular.md`](
 | `g1/v7/g1_detect_v7.m` | function | v7 detector: v6 + model error anchored at the freeze (D1) and large non-growing deviation as an offset event (D2) |
 | `g1/v7/g1_prototype_v7.m` | script | v7 dev run: v6, v7 and ablations noD1/noD2 on the dev set and the spent test set, regression vs v6, selection by the declared rule |
 | `g1/v7/g1_smoke_v7.m` | script | Quick equivalence and run check before the v7 dev run |
+| `g1/v8/g1_detect_v8.m` | function | v8 detector: v6 + D1 of v7 + relaxation hysteresis candidates next to the play widths (R); D2 off |
+| `g1/v8/g1_prototype_v8.m` | script | v8 dev run: v6, v8 and ablations noR/noD1, regressions vs v6 and v7noD2, selection within v8 and then against v6 |
+| `g1/v8/g1_smoke_v8.m` | script | Quick equivalence and run check before the v8 dev run |
 
 Detectors receive only firmware-visible inputs.
 
