@@ -1599,7 +1599,7 @@ Veri v6–v8 ile aynı (geliştirme tohum 0–9 + kullanılmış küme tohum 100
 - **Basamak arızaları artık ofset olayı:** accel-step ve T2 / beyazda alarm kapsaması düşüyor (%99 → %85, %98 → %62), toplam kapsama aynı kalıyor ya da artıyor. Kanal kalıcı sapmayı yaklaşık bir saat sonra ofset olayı olarak raporluyor; bu, §15'teki karara uygun davranış.
 - **Bedel 1, bırakılamayan yanlış alarmlar:** E olan iki varyantta 10/saat'i aşan koşu sayısı 0–1'den 7–8'e çıkıyor. Bunlar birkaç tohumda yoğunlaşıyor:
   - geliştirme kümesinde tek bir tohum (beyazda 9, renklide 8), arızasız senaryolar dahil hepsinde aynı değer (35,1 ve 32,7/saat). Yani yanlış alarm senaryonun arızasından değil, o tohumun sağlıklı bir kanalından geliyor;
-  - bu koşularda ısıtıcının yanındaki sensörde 25 alarm var (v9noE'de 0);
+  - bu koşularda ısıtıcı penceresinde (ısıtıcı açıkken ve sonraki soğuma süresince) herhangi bir sensörde alarm olan blok sayısı 25 (v9noE'de 0). Alarm ısıtıcı penceresine denk geliyor (T1 tohum 108'de ise ısıtıcı yok);
   - kullanılmış kümede T6 tohum 103 (53,5) ve T1 tohum 108 (46,9).
   - Renkli gürültüde yanlış alarm medyanı da 0,1'den 0,9/saat'e çıkıyor.
 - **Bedel 2, yavaş kayma ofset sanılıyor:** T10 / renklide (gx, 0,015 °/s/saat) kapsama %91 → %86, arızalı kanalda ofset olayı 0 → 0,3. Kayma hızı renkli dMin'in (gx 0,0116) yalnız ~1,3 katı; duman testinde işaretlenen risk gerçekleşti.
@@ -1612,7 +1612,7 @@ Veri v6–v8 ile aynı (geliştirme tohum 0–9 + kullanılmış küme tohum 100
 - v9noE'nin geliştirme kümesindeki sayıları artık görülmüş sayıları. Onu seçmek bir sonuç sonrası karar olur; asıl sınavı ancak yeni ayrılmış küme olabilir.
 
 **Sonraki adım için öneri:**
-1. **Kısa tanı (H2):** E'nin yanlış alarm kuyruğundaki dört koşu (geliştirme beyaz tohum 9, renkli tohum 8, T6 tohum 103, T1 tohum 108). Hangi kanal, ne zaman donuyor; eğim, se ve dMin oranı; v9noE'de aynı alarm büyüme testiyle mi bırakılıyor.
+1. **Kısa tanı (H2):** [`g1_diag_v9.m`](matlab/g1/v9/g1_diag_v9.m). E'nin yanlış alarm kuyruğundaki dört koşu (geliştirme beyaz tohum 9, renkli tohum 8, T6 tohum 103, T1 tohum 108) ve T10 / renklideki ofset olayları. Hangi kanal, ne zaman donuyor; eğim, se ve dMin oranı; artık sıcaklığı izliyor mu; v9noE'de aynı alarm büyüme testiyle mi bırakılıyor. Okuma kuralı (H2 / H3 / açıklanamadı) betiğin başında, sonuçlardan önce commit edildi. Tanı izi için dedektöre yalnız `trace` açıkken dolan çıktılar eklendi; davranış değişmedi, betik bunu ayrıca denetliyor.
 2. **v10:** Tanıya göre ya dMin'e donmuş modelin tahmin hatasından gelen bir eğim payı eklenir (E kalır, rampa kazancı korunur), ya da v10 = v9noE olur. İki durumda da 1. adım önce düzeltilir ve geliştirme sayıları görülmüş sayılır; karar yeni ayrılmış kümede verilir.
 
 ---

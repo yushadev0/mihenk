@@ -131,7 +131,7 @@ o = struct( ...
     'rThr',        3/sqrt(30), ...  % ... 3 sigma of r1 under white innovations
     'nGroupsUnrel', 2, ...          % ... sensing elements needed
     'refMask',     [true true], ... % diagnostic only: references allowed for channel decisions [ICM BME]
-    'trace',       false);          % diagnostic only: record offset and tempco of each channel model
+    'trace',       false);          % diagnostic only: record offset and tempco of each channel model, (E) residual and test statistics
 if nargin > 2
     for f = fieldnames(opt)', o.(f{1}) = opt.(f{1}); end
 end
@@ -194,6 +194,10 @@ R.state = zeros(nB, nC, 'uint8');
 R.tempFlag = false(nB, 1);  R.blameBme = R.tempFlag;  R.blameIcm = R.tempFlag;  R.tempAmbig = R.tempFlag;
 R.released = false(nB, nC);  R.releaseType = zeros(nB, nC, 'uint8');  R.switchReset = false(nB, 1);
 if o.trace, R.thA = nan(nB, nC, 2);  R.thB = R.thA;  R.usable = false(nB, 2); end
+if o.trace                          % (E) diagnostic: residual, equivalence statistics, growth-test verdict
+    R.eRaw = nan(nB, nC);  R.eqBeta = R.eRaw;  R.eqSe = R.eRaw;  R.eqNw = R.eRaw;
+    R.grRel = false(nB, nC);
+end
 
 Sp = zeros(1, nC);  Sn = Sp;
 iwPrev = [];
@@ -347,6 +351,17 @@ for k = 1:nB
             if abs(beta) + o.tCrit * se < dMin(c)
                 rel(c) = true;  rtype(c) = 2;
             end
+            if o.trace              % what the growth test would say on the same history
+                R.eqBeta(k, c) = beta;  R.eqSe(k, c) = se;  R.eqNw(k, c) = nw;
+                n  = (nFroz(c) - o.Wrel + 1 : nFroz(c))';
+                zw = zHist(mod(n - 1, o.Wrel) + 1, c);
+                y  = sign(sum(zw)) * zw;
+                u  = sqrt(n) - mean(sqrt(n));
+                bg = (u' * (y - mean(y))) / (u' * u);
+                rg = y - mean(y) - bg * u;
+                sg = sqrt((rg' * rg) / (o.Wrel - 2) / (u' * u));
+                R.grRel(k, c) = bg / max(sg, eps) < o.tCrit && max(abs(zw)) < o.zU;
+            end
             continue
         end
         n  = (nFroz(c) - o.Wrel + 1 : nFroz(c))';
@@ -391,6 +406,7 @@ for k = 1:nB
             R.thB(k, :, r) = theta(3, :, r, iwb(r));
         end
         R.usable(k, :) = usable;
+        R.eRaw(k, :) = eRaw;
     end
 
     % --- measurement updates (gated), for every width candidate

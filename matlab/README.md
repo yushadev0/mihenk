@@ -62,6 +62,7 @@ Findings and the reasoning behind every script are logged in [`../bulgular.md`](
 | `g1/v9/g1_detect_v9.m` | function | v9 detector: v8 without C2 and with an equivalence test for offset events (E) |
 | `g1/v9/g1_prototype_v9.m` | script | v9 dev run: v6, v8, v9 and ablations noE/noC2, regressions vs the v8 CSV, selection within v9 and then against v6 |
 | `g1/v9/g1_smoke_v9.m` | script | Quick equivalence and run check before the v9 dev run |
+| `g1/v9/g1_diag_v9.m` | script | Diagnosis after the v9 dev run (bulgular 20B): unreleased false alarms of the equivalence test, offset events on the T10 slow drift |
 | `g1/site/g1_export_site.m` | script | Exports the run behind the main-idea scene of the project page (`web/public/data/story.json`) |
 
 Detectors receive only firmware-visible inputs.
