@@ -1,0 +1,115 @@
+Regression v10 / v6 vs v9noE / v6 rows of g1_v9_results.csv (4 runs): max difference 3.6e-14 (OK)
+"pi" with widths [1 1] vs default play 1.0: max difference 0 (OK)
+
+Held-out scenarios (100):
+  drift-ramp-200   fault T 12.5-24.5 degC  heaters 2  relax 97       BME tau2   0  ch5 drift +0.421 @5.48 h;
+  drift-sine-201   fault T 14.3-30.9 degC  heaters 2  play 1.44      BME tau2 265  ch6 drift -0.595 @2.90 h;
+  step-202         fault T 18.3-28.7 degC  heaters 2  play 0.57      BME tau2   0  ch6 step +0.408 @3.11 h;
+  slow-203         slow  T 34.8-34.8 degC  heaters 1  play 0.61      BME tau2   0  ch6 drift +0.295 @2.08 h;
+  two-faults-204   fault T 20.4-37.4 degC  heaters 2  relax 183      BME tau2 247  ch1 drift -0.0325 @4.24 h; ch8 drift +0.538 @4.71 h;
+  clean-205        none  T 23.3-36.6 degC  heaters 2  play 0.53      BME tau2 318
+  heaters-206      none  T 22.0-33.1 degC  heaters 3  play 1.48      BME tau2   0
+  emi-207          none  T 20.5-30.7 degC  heaters 2  relax 475      BME tau2 234  EMI 3.97-4.31 h [+0.8 +0.7 +0.9];
+  bme-drift-208    none  T 20.7-32.2 degC  heaters 2  pi 0.49/1.19   BME tau2   0  BME drift +1.25 @3.49 h;
+  bme-step-209     none  T 13.9-28.2 degC  heaters 2  relax 141      BME tau2   0  BME step -1.03 @3.12 h;
+  drift-ramp-210   fault T  6.0-23.5 degC  heaters 2  play 0.54      BME tau2   0  ch7 drift -0.453 @4.46 h;
+  drift-sine-211   fault T 20.9-32.1 degC  heaters 1  play 0.93      BME tau2 282  ch2 drift -0.0389 @4.92 h;
+  step-212         fault T 24.0-33.6 degC  heaters 1  relax 311      BME tau2 370  ch2 step -0.0215 @3.39 h;
+  slow-213         slow  T 23.0-23.0 degC  heaters 2  relax 540      BME tau2 394  ch3 drift +0.0214 @2.58 h;
+  two-faults-214   fault T 24.6-38.3 degC  heaters 2  relax 170      BME tau2   0  ch5 drift -0.495 @4.40 h; ch3 drift -0.0377 @4.76 h;
+  clean-215        none  T 19.1-38.3 degC  heaters 2  pi 0.50/1.02   BME tau2 340
+  heaters-216      none  T 25.0-39.9 degC  heaters 3  play 1.15      BME tau2 131
+  emi-217          none  T 16.6-35.6 degC  heaters 1  play 1.34      BME tau2   0  EMI 3.38-3.81 h [+0.7 -0.8 +0.9];
+  bme-drift-218    none  T 23.1-33.3 degC  heaters 1  play 1.45      BME tau2   0  BME drift -0.80 @5.22 h;
+  bme-step-219     none  T 15.4-25.7 degC  heaters 2  relax 142      BME tau2   0  BME step +1.31 @4.89 h;
+  drift-ramp-220   fault T 17.8-33.2 degC  heaters 2  play 1.29      BME tau2 235  ch7 drift +0.438 @3.30 h;
+  drift-sine-221   fault T 23.3-39.9 degC  heaters 1  relax 208      BME tau2 281  ch9 drift +0.446 @2.55 h;
+  step-222         fault T 20.2-35.0 degC  heaters 2  play 0.57      BME tau2 200  ch8 step -1.26 @4.24 h;
+  slow-223         slow  T 30.3-30.3 degC  heaters 1  relax 386      BME tau2   0  ch1 drift -0.0164 @1.75 h;
+  two-faults-224   fault T 20.9-31.2 degC  heaters 1  relax 469      BME tau2 332  ch3 drift +0.0369 @4.04 h; ch9 drift +0.542 @4.14 h;
+  clean-225        none  T 26.1-35.0 degC  heaters 1  pi 0.20/1.60   BME tau2 116
+  heaters-226      none  T  1.3-16.6 degC  heaters 3  pi 0.44/1.73   BME tau2   0
+  emi-227          none  T 27.8-40.0 degC  heaters 1  relax 309      BME tau2 377  EMI 2.68-3.10 h [-1.9 -1.4 +1.1];
+  bme-drift-228    none  T 19.6-32.5 degC  heaters 1  pi 0.59/1.37   BME tau2 208  BME drift +0.65 @3.26 h;
+  bme-step-229     none  T 23.6-39.2 degC  heaters 1  play 1.36      BME tau2   0  BME step -1.18 @4.50 h;
+  drift-ramp-230   fault T 23.8-31.9 degC  heaters 1  pi 0.25/1.82   BME tau2   0  ch2 drift +0.0229 @3.63 h;
+  drift-sine-231   fault T 22.3-39.8 degC  heaters 2  play 0.78      BME tau2   0  ch7 drift -0.451 @4.83 h;
+  step-232         fault T 13.6-28.9 degC  heaters 2  relax 581      BME tau2 132  ch5 step +0.446 @5.25 h;
+  slow-233         slow  T 19.0-19.0 degC  heaters 1  pi 0.57/1.66   BME tau2 126  ch6 drift -0.239 @1.66 h;
+  two-faults-234   fault T 15.9-29.0 degC  heaters 1  relax 307      BME tau2   0  ch1 drift -0.0278 @4.80 h; ch9 drift +0.46 @4.86 h;
+  clean-235        none  T  5.2-20.1 degC  heaters 2  pi 0.41/1.11   BME tau2   0
+  heaters-236      none  T 15.8-33.9 degC  heaters 3  play 0.72      BME tau2   0
+  emi-237          none  T 13.4-28.7 degC  heaters 2  relax 244      BME tau2   0  EMI 2.34-2.94 h [-1.2 -0.6 +1.9];
+  bme-drift-238    none  T 26.4-37.7 degC  heaters 1  pi 0.44/1.22   BME tau2   0  BME drift -1.69 @2.97 h;
+  bme-step-239     none  T 14.8-34.6 degC  heaters 2  relax 593      BME tau2   0  BME step -0.92 @4.00 h;
+  drift-ramp-240   fault T 26.2-41.4 degC  heaters 2  play 0.82      BME tau2   0  ch8 drift +0.321 @3.44 h;
+  drift-sine-241   fault T 20.4-31.2 degC  heaters 2  relax 585      BME tau2 179  ch1 drift +0.0235 @4.32 h;
+  step-242         fault T 29.4-42.9 degC  heaters 1  play 1.43      BME tau2   0  ch6 step -0.396 @3.84 h;
+  slow-243         slow  T 30.9-30.9 degC  heaters 1  relax 303      BME tau2   0  ch6 drift +0.325 @2.66 h;
+  two-faults-244   fault T  3.8-18.7 degC  heaters 1  play 1.35      BME tau2   0  ch1 drift +0.0313 @2.91 h; ch8 drift -0.475 @3.02 h;
+  clean-245        none  T 22.4-31.0 degC  heaters 2  relax 572      BME tau2   0
+  heaters-246      none  T 25.4-37.0 degC  heaters 3  relax 419      BME tau2 241
+  emi-247          none  T 25.3-34.1 degC  heaters 2  pi 0.29/1.40   BME tau2   0  EMI 3.53-3.73 h [+1.3 -1.0 +1.9];
+  bme-drift-248    none  T 14.5-30.1 degC  heaters 2  pi 0.37/1.48   BME tau2 390  BME drift +1.97 @2.99 h;
+  bme-step-249     none  T  7.3-21.2 degC  heaters 1  play 0.60      BME tau2   0  BME step -0.71 @5.38 h;
+  drift-ramp-250   fault T 12.9-28.8 degC  heaters 2  pi 0.24/1.26   BME tau2 381  ch7 drift +0.56 @4.28 h;
+  drift-sine-251   fault T 19.9-39.6 degC  heaters 1  relax 261      BME tau2 365  ch5 drift -0.339 @4.99 h;
+  step-252         fault T 22.6-32.0 degC  heaters 1  pi 0.24/1.64   BME tau2 280  ch7 step +1.16 @4.61 h;
+  slow-253         slow  T 22.3-22.3 degC  heaters 1  relax 480      BME tau2 281  ch4 drift +0.258 @2.20 h;
+  two-faults-254   fault T  8.4-23.8 degC  heaters 1  play 1.36      BME tau2   0  ch3 drift -0.0383 @3.48 h; ch6 drift -0.47 @3.82 h;
+  clean-255        none  T 19.6-29.9 degC  heaters 1  pi 0.23/1.19   BME tau2 191
+  heaters-256      none  T 16.2-31.1 degC  heaters 3  relax 342      BME tau2 130
+  emi-257          none  T 30.0-45.2 degC  heaters 1  play 1.28      BME tau2 361  EMI 3.47-4.01 h [+1.5 +1.9 -1.4];
+  bme-drift-258    none  T 17.1-33.4 degC  heaters 1  play 0.59      BME tau2   0  BME drift -1.08 @4.29 h;
+  bme-step-259     none  T 17.7-25.9 degC  heaters 1  pi 0.57/1.72   BME tau2 337  BME step +1.93 @3.40 h;
+  drift-ramp-260   fault T 27.0-41.3 degC  heaters 2  pi 0.51/1.04   BME tau2 138  ch5 drift +0.363 @2.71 h;
+  drift-sine-261   fault T 24.4-35.5 degC  heaters 2  relax 541      BME tau2 235  ch2 drift -0.0327 @3.40 h;
+  step-262         fault T 20.5-34.6 degC  heaters 2  pi 0.21/1.81   BME tau2 389  ch1 step -0.0337 @2.78 h;
+  slow-263         slow  T 25.3-25.3 degC  heaters 2  pi 0.22/1.46   BME tau2   0  ch6 drift -0.301 @2.46 h;
+  two-faults-264   fault T 21.8-38.5 degC  heaters 2  pi 0.30/1.14   BME tau2 286  ch6 drift +0.414 @2.93 h; ch1 drift -0.0324 @3.03 h;
+  clean-265        none  T 16.3-34.2 degC  heaters 2  pi 0.48/1.29   BME tau2 184
+  heaters-266      none  T  1.6-15.4 degC  heaters 3  pi 0.44/1.59   BME tau2   0
+  emi-267          none  T 16.8-32.5 degC  heaters 1  relax 588      BME tau2   0  EMI 2.79-3.45 h [+1.8 -0.8 +0.6];
+  bme-drift-268    none  T 18.8-28.1 degC  heaters 2  play 0.76      BME tau2   0  BME drift -0.70 @2.95 h;
+  bme-step-269     none  T 19.7-31.3 degC  heaters 1  play 1.14      BME tau2   0  BME step +1.37 @2.79 h;
+  drift-ramp-270   fault T 21.3-31.5 degC  heaters 1  play 0.86      BME tau2 359  ch5 drift -0.518 @3.22 h;
+  drift-sine-271   fault T 20.1-32.2 degC  heaters 2  relax 547      BME tau2   0  ch6 drift +0.559 @3.36 h;
+  step-272         fault T 21.8-29.9 degC  heaters 1  pi 0.42/1.64   BME tau2 160  ch8 step -1.42 @2.86 h;
+  slow-273         slow  T 30.0-30.0 degC  heaters 1  play 1.42      BME tau2 138  ch2 drift -0.0204 @2.75 h;
+  two-faults-274   fault T 13.4-28.2 degC  heaters 1  relax 112      BME tau2 189  ch4 drift +0.506 @4.97 h; ch9 drift -0.351 @5.43 h;
+  clean-275        none  T 25.7-34.9 degC  heaters 2  relax 562      BME tau2 103
+  heaters-276      none  T 23.6-38.5 degC  heaters 3  relax 169      BME tau2   0
+  emi-277          none  T 23.0-38.0 degC  heaters 1  relax 491      BME tau2   0  EMI 4.27-4.45 h [+1.1 +2.0 +1.6];
+  bme-drift-278    none  T 22.4-39.3 degC  heaters 2  relax 424      BME tau2   0  BME drift -0.74 @3.76 h;
+  bme-step-279     none  T  8.3-25.0 degC  heaters 1  pi 0.28/1.19   BME tau2 246  BME step +1.39 @4.10 h;
+  drift-ramp-280   fault T 27.3-45.2 degC  heaters 2  relax 578      BME tau2   0  ch8 drift +0.477 @3.28 h;
+  drift-sine-281   fault T 12.6-29.0 degC  heaters 1  pi 0.52/1.51   BME tau2   0  ch1 drift -0.034 @3.46 h;
+  step-282         fault T 25.1-39.7 degC  heaters 2  pi 0.42/1.24   BME tau2   0  ch1 step +0.0226 @4.95 h;
+  slow-283         slow  T 33.2-33.2 degC  heaters 2  play 0.70      BME tau2 332  ch2 drift +0.017 @1.93 h;
+  two-faults-284   fault T 24.8-33.6 degC  heaters 1  play 1.44      BME tau2 149  ch6 drift +0.455 @3.31 h; ch1 drift +0.021 @3.65 h;
+  clean-285        none  T 29.3-44.7 degC  heaters 1  play 1.49      BME tau2   0
+  heaters-286      none  T  2.7-15.6 degC  heaters 3  pi 0.50/1.46   BME tau2   0
+  emi-287          none  T 19.4-37.5 degC  heaters 2  relax 182      BME tau2   0  EMI 3.80-4.25 h [-1.2 -1.9 +1.9];
+  bme-drift-288    none  T 10.9-30.0 degC  heaters 1  pi 0.42/1.74   BME tau2 219  BME drift +1.41 @5.36 h;
+  bme-step-289     none  T 21.9-35.1 degC  heaters 1  play 1.13      BME tau2   0  BME step +1.72 @3.08 h;
+  drift-ramp-290   fault T 17.8-33.5 degC  heaters 2  play 1.22      BME tau2   0  ch6 drift -0.493 @5.02 h;
+  drift-sine-291   fault T 20.0-30.0 degC  heaters 1  play 0.53      BME tau2   0  ch6 drift +0.448 @3.14 h;
+  step-292         fault T 11.5-24.2 degC  heaters 2  pi 0.33/1.69   BME tau2 297  ch4 step +0.362 @3.04 h;
+  slow-293         slow  T 30.2-30.2 degC  heaters 2  relax 322      BME tau2 160  ch6 drift +0.262 @2.57 h;
+  two-faults-294   fault T 20.1-35.1 degC  heaters 1  play 1.28      BME tau2   0  ch8 drift -0.551 @4.37 h; ch2 drift -0.0377 @4.87 h;
+  clean-295        none  T 13.6-21.7 degC  heaters 2  relax 206      BME tau2   0
+  heaters-296      none  T 26.3-36.1 degC  heaters 3  relax 450      BME tau2 370
+  emi-297          none  T  8.2-18.6 degC  heaters 1  play 1.36      BME tau2 160  EMI 4.94-5.22 h [+0.5 -0.9 +1.6];
+  bme-drift-298    none  T 16.9-30.5 degC  heaters 2  play 0.73      BME tau2 309  BME drift -0.59 @3.14 h;
+  bme-step-299     none  T 27.0-35.7 degC  heaters 2  play 0.79      BME tau2   0  BME step -1.03 @5.34 h;
+Forms: play 36, relax 36, pi 28; BME second order 48
+  drift-ramp-200   runs; ICM hysteresis offset max 0.28 degC, BME - ICM die max 1.10 degC
+  drift-sine-201   runs; ICM hysteresis offset max 0.72 degC, BME - ICM die max 1.48 degC
+  step-202         runs; ICM hysteresis offset max 0.28 degC, BME - ICM die max 1.11 degC
+  slow-203         runs; ICM hysteresis offset max 0.00 degC, BME - ICM die max 1.11 degC
+  two-faults-204   runs; ICM hysteresis offset max 0.60 degC, BME - ICM die max 1.50 degC
+  clean-205        runs; ICM hysteresis offset max 0.27 degC, BME - ICM die max 1.44 degC
+  heaters-206      runs; ICM hysteresis offset max 0.74 degC, BME - ICM die max 1.08 degC
+  emi-207          runs; ICM hysteresis offset max 1.21 degC, BME - ICM die max 1.74 degC
+  bme-drift-208    runs; ICM hysteresis offset max 0.42 degC, BME - ICM die max 1.25 degC
+  bme-step-209     runs; ICM hysteresis offset max 0.35 degC, BME - ICM die max 1.27 degC

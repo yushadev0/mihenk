@@ -1728,6 +1728,12 @@ Kullanıcı koştu. Okuma kuralı sonuçlardan önce commit edildi (14056c3). Ko
 
 **Karar 2, kabul:** G1'in simülasyon aşaması, karar 1'in seçtiği dedektör K1a–K4'ün **hepsini** iki gürültü tipinde de geçerse kapanıyor. Ölçüt tablosu iki dedektör için de yazdırılıyor.
 
+**Duman testi** ([çıktı](matlab/g1/test2/g1_smoke_test2_output.txt), kullanıcı koştu; ayrılmış kümede hiçbir dedektör sonucu yazdırmıyor):
+- v10 ve v6, v9 CSV'sindeki v9noE ve v6 satırlarını 3,6·10⁻¹⁴ farkla tekrarlıyor (dört koşu; gevşeme yolu dahil). Simülatör yolları değişmedi, v10 = v9noE.
+- İki eşit genişlikli PI, play ile bit düzeyinde aynı (fark 0).
+- Çekilen 100 senaryo ilan edilen aralıklarda. Biçimler: play 36, gevşeme 36, PI 28; ikinci derece BME yolu 48 senaryoda. Ortam sıcaklığı 1,3–45,2 °C, geliştirmedekinden (20–40 °C) geniş. Büyük τ'lu gevşemede ICM'nin histerezis sapması 1,2 °C'ye çıkıyor.
+- Her aileden bir senaryo simülatörde ve iki dedektörde hatasız koştu.
+
 **Sonuç ne olursa olsun:**
 - Koşu bir kez yapılıyor. Kalan ölçüt yazılıyor, iddianın kapsamı daraltılıyor. Bu kümeye bakarak ayar yapılmıyor ve küme bundan sonra kullanılmış sayılıyor.
 - İzin verilen tek müdahale, dedektörün mantığını değiştirmeyen hata düzeltmesi.
