@@ -14,7 +14,8 @@ function D = simulate_node(S)
 %               mag [channel unit per hour | channel unit]; may be empty
 %     emi       [] | struct t0, t1 [s], amp [1x3 uT] - magnetometer only
 %     bmeFault  [] | struct t0 [s], type "drift" | "step", mag [degC/h | degC]
-%     hystType  "play" | "relax" (ICM thermal hysteresis form), hystTau [s]
+%     hystType  "play" | "relax" (ICM thermal hysteresis form), hystTau [s],
+%               hystWidth [degC] play width of the ICM (default 1.0)
 %
 %   Firmware-visible outputs (60 s block means unless noted):
 %     D.Y       [nB x 9]  gx gy gz [dps] | ax ay az [mg] | mx my mz [uT]
@@ -43,7 +44,8 @@ def = struct( ...
     'emi',       [], ...
     'bmeFault',  [], ...
     'hystType',  "play", ...
-    'hystTau',   180);
+    'hystTau',   180, ...
+    'hystWidth', 1.0);
 def.faults = struct('ch', 3, 't0', 4.5*h, 'type', "drift", 'mag', 0.03);
 if nargin < 1, S = struct(); end
 for f = fieldnames(S)', def.(f{1}) = S.(f{1}); end
@@ -62,6 +64,7 @@ sensors = struct( ...
     'Rth',       {150,  150,  150}, ...     % assumed
     'hystWidth', {1.0,  0,    0}, ...       % assumed
     'hystTau',   {0,    0,    0});
+sensors(1).hystWidth = S.hystWidth;
 if S.hystType == "relax"
     sensors(1).hystWidth = 0;
     sensors(1).hystTau   = S.hystTau;

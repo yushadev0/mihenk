@@ -69,6 +69,7 @@ Rapor bu tuzakları "müfredat sınıf 8" olarak topluyor. G1'in değeri kolay s
 | 16 | [`g1_prototype_v6.m`](matlab/g1/v6/g1_prototype_v6.m) | v6 (A: lead-lag T kaynağı, B: olay sonu bırakma, C1: ofset olayı, C2: model güvenilmez) ve ablasyonları; geliştirme + kullanılmış küme | ✅ eşdeğerlik 0 · ✅ T src dışı alarm 13 → 0, EMI sonrası %25 → %0, basamak kapsaması %11–76 → %99 · aday v6 · ❌ K1b: histerezis uyuşmazlığı (T9 beyaz 52/saat) · ⚠ C1 uyuşmazlıkta kaymayı ofset sanıyor · ⚠ C2 etkisiz |
 | 17 | [`g1_diag_v6_side.m`](matlab/g1/v6/g1_diag_v6_side.m) | Tanı: v6 yan etkileri (16E), referans maskesi ve model izi | ❌ H1/H3 reddedildi · mz: eşiğe yakın yanlılık, 10 tohumun 2sinde · ✅ erken bırakma sistematik (10/10): donmuş kanalda model hatası (T − T0)² ile ölçekleniyor, 15C ile aynı hata |
 | 18 | [`g1_prototype_v7.m`](matlab/g1/v7/g1_prototype_v7.m) | v7 (D1: donma anına göre model hatası, D2: büyük ve büyümeyen sapma = ofset) ve ablasyonları | ✅ eşdeğerlik 0, v6 regresyonu 4·10⁻¹⁵ · ✅ D1 basamağın erken bırakılmasını çözüyor · ❌ D1 histerezis uyuşmazlığını açığa çıkarıyor (T9 beyaz 52 → 127/saat) · ❌ D2 yavaş kaymaları ofset sanıyor · kurala göre aday v7, ama v6 genel olarak daha iyi; kuralda önceki sürüm karşılaştırması yoktu |
+| 19 | [`g1_prototype_v8.m`](matlab/g1/v8/g1_prototype_v8.m) | v8 (v6 + D1 + R: gevşeme histerezisi adayları) ve ablasyonları, v6'ya karşı iki adımlı kural | ✅ eşdeğerlik 0, iki regresyon 4·10⁻¹⁵ · ✅ R histerezis alarmlarını kaldırıyor (beyaz en kötü 51,6 → 3,8/saat) · ❌ renkli kapsama %79,7 → %78,0 (tolerans 1 puan) → kurala göre G1 = v6 · ⚠ kayıp çoğunlukla D1'den, two-faults'ta sistematik · ⚠ renkli gürültüde biçim seçimi şaşıyor |
 
 **Kritik kurallar** (MATLAB referans modelinde her zaman uygulanacak):
 
@@ -1412,6 +1413,79 @@ Veri v6 ile aynı. Kontroller:
 - **Histerezis biçimi artık her şeyin önünde.** Hem K1b'nin hem D1'in görünür kıldığı alarmların kaynağı bu.
 - **D2 yeniden tasarlanmalı.** "Büyüme yok" bir eşdeğerlik testiyle (equivalence test) gösterilmeli: eğimin güven aralığının üst sınırı, tespit edilmesi gereken en küçük kayma hızının altında kalmalı. Bu, açık konulardaki "en küçük algılanabilir kayma hızı" (9D) tanımına doğrudan bağlanıyor.
 - **Seçim kuralı:** Bundan sonra bir önceki sürüm de karşılaştırmaya girecek.
+
+---
+
+## 19. G1 v8: geliştirme koşusu ve v6 ile karşılaştırma
+
+**Script:** [`matlab/g1/v8/g1_prototype_v8.m`](matlab/g1/v8/g1_prototype_v8.m) · **Dedektör:** [`g1_detect_v8.m`](matlab/g1/v8/g1_detect_v8.m) · **Duman testi:** [`g1_smoke_v8.m`](matlab/g1/v8/g1_smoke_v8.m) · **Çıktı:** [`g1_v8_output.txt`](matlab/g1/v8/g1_v8_output.txt) · **Ham sonuçlar:** [`g1_v8_results.csv`](matlab/g1/v8/g1_v8_results.csv)
+
+Kullanıcı koştu. Dedektör, ablasyonlar ve iki adımlı seçim kuralı sonuçlardan önce commit edildi (db4c1c6).
+
+**Ne yapıldı:** v8 = v6 + v7'nin D1'i + **R**. D2 kapalı.
+- **R (gevşeme histerezisi adayları):** Kanal modeli histerezisi şimdiye kadar yalnız play biçiminde tanıyordu. R, play genişliklerinin yanına `h = T − gecikme(T, τh)` regresörünü ekliyor. τh ızgarası 60, 120, 240, 480, 960 s; seçimi yine SSE yapıyor. Izgara simülatörün 180 s'sini ve T9'un 300 s'sini bilerek içermiyor; ızgara uyuşmazlığının payı saklanmıyor, ölçülüyor.
+- **Bedel:** Kanal ve referans başına model sayısı 5'ten 10'a çıkıyor (bellek bütçesi, açık konular).
+
+Veri v6 ve v7 ile aynı (geliştirme kümesi tohum 0–9 + kullanılmış küme tohum 100–109). Kontroller:
+- **Eşdeğerlik:** R kapalı ve eski taban modunda v8 = v6; R kapalıyken v8 = v7noD2. İkisinde de fark 0.
+- **Regresyon:** v6 satırları §16'daki CSV ile, v8noR satırları §18'deki v7noD2 satırlarıyla aynı (her biri 3879 değer, en büyük göreli fark 4·10⁻¹⁵).
+
+| Ölçüt (bütün koşular) | v6 | noR (= v6 + D1) | noD1 (= v6 + R) | v8 |
+|---|---|---|---|---|
+| En kötü koşu, beyaz (yanlış alarm/saat) | 51,6 | 127,1 | 8,1 | **3,8** |
+| En kötü koşu, renkli | 13,6 | 14,4 | 11,8 | 11,8 |
+| Yanlış alarm olayı/saat, beyaz | 0,41 | 0,39 | 0,05 | **0,04** |
+| Yanlış alarm olayı/saat, renkli | 0,11 | 0,08 | 0,10 | 0,08 |
+| Kapsama, beyaz | %89,3 | %91 | %91 | **%92,2** |
+| Kapsama, renkli | **%79,7** | %79 | %77 | %78,0 |
+| Tespit, beyaz / renkli | %100 / %99 | aynı | aynı | aynı |
+| Gecikme medyanı, beyaz / renkli (dk) | 5,5 / 25,5 | aynı | aynı | aynı |
+
+**Seçim kuralının sonucu: G1 dedektörü v6 olarak kalıyor.**
+- **1. adım (v8 ailesi):** aday v8. noR 29 hücrede kötü / 39'unda iyi; noD1 42 kötü / 46 iyi. İkisi de "hiçbir yerde kötü değil" şartını sağlamıyor.
+- **2. adım (v8, v6'ya karşı):**
+  - (a) v8, 59 hücrede iyi / 58'inde kötü → geçti.
+  - (b) beyaz: en kötü 3,8 / 51,6, kapsama %92,2 / %89,3, tespit eşit → geçti.
+  - (b) renkli: en kötü 11,8 / 13,6, tespit eşit, ama **kapsama %78,0 / %79,7**. Fark 1,7 puan, ilan edilen tolerans 1 puan → **kaldı**.
+
+**Bulgu 19A: R hedeflediği sorunu çözüyor. K1b beyaz gürültüde ilk kez geçer durumda.**
+- Histerezis uyuşmazlığından gelen alarmlar neredeyse tamamen gitti:
+  - hyst-relax / beyaz: en kötü 38,8 → 0, kapsama %92 → %98;
+  - T9 / beyaz: en kötü 51,6 → 3,0, olay oranı 3,95 → 0,03/saat, kapsama %80 → %92.
+- Beyaz gürültüde bütün koşuların en kötüsü 3,8/saat; K1b eşiği (≤ 6) altında. Bu geliştirme kümesinde bir gözlem, ayrılmış test değil.
+- **Biçim seçimi beyaz gürültüde doğru:** gevşeme biçimi relax senaryolarında blokların %91–98'inde seçiliyor, play senaryolarında %0–1'inde. Seçilen τ duman testinde 240 s'ye oturdu (ızgarada 180 ve 300'e en yakın değer).
+- **D1, R ile birlikte işe yarıyor:** §18'de D1 tek başına histerezis alarmlarını büyütüyordu (noR'da en kötü 127). R uyuşmazlığı kaldırınca D1'in T2 basamağındaki kazancı kalıyor (T2 / beyaz kapsama %65 → %98).
+
+**Bulgu 19B: Renkli kapsamadaki kaybın büyük kısmı D1'den geliyor ve sistematik.**
+- Kapsama kaybı birkaç senaryoda yoğunlaşıyor:
+
+| Senaryo | v6 | noR | noD1 | v8 |
+|---|---|---|---|---|
+| two-faults / beyaz | %55 | %41 | %55 | %41 |
+| two-faults / renkli | %62 | %57 | %62 | %58 |
+| day-cycle / renkli | %85 | %77 | %86 | %77 |
+| T9 / renkli | %62 | %54 | %58 | %53 |
+
+- two-faults ve day-cycle'da noD1, v6 ile aynı; kayıp D1 olan iki varyantta var. Yani kaynak R değil, D1.
+- two-faults / beyazda v8 10 tohumun 10'unda %40–42 veriyor (v6: %42–70). Tohumdan bağımsız bu kadar dar bir değer, deterministik bir mekanizmaya işaret ediyor. **Mekanizma doğrulanmadı.** Tahmin (H1): iki arıza bir rampada birlikte başlayınca D1'in sabitlenmiş model hatası `(T − T_donma)²` ile büyüyor, |z| 3'ün altına iniyor, büyüme testi "büyüme yok" deyip kanalı ofset olayı olarak bırakıyor ve yeniden kalibrasyon kaymayı yutuyor (16B'deki mekanizmanın D1'li hâli).
+- T9 / renklide kayıp iki bileşende de var (noR %54, noD1 %58).
+- Kazançlar da var: T2 / beyaz +33 puan, T9 / beyaz +12, hyst-relax / beyaz +6, T3 / renkli +6.
+
+**Bulgu 19C: Renkli gürültüde R, play histerezisinde de gevşeme biçimini seçiyor.**
+- base / renkli %23, two-faults / renkli %28, accel-step / renkli %24 blokta gevşeme seçiliyor. Gerçek histerezis bu senaryolarda play türünde.
+- Beyazda bu oran %0–1. Renkli gürültünün yavaş bileşeni, iki biçimi SSE ile ayırmayı zorlaştırıyor (tanınabilirlik, 6F ile aynı aile).
+- Bu yanlış seçimin kapsamaya etkisi tutarsız: base / renklide etki yok, T3 / renklide noD1'in kapsaması %65'ten %48'e düşüyor.
+
+**Bulgu 19D: Aşırı uyum (overfitting) sorusu. Geliştirme koşusu buna tek başına cevap veremez.**
+- R'nin kazançları tam olarak simülatörün gevşeme biçimini kullanan senaryolarda yoğunlaşıyor. R bu biçimi birebir modelliyor (ADR-012, döngüsellik).
+- Izgaranın gerçek τ'yu içermemesi τ'ya uyumu dışlıyor, **biçime uyumu dışlamıyor**. Biçime uyumu ancak modellenmemiş üçüncü bir histerezis biçimi içeren ayrılmış küme sınayabilir.
+- Geliştirme koşusunda tohumlara uyum riski düşük: aynı farklar 10 tohumun çoğunda görülüyor. Bu yine de ayrıca sınanacak (aşağıda).
+
+**Kullanıcı önerisi ve kayıt:** Kullanıcı, sonuçları gördükten sonra renkli kapsama toleransının 1 puandan 2 puana çıkarılmasını önerdi; gerekçe v8'in yanlış alarmlardaki büyük üstünlüğü. Fark 1,7 puan olduğu için bu değişiklik v8'i geçirmeye tam yetecek kadar. Uygulanırsa **sonuç sonrası karar** olarak işaretlenecek. Karar aşağıdaki tanıdan sonra verilecek.
+
+**Sonraki adım:** [`g1_diag_v8.m`](matlab/g1/v8/g1_diag_v8.m), iki bölüm:
+1. **Mekanizma (19B):** two-faults, day-cycle / renkli ve T9 / renklide arızalı kanal başına kapsama, serbest bırakmalar (tür), ofset olayları ve bırakmadan sonra kaybedilen bloklar; H1'in sınanması.
+2. **Genelleme (19D):** Taze tohumlarda (300–309; ayrılmış küme bu aralığı kullanmayacak) ızgarada olmayan parametrelerle v6, noD1 ve v8: gevşeme τ = 90 ve 600 s, play genişliği 0,6 ve 1,6 °C (simülatöre varsayılanı 1,0 olan bir genişlik alanı eklendi; varsayılan yol bit düzeyinde aynı), ayrıca two-faults ve day-cycle'ın taze tohumları.
 
 ---
 

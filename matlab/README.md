@@ -58,6 +58,7 @@ Findings and the reasoning behind every script are logged in [`../bulgular.md`](
 | `g1/v8/g1_detect_v8.m` | function | v8 detector: v6 + D1 of v7 + relaxation hysteresis candidates next to the play widths (R); D2 off |
 | `g1/v8/g1_prototype_v8.m` | script | v8 dev run: v6, v8 and ablations noR/noD1, regressions vs v6 and v7noD2, selection within v8 and then against v6 |
 | `g1/v8/g1_smoke_v8.m` | script | Quick equivalence and run check before the v8 dev run |
+| `g1/v8/g1_diag_v8.m` | script | Diagnosis after the v8 dev run (bulgular 19): mechanism of the coverage loss, generalization to off-grid hysteresis parameters on fresh seeds |
 | `g1/site/g1_export_site.m` | script | Exports the run behind the main-idea scene of the project page (`web/public/data/story.json`) |
 
 Detectors receive only firmware-visible inputs.
