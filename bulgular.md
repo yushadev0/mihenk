@@ -75,7 +75,7 @@ Rapor bu tuzakları "müfredat sınıf 8" olarak topluyor. G1'in değeri kolay s
 | 20 (tanı) | [`g1_diag_v9.m`](matlab/g1/v9/g1_diag_v9.m) | E'nin bırakamadığı yanlış alarmlar ve T10'daki ofset olayları | ✅ iz davranışı değiştirmiyor, oranlar CSV ile aynı · H2 dört koşunun üçünde (kural gereği kabul edilmedi), H3 hiçbirinde · ⚠ geliştirmedeki iki koşu 10F'nin baştan kilitlenen kanalları: E, büyüme testinin güvenlik kapısını kapatıyor · ❌ T10: renkli gürültüde 30 blokluk pencerede se iyimser → öneri v10 = v9noE |
 | 21 | [`g1_acceptance_test2.m`](matlab/g1/test2/g1_acceptance_test2.m) | v10 (= v9noE) ve v6, ikinci ayrılmış küme: 100 tohumdan otomatik üretilmiş senaryo × 2 gürültü, PI histerezisi, ikinci derece BME yolu (önceden ilan) | Küme, ölçütler (K1–K4) ve iki karar kuralı sonuçlardan önce commit'lendi · ✅ **G1 = v10** (87 iyi / 12 kötü hücre; beyaz en kötü 161,4 → 31,6, kapsama %78,6 → %97,6) · ✅ K2a–K2d, K3c–K3f, K4 geçti · ❌ **kabul FAIL**: K1b (31,6 / 12,8), K1c beyaz, K3a beyaz (sınırda), K3b (ortak sıcaklık kaynağı modeli, 19,1) |
 | 22 | [`g1_diag_tsrc2.m`](matlab/g1/v10/g1_diag_tsrc2.m) | Tanı: ikinci kabul testindeki olay dışı "T src" alarmları (21C); ısıtıcısız ve birinci derece BME yolu karşı-olgusalları | ✅ kopya 100/100 birebir · ✅ H1 (ısıtıcı) K3b'nin ~%73'ü: ısıtıcı penceresinde tek bir "geri giriş" güncellemesi modeli bozuyor · ✅ H2 (ikinci derece yol, τ2 ≥ 359 s) ~%24: model hatası payı olmayan sT yine kilitliyor · H3 iki koşu: biri puanlama sınır bloğu |
-| 23 | [`g1_dev_tsrc_v11.m`](matlab/g1/v11/g1_dev_tsrc_v11.m) | Sıcaklık kaynağı modeli: geri giriş beklemesi (H) ve geniş gecikme ızgarası (W), dev + iki kullanılmış küme | Varyantlar ve seçim kuralı sonuçtan önce commit'lendi · sonuç bekleniyor |
+| 23 | [`g1_dev_tsrc_v11.m`](matlab/g1/v11/g1_dev_tsrc_v11.m) | Sıcaklık kaynağı modeli: geri giriş beklemesi (H) ve geniş gecikme ızgarası (W), dev + iki kullanılmış küme | Varyantlar ve seçim kuralı sonuçtan önce commit'lendi · ✅ kontroller 100/100, 280/280 · ✅ HW spent2'de K3b'yi 19,4 → 0,84'e indiriyor · ❌ kurala göre v6 kalıyor: ısıtıcı payı 0,873 → 0,851 · ⚠ düşüşün tamamı v6'nın kilitlendiği 11 koşudan, kısmen ters işaretli kilit alarmları (sonuç sonrası) |
 
 **Kritik kurallar** (MATLAB referans modelinde her zaman uygulanacak):
 
@@ -1894,6 +1894,35 @@ Kullanıcı §22'den sonra H1 ve H2 için düzeltmelerin yazılmasına karar ver
 - K3b hedefi (koşu başına ortalama ≤ 1) her küme için raporlanıyor.
 
 **Sonraki adım (bu koşudan sonra):** Seçilen sıcaklık kaynağı modeliyle v11 = v10 + yeni model. T-src çıktısı hareket kanallarının referans seçimini de etkilediği için (`usable`) tam dedektörün geliştirme koşusu gerekiyor. Ardından üçüncü ayrılmış küme ilan edilecek.
+
+### 23 (sonuç)
+
+**Çıktı:** [`g1_dev_tsrc_v11_output.txt`](matlab/g1/v11/g1_dev_tsrc_v11_output.txt) · **Ham sonuçlar:** [`g1_dev_tsrc_v11_results.csv`](matlab/g1/v11/g1_dev_tsrc_v11_results.csv) · **Figür:** [`g1_dev_tsrc_v11.png`](matlab/figures/g1_dev_tsrc_v11.png)
+
+Kullanıcı bir kez koştu. Betik değiştirilmedi. **C1 100/100, C2 280/280 birebir.**
+
+**Kural sonucu: sıcaklık kaynağı modeli v6'da kalıyor.**
+- Adım 1: aday HW. H, 8 hücrede kötü / 6'sında iyi; W, 9'da kötü / 6'sında iyi.
+- Adım 2: dev ve spent1'de HW her kalemde v6 ile aynı (ikisinde de olay dışı alarm zaten 0). spent2'de olay dışı alarm 19,44 → 0,84 (K3b hedefi ≤ 1 tutuyor), BME arızası kapsaması 0,981 → 0,983, gecikme aynı. Ama **ısıtıcı payı 0,873 → 0,851**, tolerans 0,01 aşılıyor → FAIL.
+
+**Bulgu 23A: Düzeltmeler hedeflediği şeyi yapıyor (spent2, dairesel).**
+- H tek başına ısıtıcı kilitlerini kaldırıyor: two-faults 29,5 → 0, clean 28,9 → 0, bme-step 5,4 → 0. H2 koşularına (emi 31,7) dokunmuyor.
+- W tek başına H2 koşularını kaldırıyor: emi 31,7 → 0, drift-ramp-270 150 → 0. Isıtıcı kilitlerine dokunmuyor.
+- İkisi birlikte (HW) 1944 bloktan 84'ü kalıyor: drift-ramp-220 39 ve heaters-216 45. İkisinde de geri tutulan blok sayısı çok yüksek (145, 149): model uzun süre kapı çevresinde gidip geliyor. Mekanizma doğrulanmadı.
+- Dev ve spent1'de hiçbir şey değişmiyor. Yani düzeltmeler önceki kümelerin hiçbir koşusunu bozmuyor; ama o kümelerde sınanacak bir şey de yoktu.
+
+**Bulgu 23B (sonuç sonrası okuma): Isıtıcı payındaki düşüşün tamamı, v6'nın kilitlendiği 11 koşudan geliyor. Bu koşularda v6'nın "ısıtıcı tespitinin" bir kısmı ters işaretli kilit alarmı.**
+- v6'nın olay dışı alarm verdiği 11 koşu: ısıtıcı payı v6 0,858, HW 0,657. Kalan 89 koşu: v6 0,874, HW 0,874 (HW 3 koşuda 1 puandan fazla kötü, 5 koşuda iyi).
+- Figürde step-242, two-faults-264 ve bme-step-269'da v6'nın zT'si ısıtıcı penceresinin içinde **negatif** işarete geçiyor (−20 civarı). Isıtıcı BME'yi yalnız ısıtır, yani gerçek bir ısıtıcı izi pozitif eT verir. Negatif alarmlar 22B'deki bozucu güncellemenin ürünü: kilit, ısıtıcı penceresi bitmeden başlıyor ve pencerenin kalanında "ısıtıcı tespiti" diye sayılıyor.
+- HW'de ise zT ısıtıcıda pozitif tepe yapıp kuyrukta 0'a dönüyor. Kuyrukta kaçırılan bloklar gerçek ama küçük bir kalıntı (donmuş modelin sT'si büyüdükçe z eşiğin altına iniyor).
+- Yani ölçüt, kilidin ısıtıcı penceresine taşan kısmını ödüllendiriyor. Bu bir ölçüt tanımı açığı: "ısıtıcı tespiti" yönden bağımsız tanımlanmış. Bu okuma sonuçlar görüldükten sonra yapıldı. İlan edilen kural geriye dönük değiştirilmiyor; karar kullanıcının.
+
+**Bulgu 23C (betimleyici):** Koşu sonunda seçilen gecikme ikinci derece yolda medyan 280–300 s (gerçek net gecikme medyanı 447 s). Geniş ızgara koşu sonunda nadiren kullanılıyor; W'nin etkisi rampa sonrası oturma evresinde.
+
+**Seçenekler (karar kullanıcının):**
+1. **Kurala uy:** v6 kalır, v11 sıcaklık kaynağı düzeltmesi olmadan devam eder. K3b üçüncü kümede de büyük olasılıkla kalır.
+2. **Ölçüt düzeltmesini ilan et, sonra yeniden puanla:** Isıtıcı tespiti yalnız pozitif yönlü alarmları (zT > +eşik) saysın. Bu tanım, sonucu görmeden önce ilan edilmiş olsaydı doğal olandı; ama şimdi sonuç sonrası olduğu için öyle etiketlenir. Kural aynen kalır, yalnız ölçüt değişir. Yeniden koşu ~35 dk.
+3. Her iki durumda da asıl karar üçüncü ayrılmış kümede verilecek. Bu koşu yalnız geliştirme seçimi.
 
 ---
 

@@ -1,0 +1,83 @@
+Re-entry hold: H m = 15 blocks, HW m = 30 blocks
+
+   20 / 380 runs (80 s)
+   40 / 380 runs (160 s)
+   60 / 380 runs (239 s)
+   80 / 380 runs (319 s)
+  100 / 380 runs (399 s)
+  120 / 380 runs (494 s)
+  140 / 380 runs (587 s)
+  160 / 380 runs (669 s)
+  180 / 380 runs (757 s)
+  200 / 380 runs (838 s)
+  220 / 380 runs (918 s)
+  240 / 380 runs (999 s)
+  260 / 380 runs (1080 s)
+  280 / 380 runs (1161 s)
+  300 / 380 runs (1242 s)
+  320 / 380 runs (1324 s)
+  340 / 380 runs (1406 s)
+  360 / 380 runs (1487 s)
+  380 / 380 runs (1569 s)
+
+C1 v6 variant vs acceptance CSV (spent2): 0 mismatches of 100 runs (must be 0)
+C2 v6 variant vs g1_dev_tsrc_v6 L (dev + spent1): 0 mismatches of 280 runs (must be 0)
+
+Per group: outside mean [max] | heatDet | BME fault cov / median delay [min]
+
+[dev]
+group            | v6                         | H                          | W                          | HW                        
+base             |   0.0 [  0] 0.96 -/- |   0.0 [  0] 0.96 -/- |   0.0 [  0] 0.96 -/- |   0.0 [  0] 0.96 -/-
+hold-fault       |   0.0 [  0] 0.96 -/- |   0.0 [  0] 0.96 -/- |   0.0 [  0] 0.96 -/- |   0.0 [  0] 0.96 -/-
+accel-step       |   0.0 [  0] 0.96 -/- |   0.0 [  0] 0.96 -/- |   0.0 [  0] 0.96 -/- |   0.0 [  0] 0.96 -/-
+two-faults       |   0.0 [  0] 0.96 -/- |   0.0 [  0] 0.96 -/- |   0.0 [  0] 0.96 -/- |   0.0 [  0] 0.96 -/-
+emi              |   0.0 [  0] 0.96 -/- |   0.0 [  0] 0.96 -/- |   0.0 [  0] 0.96 -/- |   0.0 [  0] 0.96 -/-
+bme-fault        |   0.0 [  0] 0.96 0.93/  14 |   0.0 [  0] 0.96 0.93/  14 |   0.0 [  0] 0.96 0.93/  14 |   0.0 [  0] 0.96 0.93/  14
+hyst-relax       |   0.0 [  0] 0.96 -/- |   0.0 [  0] 0.96 -/- |   0.0 [  0] 0.96 -/- |   0.0 [  0] 0.96 -/-
+day-cycle        |   0.0 [  0] 0.96 -/- |   0.0 [  0] 0.96 -/- |   0.0 [  0] 0.96 -/- |   0.0 [  0] 0.96 -/-
+
+[spent1]
+group            | v6                         | H                          | W                          | HW                        
+t1-fast-ramp     |   0.0 [  0] 0.95 -/- |   0.0 [  0] 0.95 -/- |   0.0 [  0] 0.95 -/- |   0.0 [  0] 0.95 -/-
+t2-plateau-step  |   0.0 [  0] 0.91 -/- |   0.0 [  0] 0.91 -/- |   0.0 [  0] 0.91 -/- |   0.0 [  0] 0.91 -/-
+t3-slow-sine     |   0.0 [  0] 0.95 -/- |   0.0 [  0] 0.95 -/- |   0.0 [  0] 0.95 -/- |   0.0 [  0] 0.95 -/-
+t4-mag-drift     |   0.0 [  0] 0.95 -/- |   0.0 [  0] 0.95 -/- |   0.0 [  0] 0.95 -/- |   0.0 [  0] 0.95 -/-
+t5-two-heaters   |   0.0 [  0] 0.94 -/- |   0.0 [  0] 0.94 -/- |   0.0 [  0] 0.94 -/- |   0.0 [  0] 0.94 -/-
+t6-emi-plateau   |   0.0 [  0] 0.95 -/- |   0.0 [  0] 0.95 -/- |   0.0 [  0] 0.95 -/- |   0.0 [  0] 0.95 -/-
+t7-bme-step      |   0.0 [  0] 0.95 1.00/   0 |   0.0 [  0] 0.95 1.00/   0 |   0.0 [  0] 0.95 1.00/   0 |   0.0 [  0] 0.95 1.00/   0
+t8-cycle-clean   |   0.0 [  0] 0.95 -/- |   0.0 [  0] 0.95 -/- |   0.0 [  0] 0.95 -/- |   0.0 [  0] 0.95 -/-
+t9-relax-az      |   0.0 [  0] 0.95 -/- |   0.0 [  0] 0.95 -/- |   0.0 [  0] 0.95 -/- |   0.0 [  0] 0.95 -/-
+t10-slow-drift   |   0.0 [  0] 0.95 -/- |   0.0 [  0] 0.95 -/- |   0.0 [  0] 0.95 -/- |   0.0 [  0] 0.95 -/-
+
+[spent2]
+group            | v6                         | H                          | W                          | HW                        
+drift-ramp       |  42.2 [272] 0.88 -/- |  17.4 [150] 0.85 -/- |  27.2 [272] 0.89 -/- |   3.9 [ 39] 0.86 -/-
+drift-sine       |   0.0 [  0] 0.84 -/- |   0.0 [  0] 0.84 -/- |   0.0 [  0] 0.84 -/- |   0.0 [  0] 0.84 -/-
+step             |  24.9 [194] 0.82 -/- |   5.5 [ 55] 0.80 -/- |  19.4 [194] 0.80 -/- |   0.0 [  0] 0.77 -/-
+slow             |   0.0 [  0] 0.86 -/- |   0.0 [  0] 0.86 -/- |   0.0 [  0] 0.86 -/- |   0.0 [  0] 0.86 -/-
+two-faults       |  29.5 [295] 0.87 -/- |   0.0 [  0] 0.83 -/- |  29.5 [295] 0.87 -/- |   0.0 [  0] 0.84 -/-
+clean            |  28.9 [289] 0.81 -/- |   0.0 [  0] 0.81 -/- |  28.9 [289] 0.81 -/- |   0.0 [  0] 0.82 -/-
+heaters          |  31.8 [163] 0.89 -/- |  15.4 [154] 0.87 -/- |  31.8 [163] 0.89 -/- |   4.5 [ 45] 0.85 -/-
+emi              |  31.7 [178] 0.88 -/- |  31.7 [178] 0.88 -/- |   0.0 [  0] 0.88 -/- |   0.0 [  0] 0.88 -/-
+bme-drift        |   0.0 [  0] 0.94 0.97/   6 |   0.0 [  0] 0.94 0.96/   6 |   0.0 [  0] 0.93 0.97/   7 |   0.0 [  0] 0.93 0.97/   7
+bme-step         |   5.4 [ 54] 0.92 0.99/   0 |   0.0 [  0] 0.86 0.99/   0 |   5.4 [ 54] 0.92 0.99/   0 |   0.0 [  0] 0.86 0.99/   0
+
+Step 1 (family rule), vs HW:
+  H  worse in 8, better in 6 cells
+  W  worse in 9, better in 6 cells
+  -> candidate: HW
+
+Step 2: HW vs v6 per set (all runs)
+  [dev] outside 0.00 vs 0.00 pass | heatDet 0.960 vs 0.960 pass | faultCov 0.930 vs 0.929 pass | delay 13.5 vs 13.5 pass
+         K3b target (mean outside <= 1): HW pass
+  [spent1] outside 0.00 vs 0.00 pass | heatDet 0.948 vs 0.948 pass | faultCov 1.000 vs 1.000 pass | delay 0.5 vs 0.5 pass
+         K3b target (mean outside <= 1): HW pass
+  [spent2] outside 0.84 vs 19.44 pass | heatDet 0.851 vs 0.873 FAIL | faultCov 0.983 vs 0.981 pass | delay 0.6 vs 0.6 pass
+         K3b target (mean outside <= 1): HW pass
+  -> temperature-source model for v11: v6
+
+Median tau_B at end of run [s], spent2 by BME path (truth 200 + tau2)
+  v6  first order  220 | second order  280 (true net lag median  447)
+  H   first order  220 | second order  300 (true net lag median  447)
+  W   first order  220 | second order  280 (true net lag median  447)
+  HW  first order  220 | second order  300 (true net lag median  447)
