@@ -40,11 +40,23 @@ function A = g1_tsrc_v6(D, opt)
 %      from a benign model error by its size alone). Kept as an ablation
 %      so the trade-off is measured, not argued.
 %
+%   4. opt.reentryHold (v11, default 0 = off) [blocks]. Bulgular 22B: after
+%      the gate has rejected a block (heater), the frozen model's sT grows
+%      as x moves away from the learned region; |zT| then dips below zU for
+%      one block while the heater residual is still in the data, and that
+%      single update (large P, large error) moves b, c and the lag choice
+%      to a confident wrong model that locks for hours. With reentryHold =
+%      m > 0, once a block after warm-up is rejected the model updates
+%      again only after m consecutive blocks with |zT| < zU (the m-th one
+%      included). Until the first rejection nothing changes.
+%
 %   With structure "lag", gridErr false and frozenFloor false this is the
 %   v5 model operation for operation (checked against the acceptance CSV).
+%   With reentryHold = 0 it is the v6 model.
 %
 %   Output A (nB x 1 unless noted): zT, eT, sT, tf (|zT| > thrT after
-%   warm-up), upd (model updated), tau (selected tau_B), b, c, bsd.
+%   warm-up), upd (model updated), hold (in gate but held back by 4),
+%   tau (selected tau_B), b, c, bsd.
 
 o = struct( ...
     'warm',        30, ...           % blocks of unconditional learning at start
@@ -58,7 +70,8 @@ o = struct( ...
     'frozenFloor', false, ...        % covariance growth while not updated (3, ablation)
     'modelHorizon', 24*60, ...       % (3) blocks over which b, c may move by sbT, scT
     'sbT',         0.1, ...          % slope prior std (v5's initial value)
-    'scT',         300);             % lead prior std [s] (>= the largest tau_I in reason)
+    'scT',         300, ...          % lead prior std [s] (>= the largest tau_I in reason)
+    'reentryHold', 0);               % (4) quiet blocks before updating again, 0 = off
 if nargin > 1
     for f = fieldnames(opt)', o.(f{1}) = opt.(f{1}); end
 end
@@ -92,7 +105,8 @@ sig2T = sigT0^2;
 sseT  = zeros(1, nJ);
 
 [A.zT, A.eT, A.sT, A.b, A.c, A.bsd, A.tau] = deal(nan(nB, 1));
-[A.tf, A.upd] = deal(false(nB, 1));
+[A.tf, A.upd, A.hold] = deal(false(nB, 1));
+quiet = o.reentryHold;                      % consecutive in-gate blocks (4)
 for k = 1:nB
     decide = k > o.warm;
     eT = zeros(1, nJ);  sT = eT;
@@ -107,7 +121,10 @@ for k = 1:nB
     A.b(k) = thT(2, jb);  A.bsd(k) = sqrt(PT(2, 2, jb));  A.tau(k) = o.tauGrid(jb);
     if lead, A.c(k) = thT(3, jb); end
     A.tf(k) = decide && abs(zT) > o.thrT;
-    if ~decide || abs(zT) < o.zU
+    inGate = abs(zT) < o.zU;
+    if decide && ~inGate, quiet = 0; elseif inGate, quiet = quiet + 1; end
+    A.hold(k) = decide && inGate && quiet < o.reentryHold;
+    if ~decide || (inGate && quiet >= o.reentryHold)
         for j = 1:nJ
             x = regressor(LB(k, j) - L0(j), dLB(k, j), lead);
             [thT(:, j), PT(:, :, j)] = rlsUpdate(thT(:, j), PT(:, :, j), x, ...

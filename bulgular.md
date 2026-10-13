@@ -75,6 +75,7 @@ Rapor bu tuzakları "müfredat sınıf 8" olarak topluyor. G1'in değeri kolay s
 | 20 (tanı) | [`g1_diag_v9.m`](matlab/g1/v9/g1_diag_v9.m) | E'nin bırakamadığı yanlış alarmlar ve T10'daki ofset olayları | ✅ iz davranışı değiştirmiyor, oranlar CSV ile aynı · H2 dört koşunun üçünde (kural gereği kabul edilmedi), H3 hiçbirinde · ⚠ geliştirmedeki iki koşu 10F'nin baştan kilitlenen kanalları: E, büyüme testinin güvenlik kapısını kapatıyor · ❌ T10: renkli gürültüde 30 blokluk pencerede se iyimser → öneri v10 = v9noE |
 | 21 | [`g1_acceptance_test2.m`](matlab/g1/test2/g1_acceptance_test2.m) | v10 (= v9noE) ve v6, ikinci ayrılmış küme: 100 tohumdan otomatik üretilmiş senaryo × 2 gürültü, PI histerezisi, ikinci derece BME yolu (önceden ilan) | Küme, ölçütler (K1–K4) ve iki karar kuralı sonuçlardan önce commit'lendi · ✅ **G1 = v10** (87 iyi / 12 kötü hücre; beyaz en kötü 161,4 → 31,6, kapsama %78,6 → %97,6) · ✅ K2a–K2d, K3c–K3f, K4 geçti · ❌ **kabul FAIL**: K1b (31,6 / 12,8), K1c beyaz, K3a beyaz (sınırda), K3b (ortak sıcaklık kaynağı modeli, 19,1) |
 | 22 | [`g1_diag_tsrc2.m`](matlab/g1/v10/g1_diag_tsrc2.m) | Tanı: ikinci kabul testindeki olay dışı "T src" alarmları (21C); ısıtıcısız ve birinci derece BME yolu karşı-olgusalları | ✅ kopya 100/100 birebir · ✅ H1 (ısıtıcı) K3b'nin ~%73'ü: ısıtıcı penceresinde tek bir "geri giriş" güncellemesi modeli bozuyor · ✅ H2 (ikinci derece yol, τ2 ≥ 359 s) ~%24: model hatası payı olmayan sT yine kilitliyor · H3 iki koşu: biri puanlama sınır bloğu |
+| 23 | [`g1_dev_tsrc_v11.m`](matlab/g1/v11/g1_dev_tsrc_v11.m) | Sıcaklık kaynağı modeli: geri giriş beklemesi (H) ve geniş gecikme ızgarası (W), dev + iki kullanılmış küme | Varyantlar ve seçim kuralı sonuçtan önce commit'lendi · sonuç bekleniyor |
 
 **Kritik kurallar** (MATLAB referans modelinde her zaman uygulanacak):
 
@@ -1862,6 +1863,37 @@ Kullanıcı bir kez koştu (~7 dk + karşı-olgusallar). Betik değiştirilmedi.
 - **H2 için aday düzeltme:** sT'ye ölçülen bir yapı uyuşmazlığı payı (§15'te kullanıcının tanımı) ve/veya daha geniş bir gecikme ızgarası. Izgarayı genişletmek, ikinci kümenin τ2 aralığına bakılarak yapılmış olur. Bu yüzden üçüncü kümede daha geniş ve farklı bir termal yapı olmalı (ADR-012).
 - **Puanlama:** Arıza başlangıcını içeren blok arızaya dahil edilmeli (22D).
 - Bunların hiçbiri bu kümeyle sınanamaz; üçüncü ayrılmış küme gerekiyor.
+
+## 23. Sıcaklık kaynağı modeli için iki düzeltme: geliştirme koşusu (önceden ilan)
+
+**Script:** [`matlab/g1/v11/g1_dev_tsrc_v11.m`](matlab/g1/v11/g1_dev_tsrc_v11.m) · **Model:** [`g1_tsrc_v6.m`](matlab/g1/v6/g1_tsrc_v6.m) (yeni anahtar 4, varsayılan kapalı) · **Puanlama:** [`g1_truth_onset.m`](matlab/g1/g1_truth_onset.m)
+
+Kullanıcı §22'den sonra H1 ve H2 için düzeltmelerin yazılmasına karar verdi. Bu bölüm, varyantları ve seçim kuralını sonuçlardan önce ilan ediyor.
+
+**Düzeltmeler:**
+- **H (geri giriş beklemesi, 22B için):** Model, ısınmadan sonra kapı dışında bir blok gördüğünde, ancak art arda m blok |zT| < zU kaldıktan sonra yeniden güncelleniyor (m'inci blok dahil). İlk reddedilen bloğa kadar hiçbir şey değişmiyor. m = ⌈3 · max(τ ızgarası) / B⌉: modelin temsil edebildiği en yavaş gecikmenin üç zaman sabiti. Bu sürede o gecikmeden geçen bir bozulma ~%5'e söner. Ayar değil, ızgaradan türetiliyor. v6 ızgarasıyla m = 15, geniş ızgarayla m = 30. `reentryHold = 0` iken model v6 ile işlem işlem aynı.
+- **W (geniş gecikme ızgarası, 22C için):** τ ızgarası 0:20:300 yerine 0:20:600. **Dairesellik uyarısı:** Bu aralık, ikinci kümenin net gecikmesi (≤ ~600 s) görüldükten sonra seçildi. Bu yüzden W o kümede dairesel; üçüncü kümede daha yavaş ve yapısal olarak farklı BME yolları olmalı. Bellek notu: aday sayısı 16'dan 31'e çıkıyor (ATmega328P bütçesi için sonra bakılacak).
+- **HW = ikisi birlikte (aday).**
+- **Puanlama (22D):** Arıza başlangıcını içeren blok artık arızalı sayılıyor (`g1_truth_onset.m`). Bu değişiklik yalnız bu bölümden sonraki betiklerde geçerli; önceki sonuçlar eski etiketleriyle kalıyor.
+
+**Veri:** Hepsi geliştirme verisi, beyaz gürültü. Model yalnız sıcaklıkları okuyor ve sıcaklıklar gürültüden bağımsız.
+- dev: `g1_scenarios_v3`, tohum 0–9 (80 koşu)
+- spent1: birinci kabul kümesi, tohum 100–119 (200 koşu)
+- spent2: ikinci kabul kümesi, tohum 200–299 (100 koşu). Düzeltmeler bu kümeye bakılarak tasarlandı. Bu yüzden spent2, düzeltmelerin hedeflediği şeyi yapıp yapmadığını gösterir; genellenip genellenmediğini göstermez.
+
+**Kontroller (sonuç okunmadan önce tutmalı):**
+- C1: v6 varyantı, eski etiketlerle ve kabul testinin penceresiyle, spent2'nin 100 koşusunda `g1_acceptance2_runs.csv` (v10 / beyaz) ile birebir aynı.
+- C2: v6 varyantı, eski etiketlerle, dev + spent1'in 280 koşusunda `g1_dev_tsrc_v6_results.csv`'deki L varyantıyla birebir aynı.
+
+**Ölçütler (koşu başına, yeni etiketlerle):** olay dışı alarm (K3b), ısıtıcı penceresinde alarm payı (tuzağı T-src'nin görmesi), BME arızası blok kapsaması, BME arızasından sonraki ilk alarmın gecikmesi. Betimleyici olarak ayrıca en uzun kilit ve geri tutulan blok sayısı.
+
+**Seçim kuralı:**
+- Gruplar: dev ve spent1'de senaryo, spent2'de aile. Her grup için ortalama olay dışı alarm, ortalama ısıtıcı payı, ortalama BME arızası kapsaması ve medyan gecikme hesaplanıyor.
+- **Adım 1:** Aday HW. Ancak H ya da W, gruplar × ölçütler üzerinde hiçbir yerde kötü değil ve bir yerde iyiyse aday o olur.
+- **Adım 2:** Aday, v6'nın yerine ancak üç kümenin **her birinde** şu koşulların hepsini sağlarsa geçer: ortalama olay dışı alarm v6'dan düşük (ya da ikisi de 0), ısıtıcı payı ≥ v6 − 0,01, BME arızası kapsaması ≥ v6 − 0,01, medyan gecikme ≤ v6 + 1 dk. Aksi hâlde v6 kalır ve başarısız kalemler raporlanır, ayarla kapatılmaz.
+- K3b hedefi (koşu başına ortalama ≤ 1) her küme için raporlanıyor.
+
+**Sonraki adım (bu koşudan sonra):** Seçilen sıcaklık kaynağı modeliyle v11 = v10 + yeni model. T-src çıktısı hareket kanallarının referans seçimini de etkilediği için (`usable`) tam dedektörün geliştirme koşusu gerekiyor. Ardından üçüncü ayrılmış küme ilan edilecek.
 
 ---
 
