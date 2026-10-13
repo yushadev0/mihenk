@@ -76,7 +76,7 @@ Rapor bu tuzakları "müfredat sınıf 8" olarak topluyor. G1'in değeri kolay s
 | 21 | [`g1_acceptance_test2.m`](matlab/g1/test2/g1_acceptance_test2.m) | v10 (= v9noE) ve v6, ikinci ayrılmış küme: 100 tohumdan otomatik üretilmiş senaryo × 2 gürültü, PI histerezisi, ikinci derece BME yolu (önceden ilan) | Küme, ölçütler (K1–K4) ve iki karar kuralı sonuçlardan önce commit'lendi · ✅ **G1 = v10** (87 iyi / 12 kötü hücre; beyaz en kötü 161,4 → 31,6, kapsama %78,6 → %97,6) · ✅ K2a–K2d, K3c–K3f, K4 geçti · ❌ **kabul FAIL**: K1b (31,6 / 12,8), K1c beyaz, K3a beyaz (sınırda), K3b (ortak sıcaklık kaynağı modeli, 19,1) |
 | 22 | [`g1_diag_tsrc2.m`](matlab/g1/v10/g1_diag_tsrc2.m) | Tanı: ikinci kabul testindeki olay dışı "T src" alarmları (21C); ısıtıcısız ve birinci derece BME yolu karşı-olgusalları | ✅ kopya 100/100 birebir · ✅ H1 (ısıtıcı) K3b'nin ~%73'ü: ısıtıcı penceresinde tek bir "geri giriş" güncellemesi modeli bozuyor · ✅ H2 (ikinci derece yol, τ2 ≥ 359 s) ~%24: model hatası payı olmayan sT yine kilitliyor · H3 iki koşu: biri puanlama sınır bloğu |
 | 23 | [`g1_dev_tsrc_v11.m`](matlab/g1/v11/g1_dev_tsrc_v11.m) | Sıcaklık kaynağı modeli: geri giriş beklemesi (H) ve geniş gecikme ızgarası (W), dev + iki kullanılmış küme | Varyantlar ve seçim kuralı sonuçtan önce commit'lendi · ✅ kontroller 100/100, 280/280 · ✅ HW spent2'de K3b'yi 19,4 → 0,84'e indiriyor · ❌ kurala göre v6 kalıyor: ısıtıcı payı 0,873 → 0,851 · ⚠ düşüşün tamamı v6'nın kilitlendiği 11 koşudan, kısmen ters işaretli kilit alarmları (sonuç sonrası) |
-| 23b | [`g1_dev_tsrc_v11b.m`](matlab/g1/v11/g1_dev_tsrc_v11b.m) | §23'ün yeniden koşusu, tek değişiklik: işaretli ısıtıcı ölçütü (zT > 0), sonuç sonrası karar | İlan commit'lendi · sonuç bekleniyor |
+| 23b | [`g1_dev_tsrc_v11b.m`](matlab/g1/v11/g1_dev_tsrc_v11b.m) | §23'ün yeniden koşusu, tek değişiklik: işaretli ısıtıcı ölçütü (zT > 0), sonuç sonrası karar | ✅ C1–C3 birebir (1520/1520) · ✅ **sıcaklık kaynağı modeli HW**: spent2 K3b 19,4 → 0,84, ısıtıcı payı 0,822 → 0,824 · ⚠ karar ölçüt değişikliğiyle döndü (sonuç sonrası) · ⚠ işaretli ölçüt BME arızasıyla çakışan ısıtıcı penceresinde arıza alarmlarını saymıyor |
 
 **Kritik kurallar** (MATLAB referans modelinde her zaman uygulanacak):
 
@@ -1936,6 +1936,27 @@ Kullanıcı bir kez koştu. Betik değiştirilmedi. **C1 100/100, C2 280/280 bir
 **Değişmeyenler:** Varyantlar, veri, diğer ölçütler, seçim kuralının iki adımı ve toleranslar §23'teki ilanla aynı.
 
 **Kontroller:** C1 ve C2 aynen. Yeni **C3**: her varyant ve her koşu için olay dışı alarm, `heatDetAll`, BME arızası kapsaması ve gecikme, §23'ün CSV'si ile aynı olmalı (aynı kod, aynı veri).
+
+### 23b (sonuç)
+
+**Çıktı:** [`g1_dev_tsrc_v11b_output.txt`](matlab/g1/v11/g1_dev_tsrc_v11b_output.txt) · **Ham sonuçlar:** [`g1_dev_tsrc_v11b_results.csv`](matlab/g1/v11/g1_dev_tsrc_v11b_results.csv) · **Figür:** [`g1_dev_tsrc_v11b.png`](matlab/figures/g1_dev_tsrc_v11b.png)
+
+Kullanıcı bir kez koştu. **C1 100/100, C2 280/280, C3 1520/1520 birebir.** Yani ölçüt dışında hiçbir şey değişmedi.
+
+**Kural sonucu: v11'in sıcaklık kaynağı modeli HW** (geri giriş beklemesi m = 30 + gecikme ızgarası 0:20:600).
+- Adım 1: aday HW. H, 8 hücrede kötü / 6'sında iyi; W, 11'de kötü / 2'sinde iyi.
+- Adım 2, her kümede geçti:
+  - dev ve spent1: v6 ile her kalemde aynı.
+  - spent2: olay dışı alarm 19,44 → 0,84, ısıtıcı payı (işaretli) 0,822 → 0,824, BME arızası kapsaması 0,981 → 0,983, gecikme 0,6 → 0,6.
+- Bilgi: §23'teki işaretsiz ölçütle 0,873 → 0,851. Kararı bu ölçüt değişikliği çevirdi. Değişiklik sonuç sonrası verildi (§23b başı).
+
+**Bulgu 23D: İşaretli ölçütün bir sınırı var: ısıtıcı penceresi BME arızasıyla çakışınca gerçek arıza alarmlarını saymıyor.** v6'nın kilitlenmediği koşularda iki ölçüt arasındaki fark ortalama 3 puan. 5 puanı aşan 8 koşunun hepsi bme-step / bme-drift. Bu koşularda ısıtıcı penceresi negatif işaretli bir BME arızasıyla çakışıyor ve doğru arıza alarmları ısıtıcı payından düşüyor. Etki v6'da ve HW'de aynı (8'er koşu, ortalama fark 0,030 / 0,027), yani karar yönünü değiştirmiyor. Sonraki ilanlarda ısıtıcı payı, BME arızası bloklarını dışarıda bırakarak tanımlanmalı.
+
+**Genel değerlendirme:**
+- Geliştirme verisinde K3b'nin iki mekanizması çözüldü: spent2'de 19,4'ten 0,84'e. Geriye drift-ramp-220 (39 blok) ve heaters-216 (45 blok) kalıyor.
+- W'nin aralığı spent2 görülerek seçildi. Bu yüzden üçüncü kümede daha yavaş (net gecikme > 600 s) ve yapısal olarak farklı BME yolları olmalı.
+- Bellek: 31 gecikme adayı. ATmega328P bütçesinde ayrıca bakılacak.
+- **Sonraki adım:** v11 = v10 + HW sıcaklık kaynağı modeli. T-src çıktısı hareket kanallarının referans seçimini (`usable`) etkilediği için tam dedektörün geliştirme koşusu gerekiyor (v10'a karşı).
 
 ---
 
