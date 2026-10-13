@@ -76,6 +76,7 @@ Rapor bu tuzakları "müfredat sınıf 8" olarak topluyor. G1'in değeri kolay s
 | 21 | [`g1_acceptance_test2.m`](matlab/g1/test2/g1_acceptance_test2.m) | v10 (= v9noE) ve v6, ikinci ayrılmış küme: 100 tohumdan otomatik üretilmiş senaryo × 2 gürültü, PI histerezisi, ikinci derece BME yolu (önceden ilan) | Küme, ölçütler (K1–K4) ve iki karar kuralı sonuçlardan önce commit'lendi · ✅ **G1 = v10** (87 iyi / 12 kötü hücre; beyaz en kötü 161,4 → 31,6, kapsama %78,6 → %97,6) · ✅ K2a–K2d, K3c–K3f, K4 geçti · ❌ **kabul FAIL**: K1b (31,6 / 12,8), K1c beyaz, K3a beyaz (sınırda), K3b (ortak sıcaklık kaynağı modeli, 19,1) |
 | 22 | [`g1_diag_tsrc2.m`](matlab/g1/v10/g1_diag_tsrc2.m) | Tanı: ikinci kabul testindeki olay dışı "T src" alarmları (21C); ısıtıcısız ve birinci derece BME yolu karşı-olgusalları | ✅ kopya 100/100 birebir · ✅ H1 (ısıtıcı) K3b'nin ~%73'ü: ısıtıcı penceresinde tek bir "geri giriş" güncellemesi modeli bozuyor · ✅ H2 (ikinci derece yol, τ2 ≥ 359 s) ~%24: model hatası payı olmayan sT yine kilitliyor · H3 iki koşu: biri puanlama sınır bloğu |
 | 23 | [`g1_dev_tsrc_v11.m`](matlab/g1/v11/g1_dev_tsrc_v11.m) | Sıcaklık kaynağı modeli: geri giriş beklemesi (H) ve geniş gecikme ızgarası (W), dev + iki kullanılmış küme | Varyantlar ve seçim kuralı sonuçtan önce commit'lendi · ✅ kontroller 100/100, 280/280 · ✅ HW spent2'de K3b'yi 19,4 → 0,84'e indiriyor · ❌ kurala göre v6 kalıyor: ısıtıcı payı 0,873 → 0,851 · ⚠ düşüşün tamamı v6'nın kilitlendiği 11 koşudan, kısmen ters işaretli kilit alarmları (sonuç sonrası) |
+| 23b | [`g1_dev_tsrc_v11b.m`](matlab/g1/v11/g1_dev_tsrc_v11b.m) | §23'ün yeniden koşusu, tek değişiklik: işaretli ısıtıcı ölçütü (zT > 0), sonuç sonrası karar | İlan commit'lendi · sonuç bekleniyor |
 
 **Kritik kurallar** (MATLAB referans modelinde her zaman uygulanacak):
 
@@ -1923,6 +1924,18 @@ Kullanıcı bir kez koştu. Betik değiştirilmedi. **C1 100/100, C2 280/280 bir
 1. **Kurala uy:** v6 kalır, v11 sıcaklık kaynağı düzeltmesi olmadan devam eder. K3b üçüncü kümede de büyük olasılıkla kalır.
 2. **Ölçüt düzeltmesini ilan et, sonra yeniden puanla:** Isıtıcı tespiti yalnız pozitif yönlü alarmları (zT > +eşik) saysın. Bu tanım, sonucu görmeden önce ilan edilmiş olsaydı doğal olandı; ama şimdi sonuç sonrası olduğu için öyle etiketlenir. Kural aynen kalır, yalnız ölçüt değişir. Yeniden koşu ~35 dk.
 3. Her iki durumda da asıl karar üçüncü ayrılmış kümede verilecek. Bu koşu yalnız geliştirme seçimi.
+
+### 23b. İşaretli ısıtıcı ölçütüyle yeniden koşu (sonuç sonrası karar, önceden ilan)
+
+**Script:** [`matlab/g1/v11/g1_dev_tsrc_v11b.m`](matlab/g1/v11/g1_dev_tsrc_v11b.m)
+
+**Karar:** Kullanıcı 2. seçeneği seçti. **Bu karar §23'ün sonuçları görüldükten sonra verildi** ve öyle etiketleniyor.
+
+**Tek değişiklik, ısıtıcı ölçütü:** Isıtıcı payı artık yalnız zT > 0 olan ısıtıcı penceresi alarmlarını sayıyor. Isıtıcı yalnız BME688'i ısıtır, yani gerçek bir ısıtıcı izi pozitif hata verir. §23'teki ölçüt, ısıtıcı penceresinde bozulan bir modelin (22B) ters işaretli alarmlarını da sayıyordu, yani kilidi ödüllendiriyordu. Eski ölçüt `heatDetAll` adıyla betimleyici olarak duruyor.
+
+**Değişmeyenler:** Varyantlar, veri, diğer ölçütler, seçim kuralının iki adımı ve toleranslar §23'teki ilanla aynı.
+
+**Kontroller:** C1 ve C2 aynen. Yeni **C3**: her varyant ve her koşu için olay dışı alarm, `heatDetAll`, BME arızası kapsaması ve gecikme, §23'ün CSV'si ile aynı olmalı (aynı kod, aynı veri).
 
 ---
 
