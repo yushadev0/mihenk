@@ -74,7 +74,7 @@ Rapor bu tuzakları "müfredat sınıf 8" olarak topluyor. G1'in değeri kolay s
 | 20 | [`g1_prototype_v9.m`](matlab/g1/v9/g1_prototype_v9.m) | v9 (v8 − C2 + E: ofset olayı için eşdeğerlik testi) ve ablasyonları, v6'ya karşı iki adımlı kural | ✅ eşdeğerlik 0, iki regresyon 4·10⁻¹⁵ · ✅ C2'siz two-faults %55 → %98 · ✅ E rampada ofset sanmayı çözüyor · ❌ E bazı yanlış alarmları bırakamıyor (en kötü 53,5 beyaz, 32,7 renkli) → kurala göre G1 = v6 · ⚠ v9noE (= v8 − C2) iki eşiği de geçiyor ama 1. adım onu seçemiyor (kural açığı) |
 | 20 (tanı) | [`g1_diag_v9.m`](matlab/g1/v9/g1_diag_v9.m) | E'nin bırakamadığı yanlış alarmlar ve T10'daki ofset olayları | ✅ iz davranışı değiştirmiyor, oranlar CSV ile aynı · H2 dört koşunun üçünde (kural gereği kabul edilmedi), H3 hiçbirinde · ⚠ geliştirmedeki iki koşu 10F'nin baştan kilitlenen kanalları: E, büyüme testinin güvenlik kapısını kapatıyor · ❌ T10: renkli gürültüde 30 blokluk pencerede se iyimser → öneri v10 = v9noE |
 | 21 | [`g1_acceptance_test2.m`](matlab/g1/test2/g1_acceptance_test2.m) | v10 (= v9noE) ve v6, ikinci ayrılmış küme: 100 tohumdan otomatik üretilmiş senaryo × 2 gürültü, PI histerezisi, ikinci derece BME yolu (önceden ilan) | Küme, ölçütler (K1–K4) ve iki karar kuralı sonuçlardan önce commit'lendi · ✅ **G1 = v10** (87 iyi / 12 kötü hücre; beyaz en kötü 161,4 → 31,6, kapsama %78,6 → %97,6) · ✅ K2a–K2d, K3c–K3f, K4 geçti · ❌ **kabul FAIL**: K1b (31,6 / 12,8), K1c beyaz, K3a beyaz (sınırda), K3b (ortak sıcaklık kaynağı modeli, 19,1) |
-| 22 | [`g1_diag_tsrc2.m`](matlab/g1/v10/g1_diag_tsrc2.m) | Tanı: ikinci kabul testindeki olay dışı "T src" alarmları (21C); ısıtıcısız ve birinci derece BME yolu karşı-olgusalları | Hipotezler ve karar kuralları sonuçtan önce commit'lendi · sonuç bekleniyor |
+| 22 | [`g1_diag_tsrc2.m`](matlab/g1/v10/g1_diag_tsrc2.m) | Tanı: ikinci kabul testindeki olay dışı "T src" alarmları (21C); ısıtıcısız ve birinci derece BME yolu karşı-olgusalları | ✅ kopya 100/100 birebir · ✅ H1 (ısıtıcı) K3b'nin ~%73'ü: ısıtıcı penceresinde tek bir "geri giriş" güncellemesi modeli bozuyor · ✅ H2 (ikinci derece yol, τ2 ≥ 359 s) ~%24: model hatası payı olmayan sT yine kilitliyor · H3 iki koşu: biri puanlama sınır bloğu |
 
 **Kritik kurallar** (MATLAB referans modelinde her zaman uygulanacak):
 
@@ -1796,7 +1796,7 @@ Kullanıcı bir kez koştu (200 koşu × 2 dedektör, ~20 dk). Hata düzeltmesi 
 
 ## 22. Tanı: ikinci kabul testindeki "T src" alarmları (21C)
 
-**Script:** [`matlab/g1/v10/g1_diag_tsrc2.m`](matlab/g1/v10/g1_diag_tsrc2.m) · **Çıktı:** `g1_diag_tsrc2_output.txt` (koşudan sonra) · **Figür:** `g1_diag_tsrc2.png` (koşudan sonra)
+**Script:** [`matlab/g1/v10/g1_diag_tsrc2.m`](matlab/g1/v10/g1_diag_tsrc2.m) · **Çıktı:** [`g1_diag_tsrc2_output.txt`](matlab/g1/v10/g1_diag_tsrc2_output.txt) · **Figür:** [`g1_diag_tsrc2.png`](matlab/figures/g1_diag_tsrc2.png)
 
 **Ne yapıyor ve neden:** K3b'nin 19,1'lik değeri, 100 senaryonun 12'sindeki olay dışı "T src" alarmlarından geliyor. Bu değer v6'da ve v10'da, beyaz ve renkli gürültüde aynı. İki dedektör de aynı sıcaklık kaynağı modelini (`g1_tsrc_v6.m`, lead-lag, ızgara payı yok, donmuşken büyüme yok) çağırıyor ve bu model yalnız sıcaklıkları okuyor. Bu yüzden betik modeli doğrudan çağırıyor ve yalnız beyaz gürültüyü simüle ediyor. Dedektör koşulmuyor. Küme kullanılmış durumda; buradan çıkan hiçbir şey kabul sonucunu değiştirmiyor.
 
@@ -1810,6 +1810,58 @@ Kullanıcı bir kez koştu (200 koşu × 2 dedektör, ~20 dk). Hata düzeltmesi 
 1. **Kopya kontrolü:** Her senaryoda (tohum 200–299) ısıtıcı penceresi ve BME arızası dışındaki alarmlar, kabul testinin puanlama penceresinde (blok > ısınma ve v0 geçerli) sayılır. Bu sayı `g1_acceptance2_runs.csv`'deki v10 / beyaz `tSrcFlagsOutside` ile birebir aynı olmalı. Koşu başına ayrıca şunlar verilir: betimleyici model varyantlarının sayıları (noGate: her blokta güncelle, frozenFloor, gridErr), en uzun kesintisiz alarm, ilk alarm, ondan önceki güncellemesiz blok sayısı, ve bu boşlukta ısıtıcı olup olmadığı.
 2. **Karşı-olgusallar:** Alarmlı her koşu için ısıtıcısız, `bmeTau2 = 0` (yalnız > 0 olanlarda) ve ikisi birlikte. Hüküm yukarıdaki kurallarla verilir.
 3. **Bağlam:** İlk alarmın çevresindeki bloklar (eT, sT, zT, seçilen gecikme, b, c) ve alarmlı her koşu için sıcaklık ve zT figürü.
+
+### 22 (sonuç)
+
+Kullanıcı bir kez koştu (~7 dk + karşı-olgusallar). Betik değiştirilmedi.
+
+**Hükümler (ilan edilen kurala göre):**
+
+| Koşu | τ2 [s] | Alarm | Isıtıcısız | τ2 = 0 | İkisi | Hüküm |
+|---|---|---|---|---|---|---|
+| step-212 | 370 | 55 | 0 | 0 | 0 | H1 ve H2 |
+| heaters-216 | 131 | 155 | 0 | 174 | 0 | H1+H2 birlikte (ısıtıcısız 0, ama boşlukta ısıtıcı yok) |
+| drift-ramp-220 | 235 | 272 | 0 | 289 | 0 | H1 |
+| emi-227 | 377 | 139 | 139 | 0 | 0 | H2 |
+| clean-235 | 0 | 289 | 0 | – | – | H1 |
+| step-242 | 0 | 194 | 0 | – | – | H1 |
+| emi-257 | 361 | 165 | 165 | 0 | 0 | H2 |
+| two-faults-264 | 286 | 294 | 0 | 317 | 0 | H1 |
+| bme-step-269 | 0 | 43 | 1 | – | – | H3 |
+| drift-ramp-270 | 359 | 150 | 150 | 0 | 0 | H2 |
+| heaters-286 | 0 | 153 | 0 | – | – | H1 |
+| bme-step-289 | 0 | 1 | 1 | – | – | H3 |
+
+**Bulgu 22A: Kopya birebir.** 100 koşunun 100'ünde alarm sayısı kabul CSV'si ile aynı. Yani K3b'nin tamamı `g1_tsrc_v6`'dan geliyor; dedektörlerin geri kalanı katkı vermiyor.
+
+**Bulgu 22B: H1 doğrulandı (5 koşu, artı step-212'de H2 ile birlikte). Mekanizma 14B'den farklı: ısıtıcı penceresinde tek bir "geri giriş" güncellemesi.** Bağlam tablolarında hep aynı sıra görülüyor (drift-ramp-220, clean-235, step-242, heaters-286, two-faults-264):
+1. Isıtıcı |zT|'yi kapının dışına itiyor, model donuyor. Buraya kadar beklenen davranış.
+2. Model donukken sT büyüyor: 0,06 → 0,36 °C (step-242), 0,02 → 0,39 (two-faults-264). Neden: x = [1; L − L0; dL/dt] rampada öğrenilmiş bölgeden uzaklaşıyor ve parametre belirsizliği x'Px büyüyor. two-faults-264 ve bme-step-269'da ısıtıcı başlangıç platosuna denk geliyor, orada öncü terim c hiç öğrenilmemiş (öncül std 300 s). Rampa başlayınca dL/dt × P_cc sT'yi şişiriyor.
+3. Isıtıcının kalıntısı hâlâ duruyorken (eT 0,25–1,35 °C, gerçek ısıtıcı penceresi hâlâ açık) |zT| bir blok için 3'ün altına iniyor: 1,9 / 2,5 / 2,6 / 2,7. Bu tek güncelleme büyük bir adım atıyor, çünkü P büyük ve hata büyük. Örnekler: b 0,995 → 1,234 (step-242), b 1,095 → 1,259 (drift-ramp-220), c 0 → 833 s (two-faults-264). Seçilen gecikme de sıçrıyor.
+4. Yeni model yanlış ama kendinden emin: sT ~0,03'e iniyor, |zT| 10–36. Model saatlerce kilitli kalıyor (ilk alarmdan sonra 380 bloktan 20–180'inde güncelleme var).
+- Kapı, kendi belirsizliği şiştiği anda kirli bir bloğu içeri alıyor. Bu durum, belirsizlik arttıkça kapının gevşemesinin bedeli. 14B'de ise sorun kısa rampada öğrenilmiş bir eğimdi.
+- **heaters-216 (sonuç sonrası okuma):** Kural "boşlukta ısıtıcı yok" dediği için H1 sayılmadı. Ama aynı imza var: 135. blokta |zT| 2,9 iken (eT −3,3, sT 1,1) tek güncelleme b'yi 1,002'den 0,704'e çekiyor; c zaten 669 s, yani model daha önceki ısıtıcıda bozulmuş. Isıtıcı kaldırılınca alarm 0. Bozan güncelleme ilk alarmdan çok önce olduğu için ilan edilen "boşluk" kuralı onu göremiyor.
+- **bme-step-269 (sonuç sonrası okuma):** Kurala göre H3, çünkü ısıtıcısız da 1 alarm kalıyor. Bağlamı ise H1 ile aynı: c 0 → 825 s, ısıtıcıyla 43 alarm. Kalan 1 alarm büyük olasılıkla 22D'deki sınır bloğu (doğrulanmadı).
+
+**Bulgu 22C: H2 doğrulandı (3 koşu, artı step-212). Mekanizma 14B'nin "model hatası payı yok" sorunu.** Isıtıcı yok. Alarm, rampa sonunda ya da platoda başlıyor. eT on blokta 0,02'den 0,16 °C'ye doğrusal sürünüyor: BME'nin ikinci derece yolunun yavaş oturması. Seçilen gecikme ızgaranın ucunda (300 s); gerçek net gecikme 200 + τ2 ≈ 560–580 s. b 0,94–0,98.
+- sT ≈ 0,021 °C, yani taban değerin (0,02) hemen üstünde. Kapı, hata yalnız **0,06–0,07 °C** iken kapanıyor. Ardından sürünme 5σ'yı geçiyor ve model donuk kalıyor.
+- H2 yalnız τ2 ≥ 359 s olan koşularda görüldü. Bu aralıktaki 10 koşunun 4'ünde var, 6'sında yok. τ2 < 359 olan hiçbir koşuda yok. Izgara sınırı (300 s) ile ikinci derece yapı burada ayrılamıyor: τ2 = 0 ikisini birden kaldırıyor.
+
+**Bulgu 22D: H3'teki iki koşudan biri puanlama hatası.** bme-step-289'daki tek alarm, BME basamağının kendisi (3,08 h). eT 0,57 °C, basamağın (1,72) kabaca üçte biri; sonraki blokta tam 1,72. Yani basamak bloğun ortasında başlıyor, `D.truth.tempFault = tB >= t0` ise o bloğu arıza saymıyor. Doğru bir tespit olay dışı alarm olarak sayılmış. Etkisi küçük (koşu başına en çok 1 blok, K3b'de 0,01–0,02), ama sonraki testlerde arıza başlangıcını içeren blok arızaya dahil edilmeli. Bu değişiklik kabul sonucunu geriye dönük değiştirmiyor.
+
+**Bulgu 22E: Payların toplamı (19,1'in dağılımı).** H1 tipi (heaters-216 ve bme-step-269 dahil) 1400 blok (~%73), H2 454 (~%24), ikisi birlikte (step-212) 55 (~%3), sınır bloğu 1. Toplam 1910 = 19,1 × 100.
+
+**Bulgu 22F (betimleyici varyantlar):**
+- frozenFloor (donmuşken P büyüsün) H2 koşularını neredeyse siliyor: 139 → 9, 165 → 7, 150 → 2, 55 → 0. heaters-286'yı da siliyor (153 → 0). Ama §15'te ısıtıcıyı ve kaymayı yuttuğu görülmüştü, burada BME arızaları ölçülmedi.
+- noGate çözüm değil: bazı koşuları azaltıyor, bazılarını artırıyor (heaters-286 153 → 276).
+- gridErr hiçbir şeyi değiştirmiyor.
+
+**Genel değerlendirme ve öneri (karar kullanıcının):**
+- K3b iki ayrı mekanizmadan geliyor. İkisi de sıcaklık kaynağı modelinin kapı ve hata bütçesiyle ilgili; hareket kanallarıyla ilgisi yok.
+- **H1 için aday düzeltme:** Geri giriş kuralı. Kapı dışına çıkmış bir model ancak art arda m blok |zT| < zU kaldıktan sonra yeniden güncellensin. Alternatif: güncelleme adımı yalnız ölçüm gürültüsüne göre sınırlansın (sağlam / Huber güncellemesi). Böylece parametre belirsizliği şiştiğinde içeri alınan tek bir blok modeli taşıyamaz.
+- **H2 için aday düzeltme:** sT'ye ölçülen bir yapı uyuşmazlığı payı (§15'te kullanıcının tanımı) ve/veya daha geniş bir gecikme ızgarası. Izgarayı genişletmek, ikinci kümenin τ2 aralığına bakılarak yapılmış olur. Bu yüzden üçüncü kümede daha geniş ve farklı bir termal yapı olmalı (ADR-012).
+- **Puanlama:** Arıza başlangıcını içeren blok arızaya dahil edilmeli (22D).
+- Bunların hiçbiri bu kümeyle sınanamaz; üçüncü ayrılmış küme gerekiyor.
 
 ---
 
