@@ -74,6 +74,7 @@ Rapor bu tuzakları "müfredat sınıf 8" olarak topluyor. G1'in değeri kolay s
 | 20 | [`g1_prototype_v9.m`](matlab/g1/v9/g1_prototype_v9.m) | v9 (v8 − C2 + E: ofset olayı için eşdeğerlik testi) ve ablasyonları, v6'ya karşı iki adımlı kural | ✅ eşdeğerlik 0, iki regresyon 4·10⁻¹⁵ · ✅ C2'siz two-faults %55 → %98 · ✅ E rampada ofset sanmayı çözüyor · ❌ E bazı yanlış alarmları bırakamıyor (en kötü 53,5 beyaz, 32,7 renkli) → kurala göre G1 = v6 · ⚠ v9noE (= v8 − C2) iki eşiği de geçiyor ama 1. adım onu seçemiyor (kural açığı) |
 | 20 (tanı) | [`g1_diag_v9.m`](matlab/g1/v9/g1_diag_v9.m) | E'nin bırakamadığı yanlış alarmlar ve T10'daki ofset olayları | ✅ iz davranışı değiştirmiyor, oranlar CSV ile aynı · H2 dört koşunun üçünde (kural gereği kabul edilmedi), H3 hiçbirinde · ⚠ geliştirmedeki iki koşu 10F'nin baştan kilitlenen kanalları: E, büyüme testinin güvenlik kapısını kapatıyor · ❌ T10: renkli gürültüde 30 blokluk pencerede se iyimser → öneri v10 = v9noE |
 | 21 | [`g1_acceptance_test2.m`](matlab/g1/test2/g1_acceptance_test2.m) | v10 (= v9noE) ve v6, ikinci ayrılmış küme: 100 tohumdan otomatik üretilmiş senaryo × 2 gürültü, PI histerezisi, ikinci derece BME yolu (önceden ilan) | Küme, ölçütler (K1–K4) ve iki karar kuralı sonuçlardan önce commit'lendi · ✅ **G1 = v10** (87 iyi / 12 kötü hücre; beyaz en kötü 161,4 → 31,6, kapsama %78,6 → %97,6) · ✅ K2a–K2d, K3c–K3f, K4 geçti · ❌ **kabul FAIL**: K1b (31,6 / 12,8), K1c beyaz, K3a beyaz (sınırda), K3b (ortak sıcaklık kaynağı modeli, 19,1) |
+| 22 | [`g1_diag_tsrc2.m`](matlab/g1/v10/g1_diag_tsrc2.m) | Tanı: ikinci kabul testindeki olay dışı "T src" alarmları (21C); ısıtıcısız ve birinci derece BME yolu karşı-olgusalları | Hipotezler ve karar kuralları sonuçtan önce commit'lendi · sonuç bekleniyor |
 
 **Kritik kurallar** (MATLAB referans modelinde her zaman uygulanacak):
 
@@ -1792,6 +1793,23 @@ Kullanıcı bir kez koştu (200 koşu × 2 dedektör, ~20 dk). Hata düzeltmesi 
 - G1 dedektörü v10. Simülasyon aşaması kapanmadı. Kalan dört ölçüt: K1b (iki gürültü), K1c (beyaz), K3a (beyaz, sınırda), K3b (iki gürültü, ortak sıcaklık kaynağı modeli).
 - **İddia kapsamı:** "v10, daha önce görmediği ve elle seçilmemiş senaryolarda, modellenmemiş bir histerezis biçimi ve farklı bir BME termal yolu altında da kayma ve basamak arızalarını gecikme ve kapsama ölçütlerinin hepsini geçerek tespit ediyor; tipik koşuda yanlış alarm üretmiyor." Sınırlama olarak yazılacaklar: en kötü koşuda yanlış alarm kuyruğu (yaklaşık 20 koşudan biri), ızgara dışı uzun τ'lu gevşeme, sıcaklık kaynağı modelinin olay dışı alarmları.
 - Bu kümeye bakarak ayar yapılmayacak. Sonraki adım tanı: K3b gürültüden bağımsız olduğu için tek tohumla incelenebilir (13D'deki yol); K1b kuyruğu için D1'in uzun τ'daki bedeli ve play'deki iki ısıtıcı koşusu. Tanıdan çıkan yeni bir sürüm, ancak üçüncü bir ayrılmış kümeyle sınanabilir.
+
+## 22. Tanı: ikinci kabul testindeki "T src" alarmları (21C)
+
+**Script:** [`matlab/g1/v10/g1_diag_tsrc2.m`](matlab/g1/v10/g1_diag_tsrc2.m) · **Çıktı:** `g1_diag_tsrc2_output.txt` (koşudan sonra) · **Figür:** `g1_diag_tsrc2.png` (koşudan sonra)
+
+**Ne yapıyor ve neden:** K3b'nin 19,1'lik değeri, 100 senaryonun 12'sindeki olay dışı "T src" alarmlarından geliyor. Bu değer v6'da ve v10'da, beyaz ve renkli gürültüde aynı. İki dedektör de aynı sıcaklık kaynağı modelini (`g1_tsrc_v6.m`, lead-lag, ızgara payı yok, donmuşken büyüme yok) çağırıyor ve bu model yalnız sıcaklıkları okuyor. Bu yüzden betik modeli doğrudan çağırıyor ve yalnız beyaz gürültüyü simüle ediyor. Dedektör koşulmuyor. Küme kullanılmış durumda; buradan çıkan hiçbir şey kabul sonucunu değiştirmiyor.
+
+**Önceden ilan edilen hipotezler** (betik koşulmadan commit'lendi):
+- **H1, ısıtıcı tetikliyor (14B'nin benzeri):** Isıtıcı |zT|'yi kapının dışına itiyor, model güncellemeyi durduruyor ve gerçek ısıtıcı penceresi bittikten sonra geri dönmüyor. Bir koşu için doğrulanmış sayılır, eğer (a) aynı koşu ısıtıcısız (`heaterOn = []`) yapıldığında BME arızası dışında alarm kalmıyorsa **ve** (b) son güncelleme ile ilk olay dışı alarm arasında bir ısıtıcı darbesi varsa.
+- **H2, ikinci derece BME yolu (yapı uyuşmazlığı, ADR-012):** Lead-lag yapısı yalnız birinci derece BME yolu için kesin. `bmeTau2 > 0` olan bir koşu için doğrulanmış sayılır, eğer aynı koşu `bmeTau2 = 0` ile yapıldığında ısıtıcı penceresi ve BME arızası dışında alarm kalmıyorsa.
+- **H3, ikisi de değil:** Isıtıcısız ve birinci derece yolla da alarm kalıyorsa koşu "açıklanamadı" olarak raporlanır. İlk alarmın bağlamı (profil evresi, değişim hızı, güncelleme boşluğu) verilir.
+- H1 ve H2 aynı koşuda birlikte doğrulanabilir. Alarmları yalnız ikisinin birlikte kaldırıldığı karşı-olgusal siliyorsa koşu "H1+H2 birlikte" diye raporlanır.
+
+**Adımlar:**
+1. **Kopya kontrolü:** Her senaryoda (tohum 200–299) ısıtıcı penceresi ve BME arızası dışındaki alarmlar, kabul testinin puanlama penceresinde (blok > ısınma ve v0 geçerli) sayılır. Bu sayı `g1_acceptance2_runs.csv`'deki v10 / beyaz `tSrcFlagsOutside` ile birebir aynı olmalı. Koşu başına ayrıca şunlar verilir: betimleyici model varyantlarının sayıları (noGate: her blokta güncelle, frozenFloor, gridErr), en uzun kesintisiz alarm, ilk alarm, ondan önceki güncellemesiz blok sayısı, ve bu boşlukta ısıtıcı olup olmadığı.
+2. **Karşı-olgusallar:** Alarmlı her koşu için ısıtıcısız, `bmeTau2 = 0` (yalnız > 0 olanlarda) ve ikisi birlikte. Hüküm yukarıdaki kurallarla verilir.
+3. **Bağlam:** İlk alarmın çevresindeki bloklar (eT, sT, zT, seçilen gecikme, b, c) ve alarmlı her koşu için sıcaklık ve zT figürü.
 
 ---
 
