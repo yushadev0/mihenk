@@ -1,0 +1,26 @@
+{
+  "name": "MIHENK",
+  "year": 2026,
+  "frame": "window",
+  "stack": [
+    "MATLAB",
+    "Simulation",
+    "Embedded"
+  ],
+  "demo": "https://yusa.app/mihenk/",
+  "tagline": {
+    "en": "Can a sensor tell when it's failing?",
+    "tr": "Bir sensör, bozulduğunu kendisi anlayabilir mi?"
+  },
+  "body": {
+    "en": [
+      "A research project on small, cheap sensor nodes that work alone: can a node estimate how far it can trust its own readings, without a spare sensor, GPS or calibration moves?",
+      "Different sensors still share causes like temperature. I use that shared physics to tell whether a change comes from the environment or from the sensor itself, and test it in a physics, sensor and firmware co-simulation."
+    ],
+    "tr": [
+      "Küçük, ucuz ve tek başına çalışan sensör düğümleri üzerine bir araştırma projesi: Yedek sensör, GPS ya da kalibrasyon manevrası olmadan bir düğüm kendi ölçümlerine ne kadar güvenebileceğini kestirebilir mi?",
+      "Farklı sensörler bile sıcaklık gibi ortak sebepleri paylaşır. Bu ortak fiziği kullanarak bir değişimin ortamdan mı yoksa sensörün kendisinden mi geldiğini ayırmaya çalışıyor, bunu fizik, sensör ve firmware'i birlikte çalıştıran bir simülasyonda test ediyorum."
+    ]
+  },
+  "cover": "showcase-cover.webp"
+}
